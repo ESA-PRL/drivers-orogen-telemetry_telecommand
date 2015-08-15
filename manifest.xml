@@ -1,5 +1,5 @@
 <package>
-  <description brief="Orogen component for data_handling library">
+  <description brief="Orogen component for telemetry_telecommand library">
   
   </description>
   <author>Martin Azkarate/martin.azkarate@esa.int</author>
@@ -14,5 +14,5 @@
   <depend package="dummy-dependency-n-1" />
   <depend package="dummy-dependency-n" />
   -->
-  <depend package="exoter/data_handling" />
+  <depend package="drivers/telemetry_telecommand" />
 </package>

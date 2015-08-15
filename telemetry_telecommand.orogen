@@ -1,17 +1,17 @@
-name "data_handling"
+name "telemetry_telecommand"
 # Optionally declare the version number
 # version "0.1"
 
 # If new data types need to be defined, they have to be put in a separate C++
 # header, and this header will be loaded here
-import_types_from "data_handlingTypes.hpp"
+import_types_from "telemetry_telecommandTypes.hpp"
 # Finally, it is pretty common that headers are directly loaded from an external
 # library. In this case, the library must be first used (the name is the
 # library's pkg-config name) and then the header can be used. Following Rock
 # conventions, a common use-case would be:
 #
-using_library "data_handling"
-# import_types_from "data_handling/CustomType.hpp"
+using_library "telemetry_telecommand"
+# import_types_from "telemetry_telecommand/CustomType.hpp"
 
 # If this project uses data types that are defined in other oroGen projects,
 # these projects should be imported there as well.
@@ -20,7 +20,7 @@ using_library "data_handling"
 # Declare a new task context (i.e., a component)
 #
 # The corresponding C++ class can be edited in tasks/Task.hpp and
-# tasks/Task.cpp, and will be put in the data_handling namespace.
+# tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 task_context "Task" do
     # This is the default from now on, and should not be removed. Rock will
     # transition to a setup where all components use a configuration step.

@@ -1,5 +1,5 @@
-#ifndef data_handling_TYPES_HPP
-#define data_handling_TYPES_HPP
+#ifndef telemetry_telecommand_TYPES_HPP
+#define telemetry_telecommand_TYPES_HPP
 
 /* If you need to define types specific to your oroGen components, define them
  * here. Required headers must be included explicitly
@@ -8,7 +8,7 @@
  * which case you do not need this file
  */
 
-namespace data_handling {
+namespace telemetry_telecommand {
 }
 
 #endif
