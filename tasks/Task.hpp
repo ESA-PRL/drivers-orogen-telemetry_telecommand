@@ -4,6 +4,8 @@
 #define TELEMETRY_TELECOMMAND_TASK_TASK_HPP
 
 #include "telemetry_telecommand/TaskBase.hpp"
+#include "telemetry_telecommand/comm.h"
+#include "telemetry_telecommand/rt.h"
 
 namespace telemetry_telecommand {
 
@@ -30,7 +32,9 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
     protected:
 
 
-
+	CommTmServer* tmComm;
+    CommTcServer* tcComm;
+    CommTcReplyServer* tcReplyServer;
     public:
         /** TaskContext constructor for Task
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
