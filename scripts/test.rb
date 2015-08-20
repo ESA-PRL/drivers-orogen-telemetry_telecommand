@@ -7,14 +7,14 @@ include Orocos
 
 Orocos.initialize
 
-Orocos.run 'data_handling::Task' => 'data_handling' do
+Orocos.run 'telemetry_telecommand::Task' => 'telemetry_telecommand' do
 
     Orocos.log_all
 
-    dh = TaskContext.get 'data_handling'
+    tmtc = TaskContext.get 'telemetry_telecommand'
 
-    dh.configure
-    dh.start
+    tmtc.configure
+    tmtc.start
 
     #reader = vicon.pose_samples.reader
 
@@ -26,5 +26,5 @@ Orocos.run 'data_handling::Task' => 'data_handling' do
     # end
     Readline::readline("Press ENTER to exit\n") do
     end
-    dh.stop
+    tmtc.stop
 end
