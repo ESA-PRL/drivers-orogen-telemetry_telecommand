@@ -32,9 +32,14 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
     protected:
 
 
-	CommTmServer* tmComm;
+    CommTmServer* tmComm;
     CommTcServer* tcComm;
     CommTcReplyServer* tcReplyServer;
+
+//    TC_PACKET telecommand;
+    base::MotionCommand2D motion_command;
+    base::samples::RigidBodyState pose;
+
     public:
         /** TaskContext constructor for Task
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.

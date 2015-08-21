@@ -36,7 +36,7 @@ task_context "Task" do
     # Data can be retrieved using _input.read(value), which returns true if data
     # was available, and false otherwise. _input.connected() returns if this
     # input is connected to an output or not.
-    input_port "joints_reading", "/base/samples/Joints"
+    input_port "current_pose", "/base/samples/RigidBodyState"
 
     # An output port, i.e. an object to which the component pushes data so that
     # it is transmitted to other components' inputs
@@ -45,10 +45,12 @@ task_context "Task" do
     # if this output is connected to an input or not.
     output_port "output", "int"
 
+    output_port "locomotion_command", "base/MotionCommand2D"
+
     # If you want that component's updateHook() to be executed when the "input"
     # port gets data, uncomment this and comment the 'periodic' line
     # port_driven "input"
     # By default, the task will be periodic with a period of 0.1
-    periodic 0.1
+    periodic 0.5
 end
 

@@ -81,11 +81,55 @@ bool Task::startHook()
     RobotTask* RT2 = new RobotTask ("RT2");
     RobotTasks.push_back( RT2 );
     
+    // telecommand=NULL;
+
     return true;
 }
 void Task::updateHook()
 {
     TaskBase::updateHook();
+    
+
+    //! Check list of telecommands
+    /*
+    while (tcComm->GetTelecommandFromList(&telecommand) != 0)
+    {
+        if (telecommand.subsystem == LOCOMOTION) // Motion command
+        */
+        {
+            motion_command.translation = 1.0; // telecommand.param1;
+            motion_command.rotation = 0.0; // telecommand.param2;
+            _locomotion_command.write(motion_command);
+        }
+        /*
+        else if (telecommand.subsystem == PERCEPTION) // camera image acquisition
+        {
+            switch (telecommand.param1)
+            {
+            case NAV_CAM:
+                break;
+            case LOC_CAM:
+                break;
+            case PAN_IMAGE:
+                break;
+            }
+        }
+        else if (telecommand.subsystem == MAST)
+        {
+
+        }
+        else if (telecommand.subsystem == SOLAR_ARRAY)
+        {
+
+        }
+    }
+    */
+    //! Send telemetry data
+    if (_current_pose.read(pose) == RTT::NewData)
+    {
+        // generate TM packet with updated pose estimation
+    }
+    // generate rest of TM packet
 }
 void Task::errorHook()
 {
