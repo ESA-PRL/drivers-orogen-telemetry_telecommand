@@ -6,23 +6,22 @@
 #define TM_SERVER_PORT_NBR 7032
 #define TC_REPLY_SERVER_PORT_NBR 7033
 
+const int GNC_LLO_ACTIVITY = 1;
+const int PANCAM_WAC_RRGB_ACTIVITY = 2;
+
 using namespace telemetry_telecommand;
 
-static std::list<RobotTask*> RobotTasks;
+RobotProcedure*  theRobotProcedure;// = new RobotProcedure("exoter");
 
-RobotTask* GetRTFromName (char* name) {
-  std::list<RobotTask*>::iterator pr; 
-    for ( pr = RobotTasks.begin(); pr != RobotTasks.end(); pr++ ) {
-    if ( !strcmp( (*pr)->GetName().c_str(), name ) ) 
-      return (*pr);
-  }
-  return NULL;
+RobotTask* GetRTFromName (char* rtname) {
+  RobotTask* RT = ( RobotTask* ) theRobotProcedure->GetRTFromName((char*)rtname);
+  return RT;
 }
 
 extern "C" {
   
   int orcExecAct(const char* rtname, const char *rtparams, int req_id) {
-    RobotTask* RT = ( RobotTask* ) GetRTFromName((char*)rtname);
+    RobotTask* RT = ( RobotTask* ) theRobotProcedure->GetRTFromName((char*)rtname);
     if (RT != NULL) {
       RT->SetParam((char *)rtparams);
       RT->SetTcRequestId(req_id);
@@ -34,6 +33,9 @@ extern "C" {
       sprintf(tc_reply, "%d 2 RspAck\n", RT->GetTcRequestId());
       // sprintf(tc_reply, "%d 2 RspError\n", RT->tcRequestId); // in case of error
       //tcReplyServer->sendData(tc_reply);
+    }
+    else {
+
     }
   }
 }
@@ -69,77 +71,233 @@ bool Task::configureHook()
 }
 bool Task::startHook()
 {
-    if (! TaskBase::startHook())
-        return false;
-//    signal(SIGPIPE, SIG_IGN);
-		
-    tcComm = new CommTcServer( TC_SERVER_PORT_NBR); 
+  if (! TaskBase::startHook())
+    return false;
+  //    signal(SIGPIPE, SIG_IGN);
   
-    tmComm = new CommTmServer( TM_SERVER_PORT_NBR);
+  theRobotProcedure = new RobotProcedure("exoter");
   
-    tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NBR );
+  
+  
+  tcComm = new CommTcServer( TC_SERVER_PORT_NBR); 
+  
+  tmComm = new CommTmServer( TM_SERVER_PORT_NBR);
+  
+  tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NBR );
+  
+  
+  RobotTask* rt1 = new RobotTask("ADE_LEFT_Initialise"); // Simulated
+  RobotTask* rt2 = new RobotTask("ADE_LEFT_conf");  // Simulated 
+  RobotTask* rt3 = new RobotTask("ADE_LEFT_ReleaseHDRM"); // Simulated
+  RobotTask* rt4 = new RobotTask("ADE_LEFT_SwitchOff"); // Simulated
+  RobotTask* rt5 = new RobotTask("ADE_RIGHT_Initialise"); // Simulated
+  RobotTask* rt6 = new RobotTask("ADE_RIGHT_conf"); // Simulated
+  RobotTask* rt7 = new RobotTask("ADE_RIGHT_ReleaseHDRM"); // Simulated
+  RobotTask* rt8 = new RobotTask("ADE_RIGHT_SwitchOff"); // Simulated
 
-    RobotTask* RT1 = new RobotTask ("RT1");
-    RobotTasks.push_back( RT1 ); 
-    RobotTask* RT2 = new RobotTask ("RT2");
-    RobotTasks.push_back( RT2 );
-    
-    // telecommand=NULL;
+  RobotTask* rt9 = new RobotTask("SA_LEFT_Initialise"); // Simulated
+  RobotTask* rt10 = new RobotTask("SA_LEFT_PrimaryMoveTo"); // Simulated
+  RobotTask* rt11 = new RobotTask("SA_LEFT_SecondaryMoveTo"); // Simulated
+  RobotTask* rt12 = new RobotTask("SA_LEFT_SwitchOff"); // Simulated
+  RobotTask* rt13 = new RobotTask("SA_RIGHT_Initialise"); // Simulated
+  RobotTask* rt14 = new RobotTask("SA_RIGHT_PrimaryMoveTo"); // Simulated
+  RobotTask* rt15 = new RobotTask("SA_RIGHT_SecondaryMoveTo"); // Simulated
+  RobotTask* rt16 = new RobotTask("SA_RIGHT_SwitchOff"); // Simulated
 
+  RobotTask* rt17 = new RobotTask("PanCam_Initialise"); // Simulated
+  RobotTask* rt18 = new RobotTask("PanCam_InitWACs"); // Simulated
+  RobotTask* rt19 = new RobotTask("PanCam_SwitchOn"); // Simulated
+  RobotTask* rt20 = new RobotTask("PanCam_WACAcqImage"); // Simulated
+  RobotTask* rt21 = new RobotTask("PanCam_WACGetImage"); // Executed (params WAC_L, WAC_R)
+  RobotTask* rt22 = new RobotTask("PanCam_SwitchOff"); // Simulated 
+  RobotTask* rt23 = new RobotTask("PanCam_PIUSwitchOff"); // Simulated 
+  RobotTask* rt24 = new RobotTask("PANCAM_WAC_RRGB"); // Executed
+  RobotTask* rt25 = new RobotTask("PanCam_FilterSel"); // Simulated  
+
+  RobotTask* rt26 = new RobotTask("MAST_DEP_Initialise"); // Simulated  
+  RobotTask* rt27 = new RobotTask("MAST_DEP_Deploy"); // Simulated 
+  RobotTask* rt28 = new RobotTask("MAST_PTU_Initialise"); // Simulated 
+  RobotTask* rt29 = new RobotTask("MAST_PTU_MoveTo"); // Executed
+  RobotTask* rt30 = new RobotTask("MAST_SwitchOff"); // Simulated 
+
+  RobotTask* rt31 = new RobotTask("GNC_Initialise"); // Simulated 
+  RobotTask* rt32 = new RobotTask("GNC_LLO"); // Executed  (params: distance, speed (m, m/hour))
+  RobotTask* rt33 = new RobotTask("GNC_SwitchOff"); // Simulated 
+  RobotTask* rt331 = new RobotTask("BEMA_Deploy_1"); // Simulated or Executed 
+  RobotTask* rt332 = new RobotTask("BEMA_Deploy_2"); // Simulated or Executed
+
+
+  RobotTask* rt34 = new RobotTask("RV_WakeUp"); // Simulated  
+  RobotTask* rt35 = new RobotTask("MMS_WaitAbsTime"); // Simulated 
+  RobotTask* rt36 = new RobotTask("RV_Prepare4Comms"); // Simulated 
+  RobotTask* rt37 = new RobotTask("RV_PostComms"); // Simulated 
+  RobotTask* rt38 = new RobotTask("DHS_Go2Nominal"); // Simulated 
+  RobotTask* rt39 = new RobotTask("RV_Prepare4Travel"); // Simulated 
+  RobotTask* rt40 = new RobotTask("RV_Prepare4Night"); // Simulated 
+  RobotTask* rt41 = new RobotTask("RV_Prepare4Dozing"); // Simulated 
+
+
+  theRobotProcedure->insertRT(rt1);
+  theRobotProcedure->insertRT(rt2);
+  theRobotProcedure->insertRT(rt3);
+  theRobotProcedure->insertRT(rt4);
+  theRobotProcedure->insertRT(rt5);
+  theRobotProcedure->insertRT(rt6);
+  theRobotProcedure->insertRT(rt7);
+  theRobotProcedure->insertRT(rt8);
+  theRobotProcedure->insertRT(rt9);
+  theRobotProcedure->insertRT(rt10);
+  theRobotProcedure->insertRT(rt11);
+  theRobotProcedure->insertRT(rt12);
+  theRobotProcedure->insertRT(rt13);
+  theRobotProcedure->insertRT(rt14);
+  theRobotProcedure->insertRT(rt15);
+  theRobotProcedure->insertRT(rt16);
+  theRobotProcedure->insertRT(rt17);
+  theRobotProcedure->insertRT(rt18);
+  theRobotProcedure->insertRT(rt19);
+  theRobotProcedure->insertRT(rt20);
+  theRobotProcedure->insertRT(rt21);
+  theRobotProcedure->insertRT(rt22);
+  theRobotProcedure->insertRT(rt23);
+  theRobotProcedure->insertRT(rt24);
+  theRobotProcedure->insertRT(rt25);
+  theRobotProcedure->insertRT(rt26);
+  theRobotProcedure->insertRT(rt27);
+  theRobotProcedure->insertRT(rt28);
+  theRobotProcedure->insertRT(rt29);
+  theRobotProcedure->insertRT(rt30);
+  theRobotProcedure->insertRT(rt31);
+  theRobotProcedure->insertRT(rt32);
+  theRobotProcedure->insertRT(rt33);
+  theRobotProcedure->insertRT(rt331);
+  theRobotProcedure->insertRT(rt332);
+  theRobotProcedure->insertRT(rt34);
+  theRobotProcedure->insertRT(rt35);
+  theRobotProcedure->insertRT(rt36);
+  theRobotProcedure->insertRT(rt37);
+  theRobotProcedure->insertRT(rt38);
+  theRobotProcedure->insertRT(rt39);
+  theRobotProcedure->insertRT(rt40);
+  theRobotProcedure->insertRT(rt41);
+
+  currentActivity = -1;
     return true;
 }
 void Task::updateHook()
 {
     TaskBase::updateHook();
-    
 
     //! Check list of telecommands
-    /*
-    while (tcComm->GetTelecommandFromList(&telecommand) != 0)
-    {
-        if (telecommand.subsystem == LOCOMOTION) // Motion command
-        */
-        {
-            motion_command.translation = 0.05; // telecommand.param1;
-            motion_command.rotation = 0.0; // telecommand.param2;
-            _locomotion_command.write(motion_command);
-        }
-        /*
-        else if (telecommand.subsystem == PERCEPTION) // camera image acquisition
-        {
-            switch (telecommand.param1)
-            {
-            case NAV_CAM:
-                break;
-            case LOC_CAM:
-                break;
-            case PAN_IMAGE:
-                break;
-            }
-        }
-        else if (telecommand.subsystem == MAST)
-        */
-        {
-            ptu_command[0].position=1.0;
-            ptu_command[0].speed=base::NaN<float>();
-            ptu_command[1].position=0.0;
-            ptu_command[1].speed=base::NaN<float>();
-            _ptu_command.write(ptu_command);
-        }
-        /*
-        else if (telecommand.subsystem == SOLAR_ARRAY)
-        {
-
-        }
-    }
+    
+    CommandInfo* cmd_info = tcComm->extractCommandInfo();
+    if (cmd_info != NULL)
+      {
+	if (!strcmp((cmd_info->activityName).c_str(), "GNC_LLO")) {
+	  currentActivity = GNC_LLO_ACTIVITY;
+	  currentParams = cmd_info->activityParams;
+	  double distance = 0.0; int ackid;
+	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &targetDistance);
+	  travelledDistance = 0.0;
+	  std::cout <<  "GNC_LLO distance:" << targetDistance << std::endl;
+	}
+	else {
+	  RobotTask *rover_action = ( RobotTask* ) 
+	    theRobotProcedure->GetRTFromName( (char*)(cmd_info->activityName).c_str());
+	  
+	  if (rover_action != NULL) {
+	    orcExecAct((char*)cmd_info->activityName.c_str(), 
+		       (char*)cmd_info->activityParams.c_str(), 1); 
+	  }
+	  else {
+	    
+	  }
+	}
+      
+      /*
+      if (telecommand.subsystem == LOCOMOTION) // Motion command
+      {
+      motion_command.translation = 0.05; // telecommand.param1;
+      motion_command.rotation = 0.0; // telecommand.param2;
+      _locomotion_command.write(motion_command);
+      }
+      * /
+      / *
+      else if (telecommand.subsystem == PERCEPTION) // camera image acquisition
+      {
+      switch (telecommand.param1)
+      {
+      case NAV_CAM:
+      break;
+      case LOC_CAM:
+      break;
+      case PAN_IMAGE:
+      break;
+      }
+      }
+      else if (telecommand.subsystem == MAST)
+      {
+      ptu_command[0].position=1.0;
+      ptu_command[0].speed=base::NaN<float>();
+      ptu_command[1].position=0.0;
+      ptu_command[1].speed=base::NaN<float>();
+      _ptu_command.write(ptu_command);
+      }
+      
+      else if (telecommand.subsystem == SOLAR_ARRAY)
+      {
+      
+      } 
     */
+      }
+    /*
     //! Send telemetry data
     if (_current_pose.read(pose) == RTT::NewData)
     {
         std::cout << "received position: " << pose.position[0] << std::endl;
         // generate TM packet with updated pose estimation
     }
-    // generate rest of TM packet
+    */
+
+    //
+    // as long as the GNC_LLO is executed
+    //
+    if (currentActivity == GNC_LLO_ACTIVITY) {
+      // check the end 
+      travelledDistance = 2.0; // pose.position.x;
+      if (travelledDistance < targetDistance) {
+	motion_command.translation = 0.05; // telecommand.param1;
+	motion_command.rotation = 0.0; // telecommand.param2;
+	_locomotion_command.write(motion_command);
+      }
+      else {
+	travelledDistance = 0.0;
+	targetDistance = 0.0;
+	currentActivity = -1;
+	// sent the reply 
+      }
+    } 
+    //
+    // as long as the GNC_LLO is executed
+    //
+    if (currentActivity == PANCAM_WAC_RRGB_ACTIVITY) {
+
+      // take images
+
+      // move mast 
+      
+      if (1 == 1) {
+	// execute PANCAM_WAC_RRGB_ACTIVITY
+      }
+      else {
+	currentActivity = -1;
+	// sent the reply 
+      }
+      
+      // reset parameters and current activity
+
+    }
+   
 }
 void Task::errorHook()
 {

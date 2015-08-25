@@ -6,6 +6,7 @@
 #include "telemetry_telecommand/TaskBase.hpp"
 #include "telemetry_telecommand/comm.h"
 #include "telemetry_telecommand/rt.h"
+#include "telemetry_telecommand/prr.h"
 
 namespace telemetry_telecommand {
 
@@ -30,6 +31,13 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
     {
 	friend class TaskBase;
     protected:
+
+      int currentActivity;
+      std::string currentParams;
+      
+      // GNC_LLO parameters
+      double travelledDistance;
+      double targetDistance;
 
 
     CommTmServer* tmComm;
