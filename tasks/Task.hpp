@@ -38,6 +38,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
 //    TC_PACKET telecommand;
     base::MotionCommand2D motion_command;
+    base::commands::Joints ptu_command;
     base::samples::RigidBodyState pose;
 
     public:

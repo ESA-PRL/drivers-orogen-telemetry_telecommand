@@ -62,6 +62,9 @@ bool Task::configureHook()
 {
     if (! TaskBase::configureHook())
         return false;
+    ptu_command.resize(2);
+    ptu_command.names[0]= "MAST_PAN";
+    ptu_command.names[1]= "MAST_TILT";
     return true;
 }
 bool Task::startHook()
@@ -97,7 +100,7 @@ void Task::updateHook()
         if (telecommand.subsystem == LOCOMOTION) // Motion command
         */
         {
-            motion_command.translation = 1.0; // telecommand.param1;
+            motion_command.translation = 0.05; // telecommand.param1;
             motion_command.rotation = 0.0; // telecommand.param2;
             _locomotion_command.write(motion_command);
         }
@@ -115,9 +118,15 @@ void Task::updateHook()
             }
         }
         else if (telecommand.subsystem == MAST)
+        */
         {
-
+            ptu_command[0].position=1.0;
+            ptu_command[0].speed=base::NaN<float>();
+            ptu_command[1].position=0.0;
+            ptu_command[1].speed=base::NaN<float>();
+            _ptu_command.write(ptu_command);
         }
+        /*
         else if (telecommand.subsystem == SOLAR_ARRAY)
         {
 
@@ -127,6 +136,7 @@ void Task::updateHook()
     //! Send telemetry data
     if (_current_pose.read(pose) == RTT::NewData)
     {
+        std::cout << "received position: " << pose.position[0] << std::endl;
         // generate TM packet with updated pose estimation
     }
     // generate rest of TM packet
