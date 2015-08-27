@@ -32,22 +32,29 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 	friend class TaskBase;
     protected:
 
-      int currentActivity;
-      std::string currentParams;
+        int currentActivity;
+        std::string currentParams;
       
-      // GNC_LLO parameters
-      double travelledDistance;
-      double targetDistance;
+        // GNC_LLO parameters
+        double travelledDistance;
+        double targetDistance;
+        double targetSpeed;
+        base::samples::RigidBodyState initial_pose;
+        
+        // MAST_PTU_MoveTo parameters
+        double pan;
+        double tilt;
 
 
-    CommTmServer* tmComm;
-    CommTcServer* tcComm;
-    CommTcReplyServer* tcReplyServer;
+        CommTmServer* tmComm;
+        CommTcServer* tcComm;
+        CommTcReplyServer* tcReplyServer;
 
-//    TC_PACKET telecommand;
-    base::MotionCommand2D motion_command;
-    base::commands::Joints ptu_command;
-    base::samples::RigidBodyState pose;
+        base::MotionCommand2D motion_command;
+        base::commands::Joints ptu_command;
+        base::samples::RigidBodyState pose;
+        base::samples::Joints ptu;
+
 
     public:
         /** TaskContext constructor for Task
@@ -124,6 +131,17 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
          * before calling start() again.
          */
         void cleanupHook();
+
+        /** This method computes to absolute travelled distance in 3D. Initial position
+         * from which the distance is calculated is reset every time a locomotion command
+         * is sent. The initial position is compared to the current position to calculate the 
+         * travelled distance.
+         */
+        double computeTravelledDistance();
+
+        /** Checks if a ptu move command has reached its target.
+         */
+        bool ptuTargetReached();
     };
 }
 

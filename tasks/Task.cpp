@@ -8,6 +8,10 @@
 
 const int GNC_LLO_ACTIVITY = 1;
 const int PANCAM_WAC_RRGB_ACTIVITY = 2;
+const int PANCAM_WAC_GET_IMAGE = 3;
+const int MAST_PTU_MOVE_TO_ACTIVITY = 4;
+const int BEMA_DEPLOY_1_ACTIVITY = 5;
+const int BEMA_DEPLOY_2_ACTIVITY = 6;
 
 using namespace telemetry_telecommand;
 
@@ -67,6 +71,7 @@ bool Task::configureHook()
     ptu_command.resize(2);
     ptu_command.names[0]= "MAST_PAN";
     ptu_command.names[1]= "MAST_TILT";
+    ptu.resize(2);
     return true;
 }
 bool Task::startHook()
@@ -111,13 +116,13 @@ bool Task::startHook()
   RobotTask* rt21 = new RobotTask("PanCam_WACGetImage"); // Executed (params WAC_L, WAC_R)
   RobotTask* rt22 = new RobotTask("PanCam_SwitchOff"); // Simulated 
   RobotTask* rt23 = new RobotTask("PanCam_PIUSwitchOff"); // Simulated 
-  RobotTask* rt24 = new RobotTask("PANCAM_WAC_RRGB"); // Executed
+  RobotTask* rt24 = new RobotTask("PanCam_WAC_RRGB"); // Executed (params TBD)
   RobotTask* rt25 = new RobotTask("PanCam_FilterSel"); // Simulated  
 
   RobotTask* rt26 = new RobotTask("MAST_DEP_Initialise"); // Simulated  
   RobotTask* rt27 = new RobotTask("MAST_DEP_Deploy"); // Simulated 
   RobotTask* rt28 = new RobotTask("MAST_PTU_Initialise"); // Simulated 
-  RobotTask* rt29 = new RobotTask("MAST_PTU_MoveTo"); // Executed
+  RobotTask* rt29 = new RobotTask("MAST_PTU_MoveTo"); // Executed (params: pan, tilt (deg, deg))
   RobotTask* rt30 = new RobotTask("MAST_SwitchOff"); // Simulated 
 
   RobotTask* rt31 = new RobotTask("GNC_Initialise"); // Simulated 
@@ -196,10 +201,18 @@ void Task::updateHook()
 	if (!strcmp((cmd_info->activityName).c_str(), "GNC_LLO")) {
 	  currentActivity = GNC_LLO_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
-	  double distance = 0.0; int ackid;
-	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &targetDistance);
+	  int ackid;
+	  sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetDistance, &targetSpeed);
 	  travelledDistance = 0.0;
-	  std::cout <<  "GNC_LLO distance:" << targetDistance << std::endl;
+          initial_pose = pose;
+	  std::cout <<  "GNC_LLO distance:" << targetDistance << " speed:" << targetSpeed << std::endl;
+	}
+        else if (!strcmp((cmd_info->activityName).c_str(), "MAST_PTU_MoveTo")) {
+	  currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
+	  currentParams = cmd_info->activityParams;
+	  int ackid;
+	  sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &pan, &tilt);
+	  std::cout <<  "MAST_PTU_MoveTo pan:" << pan << " tilt:" << tilt << std::endl;
 	}
 	else {
 	  RobotTask *rover_action = ( RobotTask* ) 
@@ -215,14 +228,6 @@ void Task::updateHook()
 	}
       
       /*
-      if (telecommand.subsystem == LOCOMOTION) // Motion command
-      {
-      motion_command.translation = 0.05; // telecommand.param1;
-      motion_command.rotation = 0.0; // telecommand.param2;
-      _locomotion_command.write(motion_command);
-      }
-      * /
-      / *
       else if (telecommand.subsystem == PERCEPTION) // camera image acquisition
       {
       switch (telecommand.param1)
@@ -243,43 +248,55 @@ void Task::updateHook()
       ptu_command[1].speed=base::NaN<float>();
       _ptu_command.write(ptu_command);
       }
-      
-      else if (telecommand.subsystem == SOLAR_ARRAY)
-      {
-      
-      } 
-    */
+      */
       }
-    /*
+    
     //! Send telemetry data
     if (_current_pose.read(pose) == RTT::NewData)
     {
-        std::cout << "received position: " << pose.position[0] << std::endl;
+        std::cout << "received pose: " << pose.position[0] << " " << pose.position[1] << " " << pose.position[2] << std::endl;
         // generate TM packet with updated pose estimation
     }
-    */
+    if (_current_ptu.read(ptu) == RTT::NewData)
+    {
+        std::cout << "received ptu: " << ptu[0].position << " " << ptu[1].position << std::endl;
+        // generate TM packet with updated ptu position
+    }
 
-    //
-    // as long as the GNC_LLO is executed
-    //
     if (currentActivity == GNC_LLO_ACTIVITY) {
-      // check the end 
-      travelledDistance = 2.0; // pose.position.x;
+      travelledDistance = computeTravelledDistance();
       if (travelledDistance < targetDistance) {
-	motion_command.translation = 0.05; // telecommand.param1;
-	motion_command.rotation = 0.0; // telecommand.param2;
+	motion_command.translation = targetSpeed;
+	motion_command.rotation = 0.0;
 	_locomotion_command.write(motion_command);
       }
       else {
 	travelledDistance = 0.0;
 	targetDistance = 0.0;
 	currentActivity = -1;
-	// sent the reply 
+        motion_command.translation = 0.0;
+        motion_command.rotation = 0.0;
+        _locomotion_command.write(motion_command);
+	// sent the reply
       }
-    } 
-    //
-    // as long as the GNC_LLO is executed
-    //
+    }
+
+    if (currentActivity == MAST_PTU_MOVE_TO_ACTIVITY) {
+      if (!ptuTargetReached()) {
+        ptu_command[0].position=pan;
+        ptu_command[0].speed=base::NaN<float>();
+        ptu_command[1].position=tilt;
+        ptu_command[1].speed=base::NaN<float>();
+        _ptu_command.write(ptu_command);
+      }
+      else {
+	currentActivity = -1;
+	// sent the reply
+      }
+    }
+
+
+
     if (currentActivity == PANCAM_WAC_RRGB_ACTIVITY) {
 
       // take images
@@ -311,3 +328,23 @@ void Task::cleanupHook()
 {
     TaskBase::cleanupHook();
 }
+
+double Task::computeTravelledDistance()
+{
+    double distance = 0.0;
+    distance = sqrt((pose.position[0]-initial_pose.position[0])*(pose.position[0]-initial_pose.position[0])
+                   +(pose.position[1]-initial_pose.position[1])*(pose.position[1]-initial_pose.position[1])
+                   +(pose.position[2]-initial_pose.position[2])*(pose.position[2]-initial_pose.position[2]));
+    return distance;
+}
+
+bool Task::ptuTargetReached()
+{
+    double window = 0.01;
+    if (abs(ptu[0].position-pan) > window)
+        return false;
+    if (abs(ptu[1].position-tilt) > window)
+        return false;
+    return true;
+}
+
