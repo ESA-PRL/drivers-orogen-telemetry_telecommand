@@ -38,6 +38,8 @@ task_context "Task" do
     # input is connected to an output or not.
     input_port "current_pose", "/base/samples/RigidBodyState"
     input_port "current_ptu", "base/samples/Joints"
+    input_port "left_frame", ro_ptr('base::samples::frame::Frame')
+    input_port "right_frame", ro_ptr('base::samples::frame::Frame')
     # An output port, i.e. an object to which the component pushes data so that
     # it is transmitted to other components' inputs
     #

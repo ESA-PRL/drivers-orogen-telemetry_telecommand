@@ -45,7 +45,15 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         double pan;
         double tilt;
 
+        // PanCam_WACGetImage parameters
+        std::string cam;
+	RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> frame_left;   //! De-interlaced left frame
+        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> frame_right;  //! De-interlaced right frame  
 
+        // PanCam_WAC_RRGB parameters
+        int inPanCamActivity;
+	
+ 
         CommTmServer* tmComm;
         CommTcServer* tcComm;
         CommTcReplyServer* tcReplyServer;

@@ -7,9 +7,9 @@
 #define TC_REPLY_SERVER_PORT_NBR 7033
 
 const int GNC_LLO_ACTIVITY = 1;
-const int PANCAM_WAC_RRGB_ACTIVITY = 2;
-const int PANCAM_WAC_GET_IMAGE = 3;
-const int MAST_PTU_MOVE_TO_ACTIVITY = 4;
+const int PANCAM_WAC_GET_IMAGE_ACTIVITY = 2;
+const int MAST_PTU_MOVE_TO_ACTIVITY = 3;
+const int PANCAM_WAC_RRGB_ACTIVITY = 4;
 const int BEMA_DEPLOY_1_ACTIVITY = 5;
 const int BEMA_DEPLOY_2_ACTIVITY = 6;
 
@@ -72,6 +72,7 @@ bool Task::configureHook()
     ptu_command.names[0]= "MAST_PAN";
     ptu_command.names[1]= "MAST_TILT";
     ptu.resize(2);
+    inPanCamActivity=0;
     return true;
 }
 bool Task::startHook()
@@ -214,6 +215,13 @@ void Task::updateHook()
 	  sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &pan, &tilt);
 	  std::cout <<  "MAST_PTU_MoveTo pan:" << pan << " tilt:" << tilt << std::endl;
 	}
+	else if (!strcmp((cmd_info->activityName).c_str(), "PanCam_WACGetImage")) {
+	  currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
+	  currentParams = cmd_info->activityParams;
+	  int ackid;
+	  sscanf(currentParams.c_str(), "%d %s", &ackid, &cam);
+	  std::cout <<  "PanCam WAC Get Image from:" << pan << std::endl;
+	}
 	else {
 	  RobotTask *rover_action = ( RobotTask* ) 
 	    theRobotProcedure->GetRTFromName( (char*)(cmd_info->activityName).c_str());
@@ -239,14 +247,6 @@ void Task::updateHook()
       case PAN_IMAGE:
       break;
       }
-      }
-      else if (telecommand.subsystem == MAST)
-      {
-      ptu_command[0].position=1.0;
-      ptu_command[0].speed=base::NaN<float>();
-      ptu_command[1].position=0.0;
-      ptu_command[1].speed=base::NaN<float>();
-      _ptu_command.write(ptu_command);
       }
       */
       }
@@ -281,7 +281,7 @@ void Task::updateHook()
       }
     }
 
-    if (currentActivity == MAST_PTU_MOVE_TO_ACTIVITY) {
+    else if (currentActivity == MAST_PTU_MOVE_TO_ACTIVITY) {
       if (!ptuTargetReached()) {
         ptu_command[0].position=pan;
         ptu_command[0].speed=base::NaN<float>();
@@ -294,26 +294,122 @@ void Task::updateHook()
 	// sent the reply
       }
     }
-
-
-
-    if (currentActivity == PANCAM_WAC_RRGB_ACTIVITY) {
-
-      // take images
-
-      // move mast 
-      
-      if (1 == 1) {
-	// execute PANCAM_WAC_RRGB_ACTIVITY
+	
+    else if (currentActivity == PANCAM_WAC_GET_IMAGE_ACTIVITY) {
+      if (!strcmp(cam.c_str(), "WAC_L")) {
+	_left_frame.read(frame_left);
+	//! Do something with frame_left;
+      }
+      else if (!strcmp(cam.c_str(), "WAC_R")) {
+	_right_frame.read(frame_right);
+	//! Do something with frame_right;
       }
       else {
-	currentActivity = -1;
+	std::cout << "Please select one of the existing cameras WAC_L or WAC_R" << std::endl;
+      }
+      currentActivity = -1;
+      // sent the reply
+    }
+
+
+    else if (currentActivity == PANCAM_WAC_RRGB_ACTIVITY || inPanCamActivity) {
+      switch (inPanCamActivity) {
+	case 0: 
+          currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
+	  pan = 150.0;
+	  tilt = 10.0;
+	  inPanCamActivity++;
+	  break;
+      	case 1:
+	  if (currentActivity == -1) {
+	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
+	    cam = "CAM_L\n";
+	    inPanCamActivity++;
+	  }
+	  break;
+	case 2:
+	  if (currentActivity == -1) {
+	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
+	    pan = 90.0;
+	    tilt = 10.0;
+	    inPanCamActivity++;
+	  }
+	  break;
+	case 3:
+	  if (currentActivity == -1) {
+	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
+	    cam = "CAM_L\n";
+	    inPanCamActivity++;
+	  }
+	  break;
+	case 4:
+	  if (currentActivity == -1) {
+	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
+	    pan = 30.0;
+	    tilt = 10.0;
+	    inPanCamActivity++;
+	  }
+	  break;
+	case 5:
+	  if (currentActivity == -1) {
+	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
+	    cam = "CAM_L\n";
+	    inPanCamActivity++;
+	  }
+	  break;
+	case 6:
+	  if (currentActivity == -1) {
+	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
+	    pan = -30.0;
+	    tilt = 10.0;
+	    inPanCamActivity++;
+	  }
+	  break;
+	case 7:
+	  if (currentActivity == -1) {
+	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
+	    cam = "CAM_L\n";
+	    inPanCamActivity++;
+	  }
+	  break;
+	case 8:
+	  if (currentActivity == -1) {
+	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
+	    pan = -90.0;
+	    tilt = 10.0;
+	    inPanCamActivity++;
+	  }
+	  break;
+	case 9:
+	  if (currentActivity == -1) {
+	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
+	    cam = "CAM_L\n";
+	    inPanCamActivity++;
+	  }
+	  break;
+	case 10:
+	  if (currentActivity == -1) {
+	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
+	    pan = -150.0;
+	    tilt = 10.0;
+	    inPanCamActivity++;
+	  }
+	  break;
+	case 11:
+	  if (currentActivity == -1) {
+	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
+	    cam = "CAM_L\n";
+	    inPanCamActivity++;
+	  }
+	  break;
+	case 12:
+	  if (currentActivity == -1) {
+	    inPanCamActivity=0;
+	  }
+	  break;
+	}
 	// sent the reply 
       }
-      
-      // reset parameters and current activity
-
-    }
    
 }
 void Task::errorHook()
