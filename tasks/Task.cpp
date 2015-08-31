@@ -222,6 +222,13 @@ void Task::updateHook()
 	  sscanf(currentParams.c_str(), "%d %s", &ackid, &cam);
 	  std::cout <<  "PanCam WAC Get Image from:" << pan << std::endl;
 	}
+	else if (!strcmp((cmd_info->activityName).c_str(), "PanCam_WAC_RRGB")) {
+	  currentActivity = PANCAM_WAC_RRGB_ACTIVITY;
+	  currentParams = cmd_info->activityParams;
+	  int ackid;
+	  //sscanf(currentParams.c_str(), "%d %s", &ackid, &params);
+	  std::cout <<  "PanCam WAC RRGB:" << std::endl; // << params
+	}
 	else {
 	  RobotTask *rover_action = ( RobotTask* ) 
 	    theRobotProcedure->GetRTFromName( (char*)(cmd_info->activityName).c_str());
