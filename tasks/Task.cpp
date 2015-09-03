@@ -82,15 +82,9 @@ bool Task::startHook()
   //    signal(SIGPIPE, SIG_IGN);
   
   theRobotProcedure = new RobotProcedure("exoter");
-  
-  
-  
   tcComm = new CommTcServer( TC_SERVER_PORT_NBR); 
-  
   tmComm = new CommTmServer( TM_SERVER_PORT_NBR);
-  
   tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NBR );
-  
   
   RobotTask* rt1 = new RobotTask("ADE_LEFT_Initialise"); // Simulated
   RobotTask* rt2 = new RobotTask("ADE_LEFT_conf");  // Simulated 
@@ -131,7 +125,6 @@ bool Task::startHook()
   RobotTask* rt33 = new RobotTask("GNC_SwitchOff"); // Simulated 
   RobotTask* rt331 = new RobotTask("BEMA_Deploy_1"); // Simulated or Executed 
   RobotTask* rt332 = new RobotTask("BEMA_Deploy_2"); // Simulated or Executed
-
 
   RobotTask* rt34 = new RobotTask("RV_WakeUp"); // Simulated  
   RobotTask* rt35 = new RobotTask("MMS_WaitAbsTime"); // Simulated 
@@ -194,30 +187,45 @@ void Task::updateHook()
 {
     TaskBase::updateHook();
 
-    //! Check list of telecommands
-    
-    CommandInfo* cmd_info = tcComm->extractCommandInfo();
-    if (cmd_info != NULL)
+    if (_current_pose.read(pose) == RTT::NewData)
+    {
+        std::cout << "received pose: " << pose.position[0] << " " << pose.position[1] << " " << pose.position[2] << std::endl;
+        //! new TM packet with updated pose estimation
+    }
+    if (_current_ptu.read(ptu) == RTT::NewData)
+    {
+        std::cout << "received ptu: " << ptu[0].position << " " << ptu[1].position << std::endl;
+        //! new TM packet with updated ptu position
+    }
+
+    //! Check list of telecommands only if there is NO running activity
+    if ((currentActivity == -1) && (inPanCamActivity == 0))
+    {
+      CommandInfo* cmd_info = tcComm->extractCommandInfo();
+      if (cmd_info != NULL)
       {
 	if (!strcmp((cmd_info->activityName).c_str(), "GNC_LLO")) {
 	  currentActivity = GNC_LLO_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
-	  sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetDistance, &targetSpeed);
+	  sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetDistance, &targetTranslation);
+          targetRotation= 0.0;
 	  travelledDistance = 0.0;
           initial_pose = pose;
-	  std::cout <<  "GNC_LLO distance:" << targetDistance << " speed:" << targetSpeed << std::endl;
-	}
+	  std::cout <<  "GNC_LLO distance:" << targetDistance << " speed:" << targetTranslation << std::endl;
+          sendMotionCommand();
+        }
         else if (!strcmp((cmd_info->activityName).c_str(), "MAST_PTU_MoveTo")) {
 	  currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &pan, &tilt);
 	  std::cout <<  "MAST_PTU_MoveTo pan:" << pan << " tilt:" << tilt << std::endl;
-	}
+          sendPtuCommand();
+        }
 	else if (!strcmp((cmd_info->activityName).c_str(), "PanCam_WACGetImage")) {
 	  currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	  currentParams = cmd_info->activityParams;
+	  currentParams = cmd_info->activityParams; //! LOC_CAM, NAV_CAM, PAN_CAM
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %s", &ackid, &cam);
 	  std::cout <<  "PanCam WAC Get Image from:" << pan << std::endl;
@@ -227,81 +235,37 @@ void Task::updateHook()
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
 	  //sscanf(currentParams.c_str(), "%d %s", &ackid, &params);
-	  std::cout <<  "PanCam WAC RRGB:" << std::endl; // << params
+	  std::cout <<  "PanCam WAC RRGB:" << std::endl; // << no params?
 	}
 	else {
-	  RobotTask *rover_action = ( RobotTask* ) 
-	    theRobotProcedure->GetRTFromName( (char*)(cmd_info->activityName).c_str());
-	  
+	  RobotTask *rover_action = ( RobotTask* ) theRobotProcedure->GetRTFromName( (char*)(cmd_info->activityName).c_str());
 	  if (rover_action != NULL) {
-	    orcExecAct((char*)cmd_info->activityName.c_str(), 
-		       (char*)cmd_info->activityParams.c_str(), 1); 
+	    orcExecAct((char*)cmd_info->activityName.c_str(),(char*)cmd_info->activityParams.c_str(), 1);
 	  }
 	  else {
-	    
+	    std::cout <<  "DEBUG: TC command not recognised!" << std::endl;
 	  }
 	}
-      
-      /*
-      else if (telecommand.subsystem == PERCEPTION) // camera image acquisition
-      {
-      switch (telecommand.param1)
-      {
-      case NAV_CAM:
-      break;
-      case LOC_CAM:
-      break;
-      case PAN_IMAGE:
-      break;
       }
-      }
-      */
-      }
-    
-    //! Send telemetry data
-    if (_current_pose.read(pose) == RTT::NewData)
-    {
-        std::cout << "received pose: " << pose.position[0] << " " << pose.position[1] << " " << pose.position[2] << std::endl;
-        // generate TM packet with updated pose estimation
     }
-    if (_current_ptu.read(ptu) == RTT::NewData)
-    {
-        std::cout << "received ptu: " << ptu[0].position << " " << ptu[1].position << std::endl;
-        // generate TM packet with updated ptu position
-    }
-
-    if (currentActivity == GNC_LLO_ACTIVITY) {
+    else if (currentActivity == GNC_LLO_ACTIVITY) {
       travelledDistance = computeTravelledDistance();
-      if (travelledDistance < targetDistance) {
-	motion_command.translation = targetSpeed;
-	motion_command.rotation = 0.0;
-	_locomotion_command.write(motion_command);
-      }
-      else {
-	travelledDistance = 0.0;
+      if (travelledDistance >= targetDistance) {
+      	travelledDistance = 0.0;
 	targetDistance = 0.0;
+        targetTranslation = 0.0;
+        targetRotation = 0.0;
+        sendMotionCommand();
 	currentActivity = -1;
-        motion_command.translation = 0.0;
-        motion_command.rotation = 0.0;
-        _locomotion_command.write(motion_command);
-	// sent the reply
+	//! send the reply
       }
     }
-
     else if (currentActivity == MAST_PTU_MOVE_TO_ACTIVITY) {
-      if (!ptuTargetReached()) {
-        ptu_command[0].position=pan;
-        ptu_command[0].speed=base::NaN<float>();
-        ptu_command[1].position=tilt;
-        ptu_command[1].speed=base::NaN<float>();
-        _ptu_command.write(ptu_command);
-      }
-      else {
-	currentActivity = -1;
-	// sent the reply
+      if (ptuTargetReached()) {
+        currentActivity = -1;
+	//! send the reply
       }
     }
-	
     else if (currentActivity == PANCAM_WAC_GET_IMAGE_ACTIVITY) {
       if (!strcmp(cam.c_str(), "WAC_L")) {
 	_left_frame.read(frame_left);
@@ -315,16 +279,15 @@ void Task::updateHook()
 	std::cout << "Please select one of the existing cameras WAC_L or WAC_R" << std::endl;
       }
       currentActivity = -1;
-      // sent the reply
+      //! send the reply
     }
-
-
-    else if (currentActivity == PANCAM_WAC_RRGB_ACTIVITY || inPanCamActivity) {
+    else if ((currentActivity == PANCAM_WAC_RRGB_ACTIVITY) || inPanCamActivity) {
       switch (inPanCamActivity) {
-	case 0: 
+	case 0:
           currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
 	  pan = 150.0;
 	  tilt = 10.0;
+          sendPtuCommand();
 	  inPanCamActivity++;
 	  break;
       	case 1:
@@ -339,7 +302,8 @@ void Task::updateHook()
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
 	    pan = 90.0;
 	    tilt = 10.0;
-	    inPanCamActivity++;
+	    sendPtuCommand();
+            inPanCamActivity++;
 	  }
 	  break;
 	case 3:
@@ -354,7 +318,8 @@ void Task::updateHook()
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
 	    pan = 30.0;
 	    tilt = 10.0;
-	    inPanCamActivity++;
+	    sendPtuCommand();
+            inPanCamActivity++;
 	  }
 	  break;
 	case 5:
@@ -369,7 +334,8 @@ void Task::updateHook()
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
 	    pan = -30.0;
 	    tilt = 10.0;
-	    inPanCamActivity++;
+	    sendPtuCommand();
+            inPanCamActivity++;
 	  }
 	  break;
 	case 7:
@@ -384,7 +350,8 @@ void Task::updateHook()
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
 	    pan = -90.0;
 	    tilt = 10.0;
-	    inPanCamActivity++;
+	    sendPtuCommand();
+            inPanCamActivity++;
 	  }
 	  break;
 	case 9:
@@ -399,7 +366,8 @@ void Task::updateHook()
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
 	    pan = -150.0;
 	    tilt = 10.0;
-	    inPanCamActivity++;
+	    sendPtuCommand();
+            inPanCamActivity++;
 	  }
 	  break;
 	case 11:
@@ -415,9 +383,9 @@ void Task::updateHook()
 	  }
 	  break;
 	}
-	// sent the reply 
+	// send the reply
       }
-   
+       //! Send telemetry data
 }
 void Task::errorHook()
 {
@@ -451,3 +419,17 @@ bool Task::ptuTargetReached()
     return true;
 }
 
+void Task::sendPtuCommand()
+{
+    ptu_command[0].position=pan;
+    ptu_command[0].speed=base::NaN<float>();
+    ptu_command[1].position=tilt;
+    ptu_command[1].speed=base::NaN<float>();
+    _ptu_command.write(ptu_command);
+}
+void Task::sendMotionCommand()
+{
+    motion_command.translation = targetTranslation;
+    motion_command.rotation = targetRotation;
+    _locomotion_command.write(motion_command);
+}

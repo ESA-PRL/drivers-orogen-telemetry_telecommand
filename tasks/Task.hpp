@@ -38,7 +38,8 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         // GNC_LLO parameters
         double travelledDistance;
         double targetDistance;
-        double targetSpeed;
+        double targetTranslation;
+        double targetRotation;
         base::samples::RigidBodyState initial_pose;
         
         // MAST_PTU_MoveTo parameters
@@ -150,6 +151,17 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         /** Checks if a ptu move command has reached its target.
          */
         bool ptuTargetReached();
+
+        /** Sends the PTU command through the ptu_command port. The values of pan and tilt 
+         *  need to be previously set
+         */
+        void sendPtuCommand();
+
+        /** Sends the Motion command through the motion_command port. The values of translation and 
+         *  rotation speed need to be previously set
+         */
+        void sendMotionCommand();
+
     };
 }
 
