@@ -34,6 +34,17 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
         int currentActivity;
         std::string currentParams;
+
+        // State variables definition
+        double State[MAX_STATE_SIZE];
+        double ADEState[MAX_STATE_SIZE]; // Needed?
+        double SAState[MAX_STATE_SIZE];  // Needed?
+        double PanCamState[MAX_STATE_SIZE];
+        double MastState[MAX_STATE_SIZE];
+        double GNCState[MAX_STATE_SIZE];
+
+        // TM message
+        std::string tmmsg;
       
         // GNC_LLO parameters
         double travelledDistance;

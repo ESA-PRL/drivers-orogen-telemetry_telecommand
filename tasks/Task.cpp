@@ -13,6 +13,8 @@ const int PANCAM_WAC_RRGB_ACTIVITY = 4;
 const int BEMA_DEPLOY_1_ACTIVITY = 5;
 const int BEMA_DEPLOY_2_ACTIVITY = 6;
 
+const double DEG2RAD = 3.141592/180;
+
 using namespace telemetry_telecommand;
 
 RobotProcedure*  theRobotProcedure;// = new RobotProcedure("exoter");
@@ -87,7 +89,7 @@ bool Task::startHook()
   tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NBR );
   
   RobotTask* rt1 = new RobotTask("ADE_LEFT_Initialise"); // Simulated
-  RobotTask* rt2 = new RobotTask("ADE_LEFT_conf");  // Simulated 
+  RobotTask* rt2 = new RobotTask("ADE_LEFT_conf");  // Simulated
   RobotTask* rt3 = new RobotTask("ADE_LEFT_ReleaseHDRM"); // Simulated
   RobotTask* rt4 = new RobotTask("ADE_LEFT_SwitchOff"); // Simulated
   RobotTask* rt5 = new RobotTask("ADE_RIGHT_Initialise"); // Simulated
@@ -180,6 +182,10 @@ bool Task::startHook()
   theRobotProcedure->insertRT(rt40);
   theRobotProcedure->insertRT(rt41);
 
+  //! Send ptu and motion commands to activate the joint dispatcher
+  pan = 0.0; tilt = 0.0; sendPtuCommand();
+  targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
+
   currentActivity = -1;
     return true;
 }
@@ -214,6 +220,13 @@ void Task::updateHook()
           initial_pose = pose;
 	  std::cout <<  "GNC_LLO distance:" << targetDistance << " speed:" << targetTranslation << std::endl;
           sendMotionCommand();
+          if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error getting GNCState" << std::endl;
+          }
+          GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
+          if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error setting GNCState" << std::endl;
+          }
         }
         else if (!strcmp((cmd_info->activityName).c_str(), "MAST_PTU_MoveTo")) {
 	  currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
@@ -222,13 +235,27 @@ void Task::updateHook()
 	  sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &pan, &tilt);
 	  std::cout <<  "MAST_PTU_MoveTo pan:" << pan << " tilt:" << tilt << std::endl;
           sendPtuCommand();
+          if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
+              std::cout << "Error getting MastState" << std::endl;
+          }
+          MastState[0]=0.0; //! Need to check indexes and corresponding values for the Mast States
+          if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
+              std::cout << "Error setting MastState" << std::endl;
+          }
         }
 	else if (!strcmp((cmd_info->activityName).c_str(), "PanCam_WACGetImage")) {
 	  currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	  currentParams = cmd_info->activityParams; //! LOC_CAM, NAV_CAM, PAN_CAM
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %s", &ackid, &cam);
-	  std::cout <<  "PanCam WAC Get Image from:" << pan << std::endl;
+	  std::cout <<  "PanCam WAC Get Image from:" << cam << std::endl;
+          if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+              std::cout << "Error getting PanCamState" << std::endl;
+          }
+          PanCamState[0]=0.0; //! Need to check indexes and corresponding values for the PanCam States
+          if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+              std::cout << "Error setting PanCamState" << std::endl;
+          }
 	}
 	else if (!strcmp((cmd_info->activityName).c_str(), "PanCam_WAC_RRGB")) {
 	  currentActivity = PANCAM_WAC_RRGB_ACTIVITY;
@@ -236,6 +263,13 @@ void Task::updateHook()
 	  int ackid;
 	  //sscanf(currentParams.c_str(), "%d %s", &ackid, &params);
 	  std::cout <<  "PanCam WAC RRGB:" << std::endl; // << no params?
+          if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+              std::cout << "Error getting PanCamState" << std::endl;
+          }
+          PanCamState[0]=0.0; //! Need to check indexes and corresponding values for the PanCam States
+          if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+              std::cout << "Error setting PanCamState" << std::endl;
+          }
 	}
 	else {
 	  RobotTask *rover_action = ( RobotTask* ) theRobotProcedure->GetRTFromName( (char*)(cmd_info->activityName).c_str());
@@ -257,13 +291,25 @@ void Task::updateHook()
         targetRotation = 0.0;
         sendMotionCommand();
 	currentActivity = -1;
-	//! send the reply
+	if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error setting GNCState" << std::endl;
+        }
       }
     }
     else if (currentActivity == MAST_PTU_MOVE_TO_ACTIVITY) {
       if (ptuTargetReached()) {
         currentActivity = -1;
-	//! send the reply
+	if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
+            std::cout << "Error getting MastState" << std::endl;
+        }
+        MastState[0]=0.0; //! Need to check indexes and corresponding values for the Mast States
+        if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
+            std::cout << "Error setting MastState" << std::endl;
+        }
       }
     }
     else if (currentActivity == PANCAM_WAC_GET_IMAGE_ACTIVITY) {
@@ -279,14 +325,20 @@ void Task::updateHook()
 	std::cout << "Please select one of the existing cameras WAC_L or WAC_R" << std::endl;
       }
       currentActivity = -1;
-      //! send the reply
+      if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+          std::cout << "Error getting PanCamState" << std::endl;
+      }
+      PanCamState[0]=0.0; //! Need to check indexes and corresponding values for the PanCam States
+      if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+          std::cout << "Error setting PanCamState" << std::endl;
+      }
     }
     else if ((currentActivity == PANCAM_WAC_RRGB_ACTIVITY) || inPanCamActivity) {
       switch (inPanCamActivity) {
 	case 0:
           currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	  pan = 150.0;
-	  tilt = 10.0;
+	  pan = 150.0*DEG2RAD;
+	  tilt = 10.0*DEG2RAD;
           sendPtuCommand();
 	  inPanCamActivity++;
 	  break;
@@ -300,8 +352,8 @@ void Task::updateHook()
 	case 2:
 	  if (currentActivity == -1) {
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	    pan = 90.0;
-	    tilt = 10.0;
+	    pan = 90.0*DEG2RAD;
+	    tilt = 10.0*DEG2RAD;
 	    sendPtuCommand();
             inPanCamActivity++;
 	  }
@@ -316,8 +368,8 @@ void Task::updateHook()
 	case 4:
 	  if (currentActivity == -1) {
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	    pan = 30.0;
-	    tilt = 10.0;
+	    pan = 30.0*DEG2RAD;
+	    tilt = 10.0*DEG2RAD;
 	    sendPtuCommand();
             inPanCamActivity++;
 	  }
@@ -332,8 +384,8 @@ void Task::updateHook()
 	case 6:
 	  if (currentActivity == -1) {
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	    pan = -30.0;
-	    tilt = 10.0;
+	    pan = -30.0*DEG2RAD;
+	    tilt = 10.0*DEG2RAD;
 	    sendPtuCommand();
             inPanCamActivity++;
 	  }
@@ -348,8 +400,8 @@ void Task::updateHook()
 	case 8:
 	  if (currentActivity == -1) {
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	    pan = -90.0;
-	    tilt = 10.0;
+	    pan = -90.0*DEG2RAD;
+	    tilt = 10.0*DEG2RAD;
 	    sendPtuCommand();
             inPanCamActivity++;
 	  }
@@ -364,8 +416,8 @@ void Task::updateHook()
 	case 10:
 	  if (currentActivity == -1) {
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	    pan = -150.0;
-	    tilt = 10.0;
+	    pan = -150.0*DEG2RAD;
+	    tilt = 10.0*DEG2RAD;
 	    sendPtuCommand();
             inPanCamActivity++;
 	  }
@@ -379,13 +431,33 @@ void Task::updateHook()
 	  break;
 	case 12:
 	  if (currentActivity == -1) {
-	    inPanCamActivity=0;
+ 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
+            pan = 0.0;
+            tilt = 0.0;
+            sendPtuCommand();
+	    inPanCamActivity++;
 	  }
 	  break;
-	}
-	// send the reply
+        case 13:
+          if (currentActivity == -1) {
+            inPanCamActivity=0;
+          }
+          break;
+        default:
+          break;
       }
-       //! Send telemetry data
+      if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+          std::cout << "Error getting PanCamState" << std::endl;
+      }
+      PanCamState[0]=0.0; //! Need to check indexes and corresponding values for the PanCam States
+      if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+          std::cout << "Error setting PanCamState" << std::endl;
+      }
+    }
+
+    //! Send telemetry data
+    //! orcGetTmMsg(tmmsg); // Do I need to do this here? Or should I edit the tmgeneration.cpp file and do get/set all the states?
+    //! Send telemetry data
 }
 void Task::errorHook()
 {
@@ -411,11 +483,12 @@ double Task::computeTravelledDistance()
 
 bool Task::ptuTargetReached()
 {
-    double window = 0.01;
+    double window = 0.001;
     if (abs(ptu[0].position-pan) > window)
         return false;
     if (abs(ptu[1].position-tilt) > window)
         return false;
+    std::cout << "---- >>>> ptu target reached!" << std::endl;
     return true;
 }
 
