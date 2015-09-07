@@ -85,7 +85,7 @@ bool Task::startHook()
   
   theRobotProcedure = new RobotProcedure("exoter");
   tcComm = new CommTcServer( TC_SERVER_PORT_NBR); 
-  tmComm = new CommTmServer( TM_SERVER_PORT_NBR);
+  tmComm = new CommTmServer( TM_SERVER_PORT_NBR, theRobotProcedure);
   tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NBR );
   
   RobotTask* rt1 = new RobotTask("ADE_LEFT_Initialise"); // Simulated
@@ -223,7 +223,7 @@ void Task::updateHook()
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error getting GNCState" << std::endl;
           }
-          GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
+          GNCState[7]=7.0; //! Need to check indexes and corresponding values for the GNC States
           if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error setting GNCState" << std::endl;
           }
