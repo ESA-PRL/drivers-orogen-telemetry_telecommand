@@ -1,5 +1,7 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
+#include <cmath>
+
 #include "Task.hpp"
 
 #define TC_SERVER_PORT_NBR 7031
@@ -195,13 +197,27 @@ void Task::updateHook()
 
     if (_current_pose.read(pose) == RTT::NewData)
     {
-        std::cout << "received pose: " << pose.position[0] << " " << pose.position[1] << " " << pose.position[2] << std::endl;
+        //! std::cout << "received pose: " << pose.position[0] << " " << pose.position[1] << " " << pose.position[2] << std::endl; // DEBUG
         //! new TM packet with updated pose estimation
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+          std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[7]=7.0; //! Need to check indexes and corresponding values for the GNC States
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+          std::cout << "Error setting GNCState" << std::endl;
+        }
     }
     if (_current_ptu.read(ptu) == RTT::NewData)
     {
-        std::cout << "received ptu: " << ptu[0].position << " " << ptu[1].position << std::endl;
+        //! std::cout << "received ptu: " << ptu[0].position << " " << ptu[1].position << std::endl; // DEBUG
         //! new TM packet with updated ptu position
+        if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
+          std::cout << "Error getting MastState" << std::endl;
+        }
+        MastState[0]=0.0; //! Need to check indexes and corresponding values for the Mast States
+        if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
+            std::cout << "Error setting MastState" << std::endl;
+        }
     }
 
     //! Check list of telecommands only if there is NO running activity
@@ -223,7 +239,7 @@ void Task::updateHook()
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error getting GNCState" << std::endl;
           }
-          GNCState[7]=7.0; //! Need to check indexes and corresponding values for the GNC States
+          GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
           if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error setting GNCState" << std::endl;
           }
@@ -337,7 +353,7 @@ void Task::updateHook()
       switch (inPanCamActivity) {
 	case 0:
           currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	  pan = 150.0*DEG2RAD;
+	  pan = 140.0*DEG2RAD;
 	  tilt = 10.0*DEG2RAD;
           sendPtuCommand();
 	  inPanCamActivity++;
@@ -416,7 +432,7 @@ void Task::updateHook()
 	case 10:
 	  if (currentActivity == -1) {
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	    pan = -150.0*DEG2RAD;
+	    pan = -140.0*DEG2RAD;
 	    tilt = 10.0*DEG2RAD;
 	    sendPtuCommand();
             inPanCamActivity++;
@@ -484,9 +500,9 @@ double Task::computeTravelledDistance()
 bool Task::ptuTargetReached()
 {
     double window = 0.001;
-    if (abs(ptu[0].position-pan) > window)
+    if (std::abs(ptu[0].position-pan) > window)
         return false;
-    if (abs(ptu[1].position-tilt) > window)
+    if (std::abs(ptu[1].position-tilt) > window)
         return false;
     std::cout << "---- >>>> ptu target reached!" << std::endl;
     return true;
