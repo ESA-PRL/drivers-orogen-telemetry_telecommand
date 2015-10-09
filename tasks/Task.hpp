@@ -7,6 +7,7 @@
 #include "telemetry_telecommand/comm.h"
 #include "telemetry_telecommand/rt.h"
 #include "telemetry_telecommand/prr.h"
+#include "frame_helper/FrameHelper.h"
 
 namespace telemetry_telecommand {
 

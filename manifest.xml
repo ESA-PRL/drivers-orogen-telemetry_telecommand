@@ -15,4 +15,6 @@
   <depend package="dummy-dependency-n" />
   -->
   <depend package="drivers/telemetry_telecommand" />
+  <depend package="image_processing/frame_helper" />
+
 </package>

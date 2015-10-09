@@ -4,9 +4,9 @@
 
 #include "Task.hpp"
 
-#define TC_SERVER_PORT_NBR 7031
-#define TM_SERVER_PORT_NBR 7032
-#define TC_REPLY_SERVER_PORT_NBR 7033
+#define TC_SERVER_PORT_NUMBER 7031
+#define TM_SERVER_PORT_NUMBBER 7032
+#define TC_REPLY_SERVER_PORT_NUMBER 7033
 
 const int GNC_LLO_ACTIVITY = 1;
 const int PANCAM_WAC_GET_IMAGE_ACTIVITY = 2;
@@ -18,6 +18,8 @@ const int BEMA_DEPLOY_2_ACTIVITY = 6;
 const double DEG2RAD = 3.141592/180;
 
 using namespace telemetry_telecommand;
+using namespace frame_helper;
+
 
 RobotProcedure*  theRobotProcedure;// = new RobotProcedure("exoter");
 
@@ -86,9 +88,9 @@ bool Task::startHook()
   //    signal(SIGPIPE, SIG_IGN);
   
   theRobotProcedure = new RobotProcedure("exoter");
-  tcComm = new CommTcServer( TC_SERVER_PORT_NBR); 
-  tmComm = new CommTmServer( TM_SERVER_PORT_NBR, theRobotProcedure);
-  tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NBR );
+  tcComm = new CommTcServer( TC_SERVER_PORT_NUMBER); 
+  tmComm = new CommTmServer( TM_SERVER_PORT_NUMBER, theRobotProcedure);
+  tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NUMBER );
   
   RobotTask* rt1 = new RobotTask("ADE_LEFT_Initialise"); // Simulated
   RobotTask* rt2 = new RobotTask("ADE_LEFT_conf");  // Simulated
@@ -331,10 +333,12 @@ void Task::updateHook()
     else if (currentActivity == PANCAM_WAC_GET_IMAGE_ACTIVITY) {
       if (!strcmp(cam.c_str(), "WAC_L")) {
 	_left_frame.read(frame_left);
+	saveFrame("~/Desktop/Images/left.jpg", frame_left);
 	//! Do something with frame_left;
       }
       else if (!strcmp(cam.c_str(), "WAC_R")) {
 	_right_frame.read(frame_right);
+	saveFrame("~/Desktop/Images/right.jpg", frame_right);
 	//! Do something with frame_right;
       }
       else {
