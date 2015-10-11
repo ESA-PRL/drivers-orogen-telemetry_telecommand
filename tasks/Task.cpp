@@ -333,12 +333,12 @@ void Task::updateHook()
     else if (currentActivity == PANCAM_WAC_GET_IMAGE_ACTIVITY) {
       if (!strcmp(cam.c_str(), "WAC_L")) {
 	_left_frame.read(frame_left);
-	//saveFrame("~/Desktop/Images/left.jpg", frame_left);
+	_store_image_filename.write("~/Desktop/Images/left.jpg");
 	//! Do something with frame_left;
       }
       else if (!strcmp(cam.c_str(), "WAC_R")) {
 	_right_frame.read(frame_right);
-	//saveFrame("~/Desktop/Images/right.jpg", frame_right);
+	_store_image_filename.write("~/Desktop/Images/right.jpg");
 	//! Do something with frame_right;
       }
       else {
