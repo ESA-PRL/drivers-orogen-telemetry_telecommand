@@ -5,7 +5,7 @@
 #include "Task.hpp"
 
 #define TC_SERVER_PORT_NUMBER 7031
-#define TM_SERVER_PORT_NUMBBER 7032
+#define TM_SERVER_PORT_NUMBER 7032
 #define TC_REPLY_SERVER_PORT_NUMBER 7033
 
 const int GNC_LLO_ACTIVITY = 1;
@@ -18,7 +18,7 @@ const int BEMA_DEPLOY_2_ACTIVITY = 6;
 const double DEG2RAD = 3.141592/180;
 
 using namespace telemetry_telecommand;
-using namespace frame_helper;
+//using namespace frame_helper;
 
 
 RobotProcedure*  theRobotProcedure;// = new RobotProcedure("exoter");
@@ -333,12 +333,12 @@ void Task::updateHook()
     else if (currentActivity == PANCAM_WAC_GET_IMAGE_ACTIVITY) {
       if (!strcmp(cam.c_str(), "WAC_L")) {
 	_left_frame.read(frame_left);
-	saveFrame("~/Desktop/Images/left.jpg", frame_left);
+	//saveFrame("~/Desktop/Images/left.jpg", frame_left);
 	//! Do something with frame_left;
       }
       else if (!strcmp(cam.c_str(), "WAC_R")) {
 	_right_frame.read(frame_right);
-	saveFrame("~/Desktop/Images/right.jpg", frame_right);
+	//saveFrame("~/Desktop/Images/right.jpg", frame_right);
 	//! Do something with frame_right;
       }
       else {
