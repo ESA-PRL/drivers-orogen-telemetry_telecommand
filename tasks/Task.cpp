@@ -17,6 +17,9 @@ const int BEMA_DEPLOY_2_ACTIVITY = 6;
 
 const double DEG2RAD = 3.141592/180;
 
+const double PANLIMIT = 140*DEG2RAD;
+const double TILTLIMIT = 30*DEG2RAD;
+
 using namespace telemetry_telecommand;
 //using namespace frame_helper;
 
@@ -252,6 +255,8 @@ void Task::updateHook()
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &pan, &tilt);
 	  std::cout <<  "MAST_PTU_MoveTo pan:" << pan << " tilt:" << tilt << std::endl;
+	  pan = pan*DEG2RAD;
+	  tilt = tilt*DEG2RAD;
           sendPtuCommand();
           if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
               std::cout << "Error getting MastState" << std::endl;
@@ -474,10 +479,6 @@ void Task::updateHook()
           std::cout << "Error setting PanCamState" << std::endl;
       }
     }
-
-    //! Send telemetry data
-    //! orcGetTmMsg(tmmsg); // Do I need to do this here? Or should I edit the tmgeneration.cpp file and do get/set all the states?
-    //! Send telemetry data
 }
 void Task::errorHook()
 {
@@ -514,6 +515,14 @@ bool Task::ptuTargetReached()
 
 void Task::sendPtuCommand()
 {
+    if (pan > PANLIMIT)
+	pan = PANLIMIT;
+    else if ( pan < -PANLIMIT)
+	pan = -PANLIMIT;
+    if (tilt > TILTLIMIT)
+	tilt = TILTLIMIT;
+    else if (tilt < -TILTLIMIT)
+	tilt = - TILTLIMIT;
     ptu_command[0].position=pan;
     ptu_command[0].speed=base::NaN<float>();
     ptu_command[1].position=tilt;
