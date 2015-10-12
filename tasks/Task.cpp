@@ -270,7 +270,8 @@ void Task::updateHook()
 	  currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	  currentParams = cmd_info->activityParams; //! LOC_CAM, NAV_CAM, PAN_CAM
 	  int ackid;
-	  sscanf(currentParams.c_str(), "%d %s", &ackid, &cam);
+	  //sscanf(currentParams.c_str(), "%d %s", &ackid, &cam);
+          cam = "WAC_L\0";
 	  std::cout <<  "PanCam WAC Get Image from:" << cam << std::endl;
           if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
               std::cout << "Error getting PanCamState" << std::endl;
@@ -338,12 +339,12 @@ void Task::updateHook()
     else if (currentActivity == PANCAM_WAC_GET_IMAGE_ACTIVITY) {
       if (!strcmp(cam.c_str(), "WAC_L")) {
 	_left_frame.read(frame_left);
-	_store_image_filename.write("~/Desktop/Images/left.jpg");
+	_store_image_filename.write("/home/exoter/Desktop/Images/left.jpg");
 	//! Do something with frame_left;
       }
       else if (!strcmp(cam.c_str(), "WAC_R")) {
 	_right_frame.read(frame_right);
-	_store_image_filename.write("~/Desktop/Images/right.jpg");
+	_store_image_filename.write("/home/exoter/Desktop/Images/right.jpg");
 	//! Do something with frame_right;
       }
       else {
