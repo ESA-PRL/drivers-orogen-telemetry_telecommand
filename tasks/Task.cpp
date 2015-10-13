@@ -16,6 +16,8 @@ const int BEMA_DEPLOY_1_ACTIVITY = 5;
 const int BEMA_DEPLOY_2_ACTIVITY = 6;
 
 const double DEG2RAD = 3.141592/180;
+const double RAD2DEG = 180/3.141592;
+
 
 const double PANLIMIT = 140*DEG2RAD;
 const double TILTLIMIT = 30*DEG2RAD;
@@ -82,6 +84,8 @@ bool Task::configureHook()
     ptu_command.names[1]= "MAST_TILT";
     ptu.resize(2);
     inPanCamActivity=0;
+    WACL_index = 1;
+    WACR_index = 1;
     return true;
 }
 bool Task::startHook()
@@ -207,7 +211,12 @@ void Task::updateHook()
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
           std::cout << "Error getting GNCState" << std::endl;
         }
-        GNCState[7]=7.0; //! Need to check indexes and corresponding values for the GNC States
+        GNCState[GNC_ROVER_POSEX_INDEX]=pose.position[0];
+        GNCState[GNC_ROVER_POSEY_INDEX]=pose.position[1];
+        GNCState[GNC_ROVER_POSEZ_INDEX]=pose.position[2];
+        GNCState[GNC_ROVER_POSERX_INDEX]=pose.getRoll();
+        GNCState[GNC_ROVER_POSERY_INDEX]=pose.getPitch();
+        GNCState[GNC_ROVER_POSERZ_INDEX]=pose.getYaw();
         if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
           std::cout << "Error setting GNCState" << std::endl;
         }
@@ -219,7 +228,8 @@ void Task::updateHook()
         if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
           std::cout << "Error getting MastState" << std::endl;
         }
-        MastState[0]=0.0; //! Need to check indexes and corresponding values for the Mast States
+        MastState[MAST_CURRENT_Q2_INDEX]=ptu[0].position*RAD2DEG;
+        MastState[MAST_CURRENT_Q3_INDEX]=ptu[1].position*RAD2DEG;
         if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
             std::cout << "Error setting MastState" << std::endl;
         }
@@ -244,7 +254,7 @@ void Task::updateHook()
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error getting GNCState" << std::endl;
           }
-          GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
+          //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
           if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error setting GNCState" << std::endl;
           }
@@ -261,7 +271,7 @@ void Task::updateHook()
           if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
               std::cout << "Error getting MastState" << std::endl;
           }
-          MastState[0]=0.0; //! Need to check indexes and corresponding values for the Mast States
+          //MastState[0]=0.0; //! Need to check indexes and corresponding values for the Mast States
           if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
               std::cout << "Error setting MastState" << std::endl;
           }
@@ -270,13 +280,12 @@ void Task::updateHook()
 	  currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	  currentParams = cmd_info->activityParams; //! LOC_CAM, NAV_CAM, PAN_CAM
 	  int ackid;
-	  //sscanf(currentParams.c_str(), "%d %s", &ackid, &cam);
-          cam = "WAC_L\0";
+	  sscanf(currentParams.c_str(), "%d %s %s", &ackid, cam, dummy_param);
 	  std::cout <<  "PanCam WAC Get Image from:" << cam << std::endl;
           if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
               std::cout << "Error getting PanCamState" << std::endl;
           }
-          PanCamState[0]=0.0; //! Need to check indexes and corresponding values for the PanCam States
+          //PanCamState[]=;
           if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
               std::cout << "Error setting PanCamState" << std::endl;
           }
@@ -290,7 +299,7 @@ void Task::updateHook()
           if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
               std::cout << "Error getting PanCamState" << std::endl;
           }
-          PanCamState[0]=0.0; //! Need to check indexes and corresponding values for the PanCam States
+          //PanCamState[0]=0.0; //! Need to check indexes and corresponding values for the PanCam States
           if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
               std::cout << "Error setting PanCamState" << std::endl;
           }
@@ -318,7 +327,19 @@ void Task::updateHook()
 	if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
             std::cout << "Error getting GNCState" << std::endl;
         }
-        GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+      }else {
+	if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=34;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
             std::cout << "Error setting GNCState" << std::endl;
         }
@@ -330,34 +351,55 @@ void Task::updateHook()
 	if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
             std::cout << "Error getting MastState" << std::endl;
         }
-        MastState[0]=0.0; //! Need to check indexes and corresponding values for the Mast States
+        MastState[MAST_ACTION_RET_INDEX]=ACTION_RET_OK;
+        MastState[MAST_ACTION_ID_INDEX]=0;
+        MastState[MAST_STATUS_INDEX]=MAST_OPER_MODE_PTU_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
+            std::cout << "Error setting MastState" << std::endl;
+        }
+      }else {
+	if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
+            std::cout << "Error getting MastState" << std::endl;
+        }
+        MastState[MAST_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        MastState[MAST_STATUS_INDEX]=MAST_OPER_MODE_PTU_MOVING;
+        MastState[MAST_ACTION_ID_INDEX]=35;
         if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
             std::cout << "Error setting MastState" << std::endl;
         }
       }
     }
     else if (currentActivity == PANCAM_WAC_GET_IMAGE_ACTIVITY) {
-      if (!strcmp(cam.c_str(), "WAC_L")) {
-	_left_frame.read(frame_left);
-	_store_image_filename.write("/home/exoter/Desktop/Images/left.jpg");
-	//! Do something with frame_left;
+      if (!strcmp(cam, "WAC_L")) {
+        char filename[240];
+        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.jpg", cam, WACL_index++);
+        std::cout << "filename->" << filename << "<-"<< std::endl;
+	_store_image_filename.write(filename);
+        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+           std::cout << "Error getting PanCamState" << std::endl;
+        }
+        PanCamState[PANCAM_WAC_L_INDEX]=WACL_index-1;
+        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+           std::cout << "Error setting PanCamState" << std::endl;
+        }
       }
-      else if (!strcmp(cam.c_str(), "WAC_R")) {
-	_right_frame.read(frame_right);
-	_store_image_filename.write("/home/exoter/Desktop/Images/right.jpg");
-	//! Do something with frame_right;
+      else if (!strcmp(cam, "WAC_R")) {
+	char filename[240];
+        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.jpg", cam, WACR_index++);
+        std::cout << "filename->" << filename << "<-"<< std::endl;
+	_store_image_filename.write(filename);
+        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+           std::cout << "Error getting PanCamState" << std::endl;
+        }
+        PanCamState[PANCAM_WAC_R_INDEX]=WACR_index-1;
+        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+           std::cout << "Error setting PanCamState" << std::endl;
+        }
       }
       else {
 	std::cout << "Please select one of the existing cameras WAC_L or WAC_R" << std::endl;
       }
       currentActivity = -1;
-      if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-          std::cout << "Error getting PanCamState" << std::endl;
-      }
-      PanCamState[0]=0.0; //! Need to check indexes and corresponding values for the PanCam States
-      if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-          std::cout << "Error setting PanCamState" << std::endl;
-      }
     }
     else if ((currentActivity == PANCAM_WAC_RRGB_ACTIVITY) || inPanCamActivity) {
       switch (inPanCamActivity) {
@@ -371,7 +413,7 @@ void Task::updateHook()
       	case 1:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    cam = "CAM_L\n";
+	    strcpy(cam,"WAC_L");
 	    inPanCamActivity++;
 	  }
 	  break;
@@ -387,7 +429,8 @@ void Task::updateHook()
 	case 3:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    cam = "CAM_L\n";
+	    strcpy(cam,"WAC_L");
+	    inPanCamActivity++;
 	    inPanCamActivity++;
 	  }
 	  break;
@@ -403,7 +446,7 @@ void Task::updateHook()
 	case 5:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    cam = "CAM_L\n";
+	    strcpy(cam,"WAC_L");
 	    inPanCamActivity++;
 	  }
 	  break;
@@ -419,7 +462,7 @@ void Task::updateHook()
 	case 7:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    cam = "CAM_L\n";
+	    strcpy(cam,"WAC_L");
 	    inPanCamActivity++;
 	  }
 	  break;
@@ -435,7 +478,7 @@ void Task::updateHook()
 	case 9:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    cam = "CAM_L\n";
+	    strcpy(cam,"WAC_L");
 	    inPanCamActivity++;
 	  }
 	  break;
@@ -451,7 +494,7 @@ void Task::updateHook()
 	case 11:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    cam = "CAM_L\n";
+	    strcpy(cam,"WAC_L");
 	    inPanCamActivity++;
 	  }
 	  break;

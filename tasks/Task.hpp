@@ -35,6 +35,8 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
         int currentActivity;
         std::string currentParams;
+        int WACL_index, WACR_index;
+        
 
         // State variables definition
         double State[MAX_STATE_SIZE];
@@ -59,7 +61,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         double tilt;
 
         // PanCam_WACGetImage parameters
-        std::string cam;
+        char cam[80], dummy_param[80];
 	RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> frame_left;   //! De-interlaced left frame
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> frame_right;  //! De-interlaced right frame  
 
