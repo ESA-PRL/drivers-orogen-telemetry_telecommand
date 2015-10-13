@@ -35,7 +35,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
         int currentActivity;
         std::string currentParams;
-        int WACL_index, WACR_index;
+        int WACL_index, WACR_index, STEREO_index;
         
 
         // State variables definition

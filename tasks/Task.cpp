@@ -86,6 +86,7 @@ bool Task::configureHook()
     inPanCamActivity=0;
     WACL_index = 1;
     WACR_index = 1;
+    STEREO_index = 1;
     return true;
 }
 bool Task::startHook()
@@ -124,7 +125,7 @@ bool Task::startHook()
   RobotTask* rt21 = new RobotTask("PanCam_WACGetImage"); // Executed (params WAC_L, WAC_R)
   RobotTask* rt22 = new RobotTask("PanCam_SwitchOff"); // Simulated 
   RobotTask* rt23 = new RobotTask("PanCam_PIUSwitchOff"); // Simulated 
-  RobotTask* rt24 = new RobotTask("PanCam_WAC_RRGB"); // Executed (params TBD)
+  RobotTask* rt24 = new RobotTask("PANCAM_WAC_RRGB"); // Executed (params TBD)
   RobotTask* rt25 = new RobotTask("PanCam_FilterSel"); // Simulated  
 
   RobotTask* rt26 = new RobotTask("MAST_DEP_Initialise"); // Simulated  
@@ -290,7 +291,7 @@ void Task::updateHook()
               std::cout << "Error setting PanCamState" << std::endl;
           }
 	}
-	else if (!strcmp((cmd_info->activityName).c_str(), "PanCam_WAC_RRGB")) {
+	else if (!strcmp((cmd_info->activityName).c_str(), "PANCAM_WAC_RRGB")) {
 	  currentActivity = PANCAM_WAC_RRGB_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
@@ -372,8 +373,8 @@ void Task::updateHook()
     else if (currentActivity == PANCAM_WAC_GET_IMAGE_ACTIVITY) {
       if (!strcmp(cam, "WAC_L")) {
         char filename[240];
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.jpg", cam, WACL_index++);
-        std::cout << "filename->" << filename << "<-"<< std::endl;
+        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.jpg 1", cam, WACL_index++);
+        //std::cout << "filename->" << filename << "<-"<< std::endl;
 	_store_image_filename.write(filename);
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
@@ -385,13 +386,27 @@ void Task::updateHook()
       }
       else if (!strcmp(cam, "WAC_R")) {
 	char filename[240];
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.jpg", cam, WACR_index++);
-        std::cout << "filename->" << filename << "<-"<< std::endl;
+        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.jpg 2", cam, WACR_index++);
+        //std::cout << "filename->" << filename << "<-"<< std::endl;
 	_store_image_filename.write(filename);
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
         }
         PanCamState[PANCAM_WAC_R_INDEX]=WACR_index-1;
+        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+           std::cout << "Error setting PanCamState" << std::endl;
+        }
+      }
+      else if (!strcmp(cam, "STEREO")) {
+	char filename[240];
+        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d 3", cam, STEREO_index++);
+        //std::cout << "filename->" << filename << "<-"<< std::endl;
+	_store_image_filename.write(filename);
+        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+           std::cout << "Error getting PanCamState" << std::endl;
+        }
+        PanCamState[PANCAM_WAC_L_INDEX]=STEREO_index-1;
+        PanCamState[PANCAM_WAC_R_INDEX]=STEREO_index-1;
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error setting PanCamState" << std::endl;
         }
@@ -413,7 +428,7 @@ void Task::updateHook()
       	case 1:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    strcpy(cam,"WAC_L");
+	    strcpy(cam,"STEREO");
 	    inPanCamActivity++;
 	  }
 	  break;
@@ -429,8 +444,7 @@ void Task::updateHook()
 	case 3:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    strcpy(cam,"WAC_L");
-	    inPanCamActivity++;
+	    strcpy(cam,"STEREO");
 	    inPanCamActivity++;
 	  }
 	  break;
@@ -446,7 +460,7 @@ void Task::updateHook()
 	case 5:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    strcpy(cam,"WAC_L");
+	    strcpy(cam,"STEREO");
 	    inPanCamActivity++;
 	  }
 	  break;
@@ -462,7 +476,7 @@ void Task::updateHook()
 	case 7:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    strcpy(cam,"WAC_L");
+	    strcpy(cam,"STEREO");
 	    inPanCamActivity++;
 	  }
 	  break;
@@ -478,7 +492,7 @@ void Task::updateHook()
 	case 9:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    strcpy(cam,"WAC_L");
+	    strcpy(cam,"STEREO");
 	    inPanCamActivity++;
 	  }
 	  break;
@@ -494,7 +508,7 @@ void Task::updateHook()
 	case 11:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    strcpy(cam,"WAC_L");
+	    strcpy(cam,"STEREO");
 	    inPanCamActivity++;
 	  }
 	  break;
@@ -518,7 +532,7 @@ void Task::updateHook()
       if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
           std::cout << "Error getting PanCamState" << std::endl;
       }
-      PanCamState[0]=0.0; //! Need to check indexes and corresponding values for the PanCam States
+      //PanCamState[0]=0.0; //! Need to check indexes and corresponding values for the PanCam States
       if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
           std::cout << "Error setting PanCamState" << std::endl;
       }
