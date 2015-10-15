@@ -286,6 +286,8 @@ void Task::updateHook()
           if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
               std::cout << "Error getting PanCamState" << std::endl;
           }
+          PanCamState[PANCAM_ACTION_ID_INDEX]=50;
+          PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
           //PanCamState[]=;
           if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
               std::cout << "Error setting PanCamState" << std::endl;
@@ -380,6 +382,8 @@ void Task::updateHook()
            std::cout << "Error getting PanCamState" << std::endl;
         }
         PanCamState[PANCAM_WAC_L_INDEX]=WACL_index-1;
+        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error setting PanCamState" << std::endl;
         }
@@ -393,6 +397,8 @@ void Task::updateHook()
            std::cout << "Error getting PanCamState" << std::endl;
         }
         PanCamState[PANCAM_WAC_R_INDEX]=WACR_index-1;
+        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error setting PanCamState" << std::endl;
         }
@@ -407,6 +413,8 @@ void Task::updateHook()
         }
         PanCamState[PANCAM_WAC_L_INDEX]=STEREO_index-1;
         PanCamState[PANCAM_WAC_R_INDEX]=STEREO_index-1;
+        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error setting PanCamState" << std::endl;
         }
