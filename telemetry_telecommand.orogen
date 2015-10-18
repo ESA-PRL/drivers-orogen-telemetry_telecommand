@@ -39,17 +39,21 @@ task_context "Task" do
     # input is connected to an output or not.
     input_port "current_pose", "/base/samples/RigidBodyState"
     input_port "current_ptu", "base/samples/Joints"
-    input_port "left_frame", ro_ptr('base::samples::frame::Frame')
-    input_port "right_frame", ro_ptr('base::samples::frame::Frame')
+    input_port "current_imu", "base/samples/RigidBodyState"
+    input_port "current_bema", "base/samples/Joints"
+#input_port "left_frame", ro_ptr('base::samples::frame::Frame')
+#input_port "right_frame", ro_ptr('base::samples::frame::Frame')
     # An output port, i.e. an object to which the component pushes data so that
     # it is transmitted to other components' inputs
     #
     # Data can be written using _output.write(value). _output.connected() returns
     # if this output is connected to an input or not.
-    output_port "output", "int"
+    output_port "bema_command", "double"
+    output_port "walking_command", "double"
     output_port "locomotion_command", "base/MotionCommand2D"
     output_port "ptu_command", "base/commands/Joints"
-    output_port "store_image_filename", "/std/string"
+    output_port "pancam_store_image_filename", "/std/string"
+    output_port "loccam_store_image_filename", "/std/string"
     # If you want that component's updateHook() to be executed when the "input"
     # port gets data, uncomment this and comment the 'periodic' line
     # port_driven "input"

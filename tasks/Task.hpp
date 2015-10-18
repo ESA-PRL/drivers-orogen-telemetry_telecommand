@@ -35,14 +35,16 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
         int currentActivity;
         std::string currentParams;
-        int WACL_index, WACR_index, STEREO_index;
+        int WACL_index, WACR_index, PAN_STEREO_index;
+        int LOCL_index, LOCR_index, LOC_STEREO_index;
         
 
         // State variables definition
         double State[MAX_STATE_SIZE];
-        double ADEState[MAX_STATE_SIZE]; // Needed?
-        double SAState[MAX_STATE_SIZE];  // Needed?
+        double ADEState[MAX_STATE_SIZE];
+        double SAState[MAX_STATE_SIZE];
         double PanCamState[MAX_STATE_SIZE];
+        double LocCamState[MAX_STATE_SIZE];
         double MastState[MAX_STATE_SIZE];
         double GNCState[MAX_STATE_SIZE];
 
@@ -75,8 +77,11 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
         base::MotionCommand2D motion_command;
         base::commands::Joints ptu_command;
+        double bema_command;
         base::samples::RigidBodyState pose;
         base::samples::Joints ptu;
+        base::samples::Joints bema;
+        base::samples::RigidBodyState imu;
 
 
     public:
@@ -161,6 +166,14 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
          * travelled distance.
          */
         double computeTravelledDistance();
+
+        /** Checks if a bema move command has reached its target.
+         */
+        bool bema1TargetReached();
+        
+        /** Checks if a walking (egress) move command has reached its target.
+         */
+        bool bema2TargetReached();
 
         /** Checks if a ptu move command has reached its target.
          */
