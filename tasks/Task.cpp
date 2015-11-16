@@ -276,11 +276,11 @@ void Task::updateHook()
           std::cout << "Error getting GNCState" << std::endl;
         }
 	int aux = (int)(imu.getRoll()*RAD2DEG*10);
-        GNCState[GNC_ROVER_POSERX_INDEX]=(double)((double)aux/10.0);
+        GNCState[GNC_ROVER_POSERX_INDEX]=-(double)((double)aux/10.0);
 	aux = (int)(imu.getPitch()*RAD2DEG*10);
-        GNCState[GNC_ROVER_POSERY_INDEX]=(double)((double)aux/10.0);
+        GNCState[GNC_ROVER_POSERY_INDEX]=-(double)((double)aux/10.0);
 	aux = (int)(imu.getYaw()*RAD2DEG*10);
-        GNCState[GNC_ROVER_POSERZ_INDEX]=(double)((double)aux/10.0);
+        GNCState[GNC_ROVER_POSERZ_INDEX]=-(double)((double)aux/10.0);
         if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
           std::cout << "Error setting GNCState" << std::endl;
         }
