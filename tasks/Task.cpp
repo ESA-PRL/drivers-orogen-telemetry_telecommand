@@ -8,7 +8,8 @@
 #define TM_SERVER_PORT_NUMBER 7032
 #define TC_REPLY_SERVER_PORT_NUMBER 7033
 
-const int GNC_LLO_ACTIVITY = 1;
+const int GNC_LLO_ACKERMANN_ACTIVITY = 1;
+const int GNC_LLO_TURNSPOT_ACTIVITY = 8;
 const int PANCAM_WAC_GET_IMAGE_ACTIVITY = 2;
 const int MAST_PTU_MOVE_TO_ACTIVITY = 3;
 const int PANCAM_WAC_RRGB_ACTIVITY = 4;
@@ -291,15 +292,33 @@ void Task::updateHook()
       CommandInfo* cmd_info = tcComm->extractCommandInfo();
       if (cmd_info != NULL)
       {
-	if (!strcmp((cmd_info->activityName).c_str(), "GNC_LLO")) {
-	  currentActivity = GNC_LLO_ACTIVITY;
+	if (!strcmp((cmd_info->activityName).c_str(), "GNC_LLO_ACKERMANN")) {
+	  currentActivity = GNC_LLO_ACKERMANN_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
-	  sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetDistance, &targetTranslation);
-          targetRotation= 0.0;
+	  sscanf(currentParams.c_str(), "%d %lf %lf %lf", &ackid, &targetPositionX, &targetPositionY, &targetSpeed);
+          motionCommand();
 	  travelledDistance = 0.0;
           initial_pose = pose;
-	  std::cout <<  "GNC_LLO distance:" << targetDistance << " speed:" << targetTranslation << std::endl;
+	  std::cout <<  "GNC_LLO_ACKERMANN X:" << targetPositionX << " Y:" << targetPositionY << " speed:" << targetSpeed << std::endl;
+          sendMotionCommand();
+          if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error getting GNCState" << std::endl;
+          }
+          //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
+          if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error setting GNCState" << std::endl;
+          }
+        }
+        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_LLO_TURNSPOT")) {
+	  currentActivity = GNC_LLO_TURNSPOT_ACTIVITY;
+	  currentParams = cmd_info->activityParams;
+	  int ackid;
+	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &targetOrientationTheta);
+          motionCommand();
+	  travelledAngle = 0.0;
+          initial_imu = imu;
+	  std::cout <<  "GNC_LLO_TURNSPOT angle:" << targetOrientationTheta << std::endl;
           sendMotionCommand();
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error getting GNCState" << std::endl;
@@ -415,11 +434,45 @@ void Task::updateHook()
 	}
       }
     }
-    else if (currentActivity == GNC_LLO_ACTIVITY) {
-      travelledDistance = computeTravelledDistance();
+    else if (currentActivity == GNC_LLO_ACKERMANN_ACTIVITY) {
+      travelledDistance = getTravelledDistance();
       if (travelledDistance >= targetDistance) {
       	travelledDistance = 0.0;
 	targetDistance = 0.0;
+        targetTranslation = 0.0;
+        targetRotation = 0.0;
+        sendMotionCommand();
+        targetPositionX=0.0;
+        targetPositionY=0.0;
+        targetSpeed=0.0;
+	currentActivity = -1;
+	if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+      }else {
+	if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=34;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+      }
+    }
+    else if (currentActivity == GNC_LLO_TURNSPOT_ACTIVITY) {
+      travelledAngle = getTravelledAngle();
+      //std::cout << "travelled angle: " << travelledAngle << " targetOrientationTheta: " << targetOrientationTheta << std::endl;
+      if (travelledAngle >= targetOrientationTheta) {
+      	travelledAngle = 0.0;
+	targetOrientationTheta = 0.0;
         targetTranslation = 0.0;
         targetRotation = 0.0;
         sendMotionCommand();
@@ -757,7 +810,7 @@ void Task::cleanupHook()
     TaskBase::cleanupHook();
 }
 
-double Task::computeTravelledDistance()
+double Task::getTravelledDistance()
 {
     double distance = 0.0;
     distance = sqrt((pose.position[0]-initial_pose.position[0])*(pose.position[0]-initial_pose.position[0])
@@ -765,6 +818,43 @@ double Task::computeTravelledDistance()
                    +(pose.position[2]-initial_pose.position[2])*(pose.position[2]-initial_pose.position[2]));
     return distance;
 }
+
+double Task::getTravelledAngle()
+{
+    double angle =0.0;
+    angle = std::abs(imu.getYaw()-initial_imu.getYaw());
+    return (angle*RAD2DEG);
+}
+
+void Task::motionCommand()
+{
+    if (currentActivity == GNC_LLO_ACKERMANN_ACTIVITY){
+        if (targetPositionY == 0){ // Straight line command
+            targetDistance = std::abs(targetPositionX);
+            double sign = (targetPositionX < 0 ? -1 : 1);
+            targetTranslation = targetSpeed*sign;
+            targetRotation = 0;
+            return;
+        }
+        double radius = (targetPositionX*targetPositionX + targetPositionY*targetPositionY)/(2*targetPositionY); //ToDo Check minimum radius and exit if requested command has a radius that is too small. Propose a Turnspot
+        double theta = atan(targetPositionX/std::abs(radius-targetPositionY));
+        double sign = (targetPositionX < 0 ? -1 : 1);
+        targetTranslation = targetSpeed*sign;
+        targetRotation = targetTranslation/radius;
+        targetDistance = std::abs(theta*radius);
+    }
+    else if (currentActivity == GNC_LLO_TURNSPOT_ACTIVITY){
+        targetTranslation=0.0;
+        if (targetOrientationTheta>=0) {
+            targetRotation=0.05; //ToDo Change this to parameter in the command
+        }
+        else {
+            targetRotation=-0.05; //ToDo Change this to parameter in the command
+            targetOrientationTheta=-targetOrientationTheta;
+        }
+    }
+}
+
 
 bool Task::ptuTargetReached()
 {

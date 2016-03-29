@@ -53,10 +53,16 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
       
         // GNC_LLO parameters
         double travelledDistance;
+        double travelledAngle;
         double targetDistance;
+        double targetPositionX; //meters
+        double targetPositionY; //meters
+        double targetOrientationTheta; //degrees
+        double targetSpeed; //meters per second
         double targetTranslation;
         double targetRotation;
         base::samples::RigidBodyState initial_pose;
+        base::samples::RigidBodyState initial_imu;
         
         // MAST_PTU_MoveTo parameters
         double pan;
@@ -160,12 +166,25 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
          */
         void cleanupHook();
 
-        /** This method computes to absolute travelled distance in 3D. Initial position
+        /** this method computes the absolute travelled distance in 3d. initial position
          * from which the distance is calculated is reset every time a locomotion command
-         * is sent. The initial position is compared to the current position to calculate the 
+         * is sent. the initial position is compared to the current position to calculate the 
          * travelled distance.
          */
-        double computeTravelledDistance();
+        double getTravelledDistance();
+
+        /** this method computes the absolute travelled angle (in radians). initial orientation
+         * from which the motion is calculated is reset every time a locomotion command
+         * is sent. the initial orientation is compared to the current orientation to calculate the 
+         * travelled angle.
+         */
+        double getTravelledAngle();
+
+        /** Calculates the parameters to be sent as motion commands (2D). Translation (m/s) and Rotation (rad/s)
+         * are calculated.
+         */
+        void motionCommand();
+
 
         /** Checks if a bema move command has reached its target.
          */
