@@ -70,8 +70,6 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
         // PanCam_WACGetImage parameters
         char cam[80], dummy_param[80];
-	RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> frame_left;   //! De-interlaced left frame
-        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> frame_right;  //! De-interlaced right frame  
 
         // PanCam_WAC_RRGB parameters
         int inPanCamActivity;
