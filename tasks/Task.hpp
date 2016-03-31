@@ -3,6 +3,8 @@
 #ifndef TELEMETRY_TELECOMMAND_TASK_TASK_HPP
 #define TELEMETRY_TELECOMMAND_TASK_TASK_HPP
 
+#include <base/commands/Joints.hpp>
+
 #include "telemetry_telecommand/TaskBase.hpp"
 #include "telemetry_telecommand/comm.h"
 #include "telemetry_telecommand/rt.h"
