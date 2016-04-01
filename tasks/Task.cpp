@@ -20,6 +20,8 @@ const int BEMA_DEPLOY_2_ACTIVITY = 7;
 const double DEG2RAD = 3.141592/180;
 const double RAD2DEG = 180/3.141592;
 
+const double OMEGA = 0.05;  //in Rad/s the commanded angular velocity to the walking actuators when deploying
+
 const double PANLIMIT_LEFT = 50*DEG2RAD;
 const double PANLIMIT_RIGHT = -235*DEG2RAD;
 const double TILTLIMIT = 90*DEG2RAD;
@@ -335,7 +337,7 @@ void Task::updateHook()
 	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
 	  std::cout <<  "BEMA Deploy 1: " << bema_command << std::endl;
           bema_command = bema_command*DEG2RAD;
-          _bema_command.write(bema_command);
+          _bema_command.write(OMEGA);
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error getting GNCState" << std::endl;
           }
@@ -351,7 +353,7 @@ void Task::updateHook()
 	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
 	  std::cout <<  "BEMA Deploy 2: " << bema_command << std::endl;
           bema_command = bema_command*DEG2RAD;
-          _walking_command.write(bema_command);
+          _walking_command.write(OMEGA);
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error getting GNCState" << std::endl;
           }
@@ -876,6 +878,7 @@ bool Task::bema1TargetReached()
             return false;
     }
     std::cout << "---- >>>> bema1 target reached!" << std::endl;
+    targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
     return true;
 }
 
@@ -888,6 +891,7 @@ bool Task::bema2TargetReached()
             return false;
     }
     std::cout << "---- >>>> bema2 target reached!" << std::endl;
+    targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
     return true;
 }
 
