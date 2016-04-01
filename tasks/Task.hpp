@@ -3,6 +3,10 @@
 #ifndef TELEMETRY_TELECOMMAND_TASK_TASK_HPP
 #define TELEMETRY_TELECOMMAND_TASK_TASK_HPP
 
+#include <base/commands/Motion2D.hpp>
+#include <base/commands/Joints.hpp>
+#include <base/samples/RigidBodyState.hpp>
+
 #include "telemetry_telecommand/TaskBase.hpp"
 #include "telemetry_telecommand/comm.h"
 #include "telemetry_telecommand/rt.h"
@@ -70,8 +74,6 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
         // PanCam_WACGetImage parameters
         char cam[80], dummy_param[80];
-	RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> frame_left;   //! De-interlaced left frame
-        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> frame_right;  //! De-interlaced right frame  
 
         // PanCam_WAC_RRGB parameters
         int inPanCamActivity;
@@ -81,7 +83,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         CommTcServer* tcComm;
         CommTcReplyServer* tcReplyServer;
 
-        base::MotionCommand2D motion_command;
+        base::commands::Motion2D motion_command;
         base::commands::Joints ptu_command;
         double bema_command;
         base::samples::RigidBodyState pose;
