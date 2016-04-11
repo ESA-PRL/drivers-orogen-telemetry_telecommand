@@ -577,8 +577,16 @@ void Task::updateHook()
       if (!strcmp(cam, "WAC_L")) {
         char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.jpg 1", cam, WACL_index++);
-        //std::cout << "filename->" << filename << "<-"<< std::endl;
-	_pancam_store_image_filename.write(filename);
+	    _pancam_store_image_filename.write(filename);
+        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, WACL_index-1);
+        std::ofstream metadata;
+        metadata.open(filename);
+        metadata << "Camera ID:  " << cam << std::endl;
+        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
+        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
+        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
         }
@@ -592,8 +600,16 @@ void Task::updateHook()
       else if (!strcmp(cam, "WAC_R")) {
 	char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.jpg 2", cam, WACR_index++);
-        //std::cout << "filename->" << filename << "<-"<< std::endl;
-	_pancam_store_image_filename.write(filename);
+    	_pancam_store_image_filename.write(filename);
+        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, WACR_index-1);
+        std::ofstream metadata;
+        metadata.open(filename);
+        metadata << "Camera ID:  " << cam << std::endl;
+        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
+        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
+        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
         }
@@ -607,8 +623,25 @@ void Task::updateHook()
       else if (!strcmp(cam, "PAN_STEREO")) {
 	char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d 3", cam, PAN_STEREO_index++);
-        //std::cout << "filename->" << filename << "<-"<< std::endl;
-	_pancam_store_image_filename.write(filename);
+    	_pancam_store_image_filename.write(filename);
+        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left_metadata.txt", cam, PAN_STEREO_index-1);
+        std::ofstream metadata;
+        metadata.open(filename);
+        metadata << "Camera ID:  " << cam << "LEFT" << std::endl;
+        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
+        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
+        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        
+        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, PAN_STEREO_index-1);
+        std::ofstream metadata;
+        metadata.open(filename);
+        metadata << "Camera ID:  " << cam << "RIGHT" << std::endl;
+        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
+        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
+        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
         }
