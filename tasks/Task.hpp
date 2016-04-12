@@ -38,10 +38,11 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
     protected:
 
         int currentActivity;
+        bool abort_activity;
         std::string currentParams;
         int WACL_index, WACR_index, PAN_STEREO_index;
-        int LOCL_index, LOCR_index, LOC_STEREO_index;
-        
+        int FLOCL_index, FLOCR_index, FLOC_STEREO_index;
+        int RLOCL_index, RLOCR_index, RLOC_STEREO_index;
 
         // State variables definition
         double State[MAX_STATE_SIZE];
