@@ -21,12 +21,13 @@ const int BEMA_DEPLOY_2_ACTIVITY = 7;
 const double DEG2RAD = 3.141592/180;
 const double RAD2DEG = 180/3.141592;
 
-const double OMEGA = 0.05;  //in Rad/s the commanded angular velocity to the walking actuators when deploying
+const double OMEGA = 0.01;  //in Rad/s the commanded angular velocity to the walking actuators when deploying
 
 const double PANLIMIT_LEFT = 50*DEG2RAD;
 const double PANLIMIT_RIGHT = -235*DEG2RAD;
 const double TILTLIMIT = 90*DEG2RAD;
 const double TARGET_WINDOW = 0.01;
+const double TARGET_WINDOW2 = 0.01;
 
 using namespace telemetry_telecommand;
 //using namespace frame_helper;
@@ -659,7 +660,7 @@ void Task::updateHook()
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left_metadata.txt", cam, PAN_STEREO_index-1);
         std::ofstream metadata;
         metadata.open(filename);
-        metadata << "Camera ID:  " << cam << "LEFT" << std::endl;
+        metadata << "Camera ID:  " << "WAC_L" << std::endl;
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
@@ -671,7 +672,7 @@ void Task::updateHook()
         sprintf (filename2, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, PAN_STEREO_index-1);
         std::ofstream metadata2;
         metadata2.open(filename2);
-        metadata2 << "Camera ID:  " << cam << "RIGHT" << std::endl;
+        metadata2 << "Camera ID:  " << "WAC_R" << std::endl;
         metadata2 << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata2 << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
@@ -680,8 +681,7 @@ void Task::updateHook()
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
         }
-        PanCamState[PANCAM_WAC_L_INDEX]=PAN_STEREO_index-1;
-        PanCamState[PANCAM_WAC_R_INDEX]=PAN_STEREO_index-1;
+        PanCamState[PANCAM_PAN_STEREO_INDEX]=PAN_STEREO_index-1;
         PanCamState[PANCAM_ACTION_ID_INDEX]=0;
         PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
@@ -710,7 +710,7 @@ void Task::updateHook()
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
         }
-        PanCamState[LOCCAM_LOC_L_INDEX]=FLOCL_index-1;
+        PanCamState[LOCCAM_FLOC_L_INDEX]=FLOCL_index-1;
         PanCamState[PANCAM_ACTION_ID_INDEX]=0;
         PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
@@ -733,7 +733,7 @@ void Task::updateHook()
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
         }
-        PanCamState[LOCCAM_LOC_R_INDEX]=FLOCR_index-1;
+        PanCamState[LOCCAM_FLOC_R_INDEX]=FLOCR_index-1;
         PanCamState[PANCAM_ACTION_ID_INDEX]=0;
         PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
@@ -747,7 +747,7 @@ void Task::updateHook()
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left_metadata.txt", cam, FLOC_STEREO_index-1);
         std::ofstream metadata;
         metadata.open(filename);
-        metadata << "Camera ID:  " << cam << "LEFT" << std::endl;
+        metadata << "Camera ID:  " << "FLOC_L" << std::endl;
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
@@ -755,7 +755,7 @@ void Task::updateHook()
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, FLOC_STEREO_index-1);
         std::ofstream metadata2;
         metadata2.open(filename);
-        metadata2 << "Camera ID:  " << cam << "RIGHT" << std::endl;
+        metadata2 << "Camera ID:  " << "FLOC_R" << std::endl;
         metadata2 << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata2 << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
@@ -764,8 +764,7 @@ void Task::updateHook()
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
         }
-        PanCamState[LOCCAM_LOC_L_INDEX]=FLOC_STEREO_index-1;
-        PanCamState[LOCCAM_LOC_R_INDEX]=FLOC_STEREO_index-1;
+        PanCamState[LOCCAM_FLOC_STEREO_INDEX]=FLOC_STEREO_index-1;
         PanCamState[PANCAM_ACTION_ID_INDEX]=0;
         PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
@@ -794,7 +793,7 @@ void Task::updateHook()
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
         }
-        PanCamState[LOCCAM_LOC_L_INDEX]=RLOCL_index-1;
+        PanCamState[LOCCAM_RLOC_L_INDEX]=RLOCL_index-1;
         PanCamState[PANCAM_ACTION_ID_INDEX]=0;
         PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
@@ -817,7 +816,7 @@ void Task::updateHook()
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
         }
-        PanCamState[LOCCAM_LOC_R_INDEX]=RLOCR_index-1;
+        PanCamState[LOCCAM_RLOC_R_INDEX]=RLOCR_index-1;
         PanCamState[PANCAM_ACTION_ID_INDEX]=0;
         PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
@@ -831,7 +830,7 @@ void Task::updateHook()
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left_metadata.txt", cam, RLOC_STEREO_index-1);
         std::ofstream metadata;
         metadata.open(filename);
-        metadata << "Camera ID:  " << cam << "LEFT" << std::endl;
+        metadata << "Camera ID:  " << "RLOC_L" << std::endl;
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
@@ -839,7 +838,7 @@ void Task::updateHook()
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, RLOC_STEREO_index-1);
         std::ofstream metadata2;
         metadata2.open(filename);
-        metadata2 << "Camera ID:  " << cam << "RIGHT" << std::endl;
+        metadata2 << "Camera ID:  " << "RLOC_R" << std::endl;
         metadata2 << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata2 << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
@@ -848,8 +847,7 @@ void Task::updateHook()
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
         }
-        PanCamState[LOCCAM_LOC_L_INDEX]=RLOC_STEREO_index-1;
-        PanCamState[LOCCAM_LOC_R_INDEX]=RLOC_STEREO_index-1;
+        PanCamState[LOCCAM_RLOC_STEREO_INDEX]=RLOC_STEREO_index-1;
         PanCamState[PANCAM_ACTION_ID_INDEX]=0;
         PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
@@ -1067,15 +1065,18 @@ bool Task::bema1TargetReached()
         targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
         return true;
     }
-    double window = TARGET_WINDOW;
+    double window = TARGET_WINDOW2;
     for (int i=0;i<6;i++)
     {
-        if (std::abs(bema[i].position-bema_command) > window)
-            return false;
+        std::cout << "bema_command: " << bema_command << " bema[].position: " << bema[i].position << std::endl;
+        if (std::abs(bema[i].position-bema_command) < window)
+        {
+            std::cout << "---- >>>> bema1 target reached!" << std::endl;
+            targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
+            return true;
+        }
     }
-    std::cout << "---- >>>> bema1 target reached!" << std::endl;
-    targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
-    return true;
+    return false;
 }
 
 bool Task::bema2TargetReached()
@@ -1085,7 +1086,7 @@ bool Task::bema2TargetReached()
         targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
         return true;
     }
-    double window = TARGET_WINDOW;
+    double window = TARGET_WINDOW2;
     for (int i=0;i<2;i++)
     {
         if (std::abs(bema[i].position-bema_command) > window)
