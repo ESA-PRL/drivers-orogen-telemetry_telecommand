@@ -91,6 +91,10 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         base::samples::Joints ptu;
         base::samples::Joints bema;
         base::samples::RigidBodyState imu;
+        base::samples::RigidBodyState initial_3Dpose;
+        double initial_absolute_heading;
+        //bool first_estimate;
+        //double first_imu_estimate_yaw;
 
 
     public:
@@ -193,9 +197,13 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
          */
         bool bema1TargetReached();
         
-        /** Checks if a walking (egress) move command has reached its target.
+        /** Checks if a walking (egress front) move command has reached its target.
          */
         bool bema2TargetReached();
+
+        /** Checks if a walking (egress rear) move command has reached its target.
+         */
+        bool bema3TargetReached();
 
         /** Checks if a ptu move command has reached its target.
          */

@@ -17,6 +17,7 @@ const int LOCCAMFRONT_GET_IMAGE_ACTIVITY = 5;
 const int LOCCAMREAR_GET_IMAGE_ACTIVITY = 9;
 const int BEMA_DEPLOY_1_ACTIVITY = 6;
 const int BEMA_DEPLOY_2_ACTIVITY = 7;
+const int BEMA_DEPLOY_3_ACTIVITY = 10;
 
 const double DEG2RAD = 3.141592/180;
 const double RAD2DEG = 180/3.141592;
@@ -26,6 +27,7 @@ const double OMEGA = 0.01;  //in Rad/s the commanded angular velocity to the wal
 const double PANLIMIT_LEFT = 50*DEG2RAD;
 const double PANLIMIT_RIGHT = -235*DEG2RAD;
 const double TILTLIMIT = 90*DEG2RAD;
+const double BEMALIMIT = 95;
 const double TARGET_WINDOW = 0.01;
 const double TARGET_WINDOW2 = 0.01;
 
@@ -101,6 +103,10 @@ bool Task::configureHook()
     RLOCL_index = 1;
     RLOCR_index = 1;
     RLOC_STEREO_index = 1;
+    //first_estimate=true;
+    //first_imu_estimate_yaw=0.0;
+    initial_3Dpose=_initial_pose;
+    initial_absolute_heading=initial_3Dpose.getYaw();
     return true;
 }
 bool Task::startHook()
@@ -231,12 +237,18 @@ void Task::updateHook()
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
           std::cout << "Error getting GNCState" << std::endl;
         }
-        int aux = (int)(pose.position[0]*100);
+        int aux = (int)((cos(initial_absolute_heading)*pose.position[0] - sin(initial_absolute_heading)*pose.position[1] + initial_3Dpose.position[0])*100);
         GNCState[GNC_ROVER_POSEX_INDEX]=(double)((double)aux/100.0);
-        aux = (int)(pose.position[1]*100);
+        aux = (int)((sin(initial_absolute_heading)*pose.position[0] + cos(initial_absolute_heading)*pose.position[1] + initial_3Dpose.position[1])*100);
         GNCState[GNC_ROVER_POSEY_INDEX]=(double)((double)aux/100.0);
-	aux = (int)(pose.position[2]*100);
+	aux = (int)((pose.position[2] + initial_3Dpose.position[2])*100);
         GNCState[GNC_ROVER_POSEZ_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(pose.getRoll()*RAD2DEG*10);
+        GNCState[GNC_ROVER_POSERX_INDEX]=-(double)((double)aux/10.0);
+	aux = (int)(pose.getPitch()*RAD2DEG*10);
+        GNCState[GNC_ROVER_POSERY_INDEX]=-(double)((double)aux/10.0);
+	aux = (int)((pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG)*10);
+        GNCState[GNC_ROVER_POSERZ_INDEX]=(double)((double)aux/10.0);
         //GNCState[GNC_ROVER_POSERX_INDEX]=pose.getRoll();
         //GNCState[GNC_ROVER_POSERY_INDEX]=pose.getPitch();
         //GNCState[GNC_ROVER_POSERZ_INDEX]=pose.getYaw();
@@ -283,6 +295,11 @@ void Task::updateHook()
     }
     if (_current_imu.read(imu) == RTT::NewData)
     {
+        //if (first_estimate){
+        //    first_imu_estimate_yaw=imu.getYaw()*RAD2DEG;
+        //    first_estimate=false;
+        //}
+
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
           std::cout << "Error getting GNCState" << std::endl;
         }
@@ -290,8 +307,8 @@ void Task::updateHook()
         GNCState[GNC_ROVER_POSERX_INDEX]=-(double)((double)aux/10.0);
 	aux = (int)(imu.getPitch()*RAD2DEG*10);
         GNCState[GNC_ROVER_POSERY_INDEX]=-(double)((double)aux/10.0);
-	aux = (int)(imu.getYaw()*RAD2DEG*10);
-        GNCState[GNC_ROVER_POSERZ_INDEX]=-(double)((double)aux/10.0);
+	aux = (int)((imu.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG)*10);
+        GNCState[GNC_ROVER_POSERZ_INDEX]=(double)((double)aux/10.0);
         if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
           std::cout << "Error setting GNCState" << std::endl;
         }
@@ -332,7 +349,7 @@ void Task::updateHook()
 	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &targetOrientationTheta);
           motionCommand();
 	  travelledAngle = 0.0;
-          initial_imu = imu;
+          initial_imu = pose;
 	  std::cout <<  "GNC_LLO_TURNSPOT angle:" << targetOrientationTheta << std::endl;
           sendMotionCommand();
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
@@ -348,9 +365,17 @@ void Task::updateHook()
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
+          if (bema_command>BEMALIMIT)
+              bema_command=BEMALIMIT;
+          else if (bema_command<-BEMALIMIT)
+              bema_command=-BEMALIMIT;
 	  std::cout <<  "BEMA Deploy 1: " << bema_command << std::endl;
           bema_command = bema_command*DEG2RAD;
-          _bema_command.write(OMEGA);
+          if (bema_command>bema[0].position){
+              _bema_command.write(OMEGA);
+          } else {
+              _bema_command.write(-OMEGA);
+          }
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error getting GNCState" << std::endl;
           }
@@ -364,9 +389,41 @@ void Task::updateHook()
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
-	  std::cout <<  "BEMA Deploy 2: " << bema_command << std::endl;
+	  if (bema_command>BEMALIMIT)
+              bema_command=BEMALIMIT;
+          else if (bema_command<-BEMALIMIT)
+              bema_command=-BEMALIMIT;
+          std::cout <<  "BEMA Deploy 2: " << bema_command << std::endl;
           bema_command = bema_command*DEG2RAD;
-          _walking_command.write(OMEGA);
+          if (bema_command>bema[0].position){
+              _walking_command_front.write(OMEGA);
+          } else {
+              _walking_command_front.write(-OMEGA);
+          }
+          if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error getting GNCState" << std::endl;
+          }
+          //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
+          if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error setting GNCState" << std::endl;
+          }
+        }
+        else if (!strcmp((cmd_info->activityName).c_str(), "BEMA_Deploy_3")) {
+	  currentActivity = BEMA_DEPLOY_3_ACTIVITY;
+	  currentParams = cmd_info->activityParams;
+	  int ackid;
+	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
+	  if (bema_command>BEMALIMIT)
+              bema_command=BEMALIMIT;
+          else if (bema_command<-BEMALIMIT)
+              bema_command=-BEMALIMIT;
+          std::cout <<  "BEMA Deploy 3: " << bema_command << std::endl;
+          bema_command = bema_command*DEG2RAD;
+          if (bema_command>bema[4].position){
+              _walking_command_rear.write(OMEGA);
+          } else {
+              _walking_command_rear.write(-OMEGA);
+          }
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error getting GNCState" << std::endl;
           }
@@ -555,7 +612,8 @@ void Task::updateHook()
             std::cout << "Error setting GNCState" << std::endl;
         }
       }
-    }else if (currentActivity == BEMA_DEPLOY_2_ACTIVITY) {
+    }
+    else if (currentActivity == BEMA_DEPLOY_2_ACTIVITY) {
       if (bema2TargetReached() || abort_activity) {
         abort_activity=false;
         //bema_command = 0.0;
@@ -575,6 +633,32 @@ void Task::updateHook()
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         GNCState[GNC_ACTION_ID_INDEX]=36;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+      }
+    }
+    else if (currentActivity == BEMA_DEPLOY_3_ACTIVITY) {
+      if (bema3TargetReached() || abort_activity) {
+        abort_activity=false;
+        //bema_command = 0.0;
+	currentActivity = -1;
+	if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+      }else {
+	if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=37;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
             std::cout << "Error setting GNCState" << std::endl;
@@ -618,7 +702,7 @@ void Task::updateHook()
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
@@ -641,7 +725,7 @@ void Task::updateHook()
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
@@ -664,7 +748,7 @@ void Task::updateHook()
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
         
         char filename2[240];
         sprintf (filename2, "/home/exoter/Desktop/Images/%s_%d_right.png 2", cam, PAN_STEREO_index-1);
@@ -676,7 +760,7 @@ void Task::updateHook()
         metadata2 << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata2 << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata2 << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
@@ -705,7 +789,7 @@ void Task::updateHook()
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -728,7 +812,7 @@ void Task::updateHook()
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -751,7 +835,7 @@ void Task::updateHook()
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, FLOC_STEREO_index-1);
         std::ofstream metadata2;
         metadata2.open(filename);
@@ -759,7 +843,7 @@ void Task::updateHook()
         metadata2 << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata2 << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata2 << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -788,7 +872,7 @@ void Task::updateHook()
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -811,7 +895,7 @@ void Task::updateHook()
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -834,7 +918,7 @@ void Task::updateHook()
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, RLOC_STEREO_index-1);
         std::ofstream metadata2;
         metadata2.open(filename);
@@ -842,7 +926,7 @@ void Task::updateHook()
         metadata2 << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata2 << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata2 << "Orientation Roll, Pitch, Yaw:  " << imu.getRoll()*RAD2DEG << ", " << imu.getPitch()*RAD2DEG << ", " << imu.getYaw()*RAD2DEG << std::endl;
+        metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -1006,7 +1090,7 @@ double Task::getTravelledDistance()
 double Task::getTravelledAngle()
 {
     double angle =0.0;
-    angle = std::abs(imu.getYaw()-initial_imu.getYaw());
+    angle = std::abs(pose.getYaw()-initial_imu.getYaw());
     return (angle*RAD2DEG);
 }
 
@@ -1089,12 +1173,36 @@ bool Task::bema2TargetReached()
     double window = TARGET_WINDOW2;
     for (int i=0;i<2;i++)
     {
-        if (std::abs(bema[i].position-bema_command) > window)
-            return false;
+        std::cout << "bema_command: " << bema_command << " bema[].position: " << bema[i].position << std::endl;
+        if (std::abs(bema[i].position-bema_command) < window)
+        {
+           std::cout << "---- >>>> bema2 target reached!" << std::endl;
+           targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
+           return true;
+        }
     }
-    std::cout << "---- >>>> bema2 target reached!" << std::endl;
-    targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
-    return true;
+    return false;
+}
+
+bool Task::bema3TargetReached()
+{
+    if (abort_activity)
+    {
+        targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
+        return true;
+    }
+    double window = TARGET_WINDOW2;
+    for (int i=0;i<2;i++)
+    {
+        std::cout << "bema_command: " << bema_command << " bema[].position: " << bema[4+i].position << std::endl;
+        if (std::abs(bema[4+i].position-bema_command) < window)
+        {
+           std::cout << "---- >>>> bema3 target reached!" << std::endl;
+           targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
+           return true;
+        }
+    }
+    return false;
 }
 
 void Task::sendPtuCommand()

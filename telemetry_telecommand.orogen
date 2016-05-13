@@ -30,6 +30,8 @@ task_context "Task" do
     # A configuration property (here, a std::string). Its value can be retrieved
     # in the C++ code with # _config_value.get() and _config_value.set(new_value).
     property "config_value", "/std/string"
+    property "initial_pose", "/base/samples/RigidBodyState" 
+
 
     # An input port, i.e. an object from which the component gets data from
     # other components' outputs
@@ -49,7 +51,8 @@ task_context "Task" do
     # Data can be written using _output.write(value). _output.connected() returns
     # if this output is connected to an input or not.
     output_port "bema_command", "double"
-    output_port "walking_command", "double"
+    output_port "walking_command_front", "double"
+    output_port "walking_command_rear", "double"
     output_port "locomotion_command", "base/MotionCommand2D"
     output_port "ptu_command", "base/commands/Joints"
     output_port "pancam_left_store_image_filename", "/std/string"
