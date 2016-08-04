@@ -53,7 +53,7 @@ task_context "Task" do
     output_port "bema_command", "double"
     output_port "walking_command_front", "double"
     output_port "walking_command_rear", "double"
-    output_port "locomotion_command", "base/MotionCommand2D"
+    output_port "locomotion_command", "base/commands/Motion2D"
     output_port "ptu_command", "base/commands/Joints"
     output_port "pancam_left_store_image_filename", "/std/string"
     output_port "loccam_front_store_image_filename", "/std/string"
