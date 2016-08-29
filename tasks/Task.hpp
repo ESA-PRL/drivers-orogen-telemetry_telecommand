@@ -92,6 +92,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         base::samples::Joints bema;
         base::samples::RigidBodyState imu;
         base::samples::RigidBodyState initial_3Dpose;
+        base::samples::RigidBodyState absolute_pose;
         double initial_absolute_heading;
         //bool first_estimate;
         //double first_imu_estimate_yaw;

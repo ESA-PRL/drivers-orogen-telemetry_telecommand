@@ -106,6 +106,7 @@ bool Task::configureHook()
     //first_estimate=true;
     //first_imu_estimate_yaw=0.0;
     initial_3Dpose=_initial_pose;
+    absolute_pose=initial_3Dpose;
     initial_absolute_heading=initial_3Dpose.getYaw();
     return true;
 }
@@ -239,14 +240,17 @@ void Task::updateHook()
         }
         int aux = (int)((cos(initial_absolute_heading)*pose.position[0] - sin(initial_absolute_heading)*pose.position[1] + initial_3Dpose.position[0])*100);
         GNCState[GNC_ROVER_POSEX_INDEX]=(double)((double)aux/100.0);
+	absolute_pose.position[0]=GNCState[GNC_ROVER_POSEX_INDEX];
         aux = (int)((sin(initial_absolute_heading)*pose.position[0] + cos(initial_absolute_heading)*pose.position[1] + initial_3Dpose.position[1])*100);
         GNCState[GNC_ROVER_POSEY_INDEX]=(double)((double)aux/100.0);
+	absolute_pose.position[1]=GNCState[GNC_ROVER_POSEY_INDEX];
 	aux = (int)((pose.position[2] + initial_3Dpose.position[2])*100);
         GNCState[GNC_ROVER_POSEZ_INDEX]=(double)((double)aux/100.0);
+	absolute_pose.position[2]=GNCState[GNC_ROVER_POSEZ_INDEX];
 	aux = (int)(pose.getRoll()*RAD2DEG*10);
-        GNCState[GNC_ROVER_POSERX_INDEX]=-(double)((double)aux/10.0);
+        GNCState[GNC_ROVER_POSERX_INDEX]=(double)((double)aux/10.0);
 	aux = (int)(pose.getPitch()*RAD2DEG*10);
-        GNCState[GNC_ROVER_POSERY_INDEX]=-(double)((double)aux/10.0);
+        GNCState[GNC_ROVER_POSERY_INDEX]=(double)((double)aux/10.0);
 	aux = (int)((pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG)*10);
         GNCState[GNC_ROVER_POSERZ_INDEX]=(double)((double)aux/10.0);
         //GNCState[GNC_ROVER_POSERX_INDEX]=pose.getRoll();
@@ -701,8 +705,8 @@ void Task::updateHook()
         metadata << "Camera ID:  " << cam << std::endl;
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
+        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
@@ -724,8 +728,8 @@ void Task::updateHook()
         metadata << "Camera ID:  " << cam << std::endl;
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
+        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
@@ -747,8 +751,8 @@ void Task::updateHook()
         metadata << "Camera ID:  " << "WAC_L" << std::endl;
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
+        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
         
         char filename2[240];
         sprintf (filename2, "/home/exoter/Desktop/Images/%s_%d_right.png 2", cam, PAN_STEREO_index-1);
@@ -759,8 +763,8 @@ void Task::updateHook()
         metadata2 << "Camera ID:  " << "WAC_R" << std::endl;
         metadata2 << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata2 << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
+        metadata2 << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
+        metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
@@ -788,8 +792,8 @@ void Task::updateHook()
         metadata << "Camera ID:  " << cam << std::endl;
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
+        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -811,8 +815,8 @@ void Task::updateHook()
         metadata << "Camera ID:  " << cam << std::endl;
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
+        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -834,16 +838,17 @@ void Task::updateHook()
         metadata << "Camera ID:  " << "FLOC_L" << std::endl;
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, FLOC_STEREO_index-1);
+        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
+        
+	sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, FLOC_STEREO_index-1);
         std::ofstream metadata2;
         metadata2.open(filename);
         metadata2 << "Camera ID:  " << "FLOC_R" << std::endl;
         metadata2 << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata2 << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
+        metadata2 << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
+        metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -871,8 +876,8 @@ void Task::updateHook()
         metadata << "Camera ID:  " << cam << std::endl;
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
+        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -894,8 +899,8 @@ void Task::updateHook()
         metadata << "Camera ID:  " << cam << std::endl;
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
+        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -917,16 +922,17 @@ void Task::updateHook()
         metadata << "Camera ID:  " << "RLOC_L" << std::endl;
         metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, RLOC_STEREO_index-1);
+        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
+        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
+        
+	sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, RLOC_STEREO_index-1);
         std::ofstream metadata2;
         metadata2.open(filename);
         metadata2 << "Camera ID:  " << "RLOC_R" << std::endl;
         metadata2 << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
         metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata2 << "Position X, Y, Z:  " << pose.position[0] << ", " << pose.position[1] << ", " << pose.position[2] << std::endl;
-        metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << pose.getYaw()*RAD2DEG << std::endl;
+	metadata2 << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
+        metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
