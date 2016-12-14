@@ -11,6 +11,12 @@
 #include "telemetry_telecommand/comm.h"
 #include "telemetry_telecommand/rt.h"
 #include "telemetry_telecommand/prr.h"
+
+#include "telemetry_telecommand/ActiveMQFilesClient.h"
+//#include "telemetry_telecommand/ActiveMQAdminClient.h"
+//#include "telemetry_telecommand/ActiveMQMonitorClient.h"
+
+
 //#include "frame_helper/FrameHelper.h"
 
 namespace telemetry_telecommand {
@@ -66,6 +72,10 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         double targetSpeed; //meters per second
         double targetTranslation;
         double targetRotation;
+        std::vector<base::Waypoint> trajectory;
+        base::Waypoint waypoint;
+        bool target_reached;
+        int NofWaypoints;
         base::samples::RigidBodyState initial_pose;
         base::samples::RigidBodyState initial_imu;
         
@@ -79,7 +89,12 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         // PanCam_WAC_RRGB parameters
         int inPanCamActivity;
 	
- 
+	//ACTIVE MQ
+/*	ActiveMQMonitorClient* monitorImuMessProducer;
+	ActiveMQMonitorClient* monitorGncMessProducer;
+	ActiveMQMonitorClient* monitorImgMessProducer;
+	ActiveMQAdminClient* adminMessProducer; 
+*/
         CommTmServer* tmComm;
         CommTcServer* tcComm;
         CommTcReplyServer* tcReplyServer;
@@ -94,6 +109,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         base::samples::RigidBodyState initial_3Dpose;
         base::samples::RigidBodyState absolute_pose;
         double initial_absolute_heading;
+        bool tj_status;
         //bool first_estimate;
         //double first_imu_estimate_yaw;
 

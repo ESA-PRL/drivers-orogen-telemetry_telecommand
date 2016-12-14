@@ -43,6 +43,7 @@ task_context "Task" do
     input_port "current_ptu", "base/samples/Joints"
     input_port "current_imu", "base/samples/RigidBodyState"
     input_port "current_bema", "base/samples/Joints"
+    input_port "trajectory_status", "bool"
 #input_port "left_frame", ro_ptr('base::samples::frame::Frame')
 #input_port "right_frame", ro_ptr('base::samples::frame::Frame')
     # An output port, i.e. an object to which the component pushes data so that
@@ -54,6 +55,7 @@ task_context "Task" do
     output_port "walking_command_front", "double"
     output_port "walking_command_rear", "double"
     output_port "locomotion_command", "base/commands/Motion2D"
+    output_port "target_trajectory", "/std/vector<base/Waypoint>"
     output_port "ptu_command", "base/commands/Joints"
     output_port "pancam_left_store_image_filename", "/std/string"
     output_port "loccam_front_store_image_filename", "/std/string"

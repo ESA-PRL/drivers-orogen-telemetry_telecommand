@@ -10,6 +10,7 @@
 
 const int GNC_LLO_ACKERMANN_ACTIVITY = 1;
 const int GNC_LLO_TURNSPOT_ACTIVITY = 8;
+const int GNC_LLO_TRAJECTORY_ACTIVITY = 11;
 const int PANCAM_WAC_GET_IMAGE_ACTIVITY = 2;
 const int MAST_PTU_MOVE_TO_ACTIVITY = 3;
 const int PANCAM_WAC_RRGB_ACTIVITY = 4;
@@ -120,7 +121,22 @@ bool Task::startHook()
   tcComm = new CommTcServer( TC_SERVER_PORT_NUMBER); 
   tmComm = new CommTmServer( TM_SERVER_PORT_NUMBER, theRobotProcedure);
   tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NUMBER );
+/*
+  activemq::library::ActiveMQCPP::initializeLibrary();
   
+  bool useTopics = true;
+  bool sessionTransacted = false;
+  int numMessages = 2000;
+  
+  adminMessProducer = new ActiveMQAdminClient(numMessages, useTopics);
+  
+  string imu_str("IMU_SENS");
+  monitorImuMessProducer = new ActiveMQMonitorClient(numMessages, useTopics, sessionTransacted, imu_str);
+  string gnc_str("GNC");
+  monitorGncMessProducer = new ActiveMQMonitorClient(numMessages, useTopics, sessionTransacted, gnc_str);
+  string img_str("XB3C");
+  monitorImgMessProducer = new ActiveMQMonitorClient(numMessages, useTopics, sessionTransacted, img_str);
+*/
   RobotTask* rt1 = new RobotTask("ADE_LEFT_Initialise"); // Simulated
   RobotTask* rt2 = new RobotTask("ADE_LEFT_conf");  // Simulated
   RobotTask* rt3 = new RobotTask("ADE_LEFT_ReleaseHDRM"); // Simulated
@@ -159,7 +175,8 @@ bool Task::startHook()
 
   RobotTask* rt31 = new RobotTask("GNC_Initialise"); // Simulated 
   RobotTask* rt32 = new RobotTask("GNC_LLO_ACKERMANN"); // Executed  (params: distance, speed (m, m/hour))
-  RobotTask* rt322 = new RobotTask("GNC_LLO_TURNSPOT"); // Executed  (params: distance, speed (m, m/hour))
+  RobotTask* rt321 = new RobotTask("GNC_LLO_TURNSPOT"); // Executed  (params: distance, speed (m, m/hour))
+  RobotTask* rt322 = new RobotTask("GNC_LLO_TRAJECTORY"); // Executed  (params: number of waypoints, vector of waypoints(x,y,h))
   RobotTask* rt33 = new RobotTask("GNC_SwitchOff"); // Simulated 
   RobotTask* rt331 = new RobotTask("BEMA_Deploy_1"); // Simulated or Executed 
   RobotTask* rt332 = new RobotTask("BEMA_Deploy_2"); // Simulated or Executed
@@ -207,6 +224,8 @@ bool Task::startHook()
   theRobotProcedure->insertRT(rt30);
   theRobotProcedure->insertRT(rt31);
   theRobotProcedure->insertRT(rt32);
+  theRobotProcedure->insertRT(rt321);
+  theRobotProcedure->insertRT(rt322);
   theRobotProcedure->insertRT(rt33);
   theRobotProcedure->insertRT(rt331);
   theRobotProcedure->insertRT(rt332);
@@ -222,6 +241,9 @@ bool Task::startHook()
   //! Send ptu and motion commands to activate the joint dispatcher. Otherwise stays waiting.
   pan = 0.0; tilt = 0.0; sendPtuCommand();
   targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
+
+  target_reached=false;
+  NofWaypoints=0;
 
   currentActivity = -1;
   abort_activity=false;
@@ -317,6 +339,13 @@ void Task::updateHook()
           std::cout << "Error setting GNCState" << std::endl;
         }
     } 
+    if (_trajectory_status.read(tj_status) == RTT::NewData)
+    {
+        if (tj_status)
+            target_reached=true;
+        else
+            abort_activity=true;
+    }
 
     CommandInfo* cmd_info = tcComm->extractCommandInfo();
     if (cmd_info != NULL)
@@ -356,6 +385,29 @@ void Task::updateHook()
           initial_imu = pose;
 	  std::cout <<  "GNC_LLO_TURNSPOT angle:" << targetOrientationTheta << std::endl;
           sendMotionCommand();
+          if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error getting GNCState" << std::endl;
+          }
+          //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
+          if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error setting GNCState" << std::endl;
+          }
+        }
+        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_LLO_TRAJECTORY")) {
+	  currentActivity = GNC_LLO_TRAJECTORY_ACTIVITY;
+	  currentParams = cmd_info->activityParams;
+	  int ackid;
+	  sscanf(currentParams.c_str(), "%d %d", &ackid, &NofWaypoints);
+          for (int i=0;i<NofWaypoints;i++){
+              sscanf(currentParams.c_str(),"%lf %lf %lf", &targetPositionX, &targetPositionY, &targetOrientationTheta);
+              waypoint.position(0)=targetPositionX;
+              waypoint.position(1)=targetPositionY;
+              waypoint.heading=targetOrientationTheta;
+              trajectory.push_back(waypoint);
+          }
+          target_reached=false;
+          _target_trajectory.write(trajectory);
+	  std::cout <<  "GNC_LLO_TRAJECTORY #ofWaypoints:" << NofWaypoints << std::endl;
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error getting GNCState" << std::endl;
           }
@@ -553,7 +605,7 @@ void Task::updateHook()
             std::cout << "Error getting GNCState" << std::endl;
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-        GNCState[GNC_ACTION_ID_INDEX]=34;
+        GNCState[GNC_ACTION_ID_INDEX]=32;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
             std::cout << "Error setting GNCState" << std::endl;
@@ -569,6 +621,36 @@ void Task::updateHook()
         targetTranslation = 0.0;
         targetRotation = 0.0;
         sendMotionCommand();
+	currentActivity = -1;
+	if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+      }else {
+	if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=33;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+      }
+    }
+    else if (currentActivity == GNC_LLO_TRAJECTORY_ACTIVITY) {
+      if (target_reached || abort_activity) {
+        abort_activity=false;
+        target_reached=false;
+        targetPositionX=0.0;
+        targetPositionY=0.0;
+        targetOrientationTheta=0.0;
+        trajectory.clear();
 	currentActivity = -1;
 	if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
             std::cout << "Error getting GNCState" << std::endl;
