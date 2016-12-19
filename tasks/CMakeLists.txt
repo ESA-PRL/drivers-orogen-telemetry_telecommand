@@ -1,6 +1,9 @@
 # Generated from orogen/lib/orogen/templates/tasks/CMakeLists.txt
 
 include(telemetry_telecommandTaskLib)
+
+SET(CMAKE_CXX_FLAGS "-std=c++0x")
+
 ADD_LIBRARY(${TELEMETRY_TELECOMMAND_TASKLIB_NAME} SHARED 
     ${TELEMETRY_TELECOMMAND_TASKLIB_SOURCES})
 add_dependencies(${TELEMETRY_TELECOMMAND_TASKLIB_NAME}

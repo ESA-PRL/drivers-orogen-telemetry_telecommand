@@ -12,9 +12,9 @@
 #include "telemetry_telecommand/rt.h"
 #include "telemetry_telecommand/prr.h"
 
-#include "telemetry_telecommand/ActiveMQFilesClient.h"
-#include "telemetry_telecommand/ActiveMQAdminClient.h"
-#include "telemetry_telecommand/ActiveMQMonitorClient.h"
+#include "telemetry_telecommand/ActiveMQTMSender.h"
+#include "telemetry_telecommand/ActiveMQAdmin.h"
+#include "telemetry_telecommand/ActiveMQTCReceiver.h"
 
 
 //#include "frame_helper/FrameHelper.h"
@@ -90,10 +90,9 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         int inPanCamActivity;
 	
 	//ACTIVE MQ
-	ActiveMQMonitorClient* monitorImuMessProducer;
-	ActiveMQMonitorClient* monitorGncMessProducer;
-	ActiveMQMonitorClient* monitorImgMessProducer;
-	ActiveMQAdminClient* adminMessProducer; 
+        ActiveMQTMSender* activemqTMSender;
+        ActiveMQTCReceiver* activemqTCReceiver;
+        ActiveMQAdmin* activemqAdmin;
 
         CommTmServer* tmComm;
         CommTcServer* tcComm;

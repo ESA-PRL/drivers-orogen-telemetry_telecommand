@@ -128,14 +128,17 @@ bool Task::startHook()
   bool sessionTransacted = false;
   int numMessages = 2000;
   
-  adminMessProducer = new ActiveMQAdminClient(numMessages, useTopics);
-  
-  string imu_str("IMU_SENS");
-  monitorImuMessProducer = new ActiveMQMonitorClient(numMessages, useTopics, sessionTransacted, imu_str);
-  string gnc_str("GNC");
-  monitorGncMessProducer = new ActiveMQMonitorClient(numMessages, useTopics, sessionTransacted, gnc_str);
-  string img_str("XB3C");
-  monitorImgMessProducer = new ActiveMQMonitorClient(numMessages, useTopics, sessionTransacted, img_str);
+  activemqTMSender = new ActiveMQTMSender(numMessages, useTopics, false, "");
+
+  activemqAdmin = new ActiveMQAdmin(numMessages, useTopics);
+
+  std::string brokerURI = "failover:(tcp://192.168.200.236:9009)";
+  activemqTCReceiver = new ActiveMQTCReceiver(brokerURI, 
+					      2000, // numMessages, 
+					      true, // useTopics, 
+					      false // sessionTransacted
+					      );
+
 
   RobotTask* rt1 = new RobotTask("ADE_LEFT_Initialise"); // Simulated
   RobotTask* rt2 = new RobotTask("ADE_LEFT_conf");  // Simulated
