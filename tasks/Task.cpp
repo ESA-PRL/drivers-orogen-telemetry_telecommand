@@ -121,7 +121,7 @@ bool Task::startHook()
   tcComm = new CommTcServer( TC_SERVER_PORT_NUMBER); 
   tmComm = new CommTmServer( TM_SERVER_PORT_NUMBER, theRobotProcedure);
   tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NUMBER );
-/*
+
   activemq::library::ActiveMQCPP::initializeLibrary();
   
   bool useTopics = true;
@@ -136,7 +136,7 @@ bool Task::startHook()
   monitorGncMessProducer = new ActiveMQMonitorClient(numMessages, useTopics, sessionTransacted, gnc_str);
   string img_str("XB3C");
   monitorImgMessProducer = new ActiveMQMonitorClient(numMessages, useTopics, sessionTransacted, img_str);
-*/
+
   RobotTask* rt1 = new RobotTask("ADE_LEFT_Initialise"); // Simulated
   RobotTask* rt2 = new RobotTask("ADE_LEFT_conf");  // Simulated
   RobotTask* rt3 = new RobotTask("ADE_LEFT_ReleaseHDRM"); // Simulated
