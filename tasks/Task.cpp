@@ -117,11 +117,6 @@ bool Task::startHook()
     return false;
   //    signal(SIGPIPE, SIG_IGN);
   
-  theRobotProcedure = new RobotProcedure("exoter");
-  tcComm = new CommTcServer( TC_SERVER_PORT_NUMBER); 
-  tmComm = new CommTmServer( TM_SERVER_PORT_NUMBER, theRobotProcedure);
-  tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NUMBER );
-
   activemq::library::ActiveMQCPP::initializeLibrary();
   
   bool useTopics = true;
@@ -138,6 +133,12 @@ bool Task::startHook()
 					      true, // useTopics, 
 					      false // sessionTransacted
 					      );
+
+  theRobotProcedure = new RobotProcedure("exoter");
+  tcComm = new CommTcServer( TC_SERVER_PORT_NUMBER); 
+  tmComm = new CommTmServer( TM_SERVER_PORT_NUMBER, theRobotProcedure, activemqTMSender);
+  tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NUMBER );
+
 
 
   RobotTask* rt1 = new RobotTask("ADE_LEFT_Initialise"); // Simulated
@@ -350,7 +351,8 @@ void Task::updateHook()
             abort_activity=true;
     }
 
-    CommandInfo* cmd_info = tcComm->extractCommandInfo();
+    CommandInfo* cmd_info = activemqTCReceiver->extractCommandInfo();
+    // CommandInfo* cmd_info = tcComm->extractCommandInfo();
     if (cmd_info != NULL)
     {
       if (!strcmp((cmd_info->activityName).c_str(), "ABORT"))

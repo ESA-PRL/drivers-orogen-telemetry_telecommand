@@ -2,7 +2,7 @@
 
 include(telemetry_telecommandTaskLib)
 
-SET(CMAKE_CXX_FLAGS "-std=c++0x")
+SET(CMAKE_CXX_FLAGS "-std=c++0x -Wwrite-strings")
 
 ADD_LIBRARY(${TELEMETRY_TELECOMMAND_TASKLIB_NAME} SHARED 
     ${TELEMETRY_TELECOMMAND_TASKLIB_SOURCES})
