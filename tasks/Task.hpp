@@ -85,6 +85,8 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
         // PanCam_WACGetImage parameters
         char cam[80], dummy_param[80];
+        std::string image_filename;
+        std::string dem_filename;
 
         // PanCam_WAC_RRGB parameters
         int inPanCamActivity;
@@ -108,7 +110,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         base::samples::RigidBodyState initial_3Dpose;
         base::samples::RigidBodyState absolute_pose;
         double initial_absolute_heading;
-        bool tj_status;
+        int tj_status;
         //bool first_estimate;
         //double first_imu_estimate_yaw;
 

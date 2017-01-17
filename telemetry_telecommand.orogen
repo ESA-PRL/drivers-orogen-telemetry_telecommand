@@ -29,7 +29,7 @@ task_context "Task" do
 
     # A configuration property (here, a std::string). Its value can be retrieved
     # in the C++ code with # _config_value.get() and _config_value.set(new_value).
-    property "config_value", "/std/string"
+    property "activeMQ_brokerURI", "/std/string"
     property "initial_pose", "/base/samples/RigidBodyState" 
 
 
@@ -43,9 +43,13 @@ task_context "Task" do
     input_port "current_ptu", "base/samples/Joints"
     input_port "current_imu", "base/samples/RigidBodyState"
     input_port "current_bema", "base/samples/Joints"
-    input_port "trajectory_status", "bool"
-#input_port "left_frame", ro_ptr('base::samples::frame::Frame')
-#input_port "right_frame", ro_ptr('base::samples::frame::Frame')
+    input_port "trajectory_status", "int"
+    input_port "image_mast_filename", "std/string"
+    input_port "image_front_filename", "std/string"
+    input_port "image_back_filename", "std/string"
+    input_port "dem_mast_filename", "std/string"
+    input_port "dem_front_filename", "std/string"
+    input_port "dem_back_filename", "std/string"
     # An output port, i.e. an object to which the component pushes data so that
     # it is transmitted to other components' inputs
     #
@@ -55,12 +59,20 @@ task_context "Task" do
     output_port "walking_command_front", "double"
     output_port "walking_command_rear", "double"
     output_port "locomotion_command", "base/commands/Motion2D"
-    output_port "target_trajectory", "/std/vector<base/Waypoint>"
+    output_port "trajectory", "/std/vector<base/Waypoint>"
     output_port "ptu_command", "base/commands/Joints"
-    output_port "pancam_left_store_image_filename", "/std/string"
-    output_port "loccam_front_store_image_filename", "/std/string"
-    output_port "pancam_right_store_image_filename", "/std/string"
-    output_port "loccam_rear_store_image_filename", "/std/string"
+    output_port "camera_mast_process_image_trigger", "/std/string"
+    output_port "camera_front_process_image_trigger", "/std/string"
+    output_port "camera_back_process_image_trigger", "/std/string"
+
+    transformer do
+        transform "left_camera_bb3", "lab"
+        transform "left_camera_bb2_front", "lab"
+        transform "left_camera_bb2_back", "lab"
+        #align_port "current_pose"
+        max_latency 0.5
+    end
+
     # If you want that component's updateHook() to be executed when the "input"
     # port gets data, uncomment this and comment the 'periodic' line
     # port_driven "input"
