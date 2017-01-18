@@ -26,7 +26,7 @@ const int BEMA_DEPLOY_3_ACTIVITY = 10;
 const double DEG2RAD = 3.141592/180;
 const double RAD2DEG = 180/3.141592;
 
-const double OMEGA = 0.01;  //in Rad/s the commanded angular velocity to the walking actuators when deploying
+const double OMEGA = 0.02;  //in Rad/s the commanded angular velocity to the walking actuators when deploying
 
 const double PANLIMIT_LEFT = 50*DEG2RAD;
 const double PANLIMIT_RIGHT = -235*DEG2RAD;
@@ -126,7 +126,7 @@ bool Task::startHook()
   int numMessages = 2000;
   activemqTMSender = new ActiveMQTMSender(numMessages, useTopics, false, "");
   activemqAdmin = new ActiveMQAdmin(numMessages, useTopics);
-  std::string brokerURI = "failover:(tcp://192.168.200.212:9009)";
+  std::string brokerURI = "failover:(tcp://192.168.200.219:9009)";
   //std::string brokerURI = _activeMQ_brokerURI.value();
   activemqTCReceiver = new ActiveMQTCReceiver(brokerURI, 
 					      2000, // numMessages, 
@@ -246,9 +246,20 @@ bool Task::startHook()
   pan = 0.0; tilt = 0.0; sendPtuCommand();
   targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
 
+
+  /**
+   * Routine to send the bema command to the rover stowed position (beggining of Egress)
+   */
+/*
+  currentActivity = BEMA_DEPLOY_1_ACTIVITY;
+  bema_command=-90.0;
+  std::cout <<  "BEMA Deploy 1: " << bema_command << std::endl;
+  bema_command = bema_command*DEG2RAD;
+  _bema_command.write(-2.0*OMEGA);
+
   target_reached=false;
   NofWaypoints=0;
-
+*/
   currentActivity = -1;
   abort_activity=false;
     return true;
@@ -355,7 +366,7 @@ void Task::updateHook()
 
     if (_image_mast_filename.read(image_filename) == RTT::NewData)
     {
-        std::cout << "check1: sending image" << std::endl;
+        std::cout << "check1: sending image " << std::endl;
         std::ifstream input(image_filename.c_str(), std::ios::binary);
 	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
@@ -364,46 +375,49 @@ void Task::updateHook()
         int seq=1;
         long time=2;
         std::cout << "check2: sending image" << std::endl;
-        if (activemqTMSender->isConnected){
-            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageProducerMonitoring);
-            std::cout << "check3: sending image" << std::endl;
-        }
-	Eigen::Affine3d tf;
+        Eigen::Affine3d tf;
 	base::Time time2 = base::Time::now();
 	if (_left_camera_bb32lab.get(time2, tf, false))
 	{
 		std::cout << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+	double transformation[7] = {tf.translation().x(), tf.translation().y(), tf.translation().z(), Eigen::Quaterniond(tf.linear()).x(), Eigen::Quaterniond(tf.linear()).y(), Eigen::Quaterniond(tf.linear()).z(), Eigen::Quaterniond(tf.linear()).w()};
+        if (activemqTMSender->isConnected){
+            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageProducerMonitoring, transformation);
+            std::cout << "check3: sending image finished" << std::endl;
+        }
     }
 
     if (_image_front_filename.read(image_filename) == RTT::NewData)
     {
-        std::cout << "check1: sending image" << std::endl;
-        std::ifstream input(image_filename.c_str(), std::ios::binary);
-	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
+        std::cout << "check1: sending image " << image_filename << std::endl;
+	sleep(2);        
+	std::ifstream input(image_filename.c_str(), std::ios::binary);
+	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_1_copy.png", std::ios::binary);
         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         auto size = buffer.size();
         char* data = &buffer[0];
         int seq=1;
         long time=2;
         std::cout << "check2: sending image" << std::endl;
-        if (activemqTMSender->isConnected){
-            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageProducerMonitoring);
-            std::cout << "check3: sending image" << std::endl;
-        }
-	Eigen::Affine3d tf;
+        Eigen::Affine3d tf;
 	base::Time time2 = base::Time::now();
 	if (_left_camera_bb2_front2lab.get(time2, tf, false))
 	{
 		std::cout << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+	double transformation[7] = {tf.translation().x(), tf.translation().y(), tf.translation().z(), Eigen::Quaterniond(tf.linear()).x(), Eigen::Quaterniond(tf.linear()).y(), Eigen::Quaterniond(tf.linear()).z(), Eigen::Quaterniond(tf.linear()).w()};
+        if (activemqTMSender->isConnected){
+            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageProducerMonitoring, transformation);
+            std::cout << "check3: sending image finished" << std::endl;
+        }
     }
 
     if (_image_back_filename.read(image_filename) == RTT::NewData)
     {
-        std::cout << "check1: sending image" << std::endl;
+        std::cout << "check1: sending image " << std::endl;
         std::ifstream input(image_filename.c_str(), std::ios::binary);
 	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
@@ -412,10 +426,6 @@ void Task::updateHook()
         int seq=1;
         long time=2;
         std::cout << "check2: sending image" << std::endl;
-        if (activemqTMSender->isConnected){
-            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageProducerMonitoring);
-            std::cout << "check3: sending image" << std::endl;
-        }
 	Eigen::Affine3d tf;
 	base::Time time2 = base::Time::now();
 	if (_left_camera_bb2_back2lab.get(time2, tf, false))
@@ -423,72 +433,71 @@ void Task::updateHook()
 		std::cout << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+	double transformation[7] = {tf.translation().x(), tf.translation().y(), tf.translation().z(), Eigen::Quaterniond(tf.linear()).x(), Eigen::Quaterniond(tf.linear()).y(), Eigen::Quaterniond(tf.linear()).z(), Eigen::Quaterniond(tf.linear()).w()};
+        if (activemqTMSender->isConnected){
+            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageProducerMonitoring, transformation);
+            std::cout << "check3: sending image finished" << std::endl;
+        }
     }
-
 
     if (_dem_mast_filename.read(dem_filename) == RTT::NewData)
     {
-        std::cout << "check1: sending image" << std::endl;
+        std::cout << "check1: sending dem " << std::endl;
         std::ifstream input(dem_filename.c_str(), std::ios::binary);
 	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
-        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        auto size = buffer.size();
-        char* data = &buffer[0];
+        std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+        std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
         int seq=1;
         long time=2;
-        std::cout << "check2: sending image" << std::endl;
-        if (activemqTMSender->isConnected){
-            //tmComm->sendDEMMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageProducerMonitoring);
-            std::cout << "check3: sending image" << std::endl;
-        }
-	Eigen::Affine3d tf;
+        std::cout << "check2: sending dem" << std::endl;
+        Eigen::Affine3d tf;
 	base::Time time2 = base::Time::now();
 	if (_left_camera_bb32lab.get(time2, tf, false))
 	{
 		std::cout << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        double transformation[7] = {tf.translation().x(), tf.translation().y(), tf.translation().z(), Eigen::Quaterniond(tf.linear()).x(), Eigen::Quaterniond(tf.linear()).y(), Eigen::Quaterniond(tf.linear()).z(), Eigen::Quaterniond(tf.linear()).w()};
+        if (activemqTMSender->isConnected){
+            tmComm->sendDEMMessage(seq, time, data.size(), data, activemqTMSender->demProducerMonitoring, transformation);
+            std::cout << "check3: sending dem finished" << std::endl;
+        }
     }
 
     if (_dem_front_filename.read(dem_filename) == RTT::NewData)
     {
-        std::cout << "check1: sending image" << std::endl;
-        std::ifstream input(dem_filename.c_str(), std::ios::binary);
-	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
-        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        auto size = buffer.size();
-        char* data = &buffer[0];
+        std::cout << "check1: sending dem " << dem_filename << std::endl;
+        //std::ifstream input(dem_filename.c_str(), std::ios::binary);
+	std::ifstream input("/home/exoter/Desktop/Images/FLOC_1_copy.obj", std::ios::binary);
+        std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+        std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
         int seq=1;
         long time=2;
-        std::cout << "check2: sending image" << std::endl;
-        if (activemqTMSender->isConnected){
-            //tmComm->sendDEMMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageProducerMonitoring);
-            std::cout << "check3: sending image" << std::endl;
-        }
-	Eigen::Affine3d tf;
+        std::cout << "check2: sending dem" << std::endl;
+        Eigen::Affine3d tf;
 	base::Time time2 = base::Time::now();
 	if (_left_camera_bb2_front2lab.get(time2, tf, false))
 	{
 		std::cout << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        double transformation[7] = {tf.translation().x(), tf.translation().y(), tf.translation().z(), Eigen::Quaterniond(tf.linear()).x(), Eigen::Quaterniond(tf.linear()).y(), Eigen::Quaterniond(tf.linear()).z(), Eigen::Quaterniond(tf.linear()).w()};
+        if (activemqTMSender->isConnected){
+            tmComm->sendDEMMessage(seq, time, data.size(), data, activemqTMSender->demProducerMonitoring, transformation);
+            std::cout << "check3: sending dem finished" << std::endl;
+        }
     }
 
     if (_dem_back_filename.read(dem_filename) == RTT::NewData)
     {
-        std::cout << "check1: sending image" << std::endl;
+        std::cout << "check1: sending dem " << std::endl;
         std::ifstream input(dem_filename.c_str(), std::ios::binary);
 	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
-        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        auto size = buffer.size();
-        char* data = &buffer[0];
+        std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+        std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
         int seq=1;
         long time=2;
-        std::cout << "check2: sending image" << std::endl;
-        if (activemqTMSender->isConnected){
-            //tmComm->sendDEMMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageProducerMonitoring);
-            std::cout << "check3: sending image" << std::endl;
-        }
+        std::cout << "check2: sending dem" << std::endl;
 	Eigen::Affine3d tf;
 	base::Time time2 = base::Time::now();
 	if (_left_camera_bb2_back2lab.get(time2, tf, false))
@@ -496,6 +505,11 @@ void Task::updateHook()
 		std::cout << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        double transformation[7] = {tf.translation().x(), tf.translation().y(), tf.translation().z(), Eigen::Quaterniond(tf.linear()).x(), Eigen::Quaterniond(tf.linear()).y(), Eigen::Quaterniond(tf.linear()).z(), Eigen::Quaterniond(tf.linear()).w()};
+        if (activemqTMSender->isConnected){
+            tmComm->sendDEMMessage(seq, time, data.size(), data, activemqTMSender->demProducerMonitoring, transformation);
+            std::cout << "check3: sending dem finished" << std::endl;
+        }
     }
 
 
@@ -945,7 +959,7 @@ void Task::updateHook()
       if (!strcmp(cam, "WAC_L")) {
         char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 1", cam, WACL_index++);
-	_camera_mast_process_image_trigger.write(filename);
+	_camera_mast_process_image_trigger.write(true);
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, WACL_index-1);
         std::ofstream metadata;
         metadata.open(filename);
@@ -958,7 +972,8 @@ void Task::updateHook()
 	base::Time time = base::Time::now();
 	if (_left_camera_bb32lab.get(time, tf, false))
 	{
-		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation() << ", " << Eigen::Quaterniond(tf.linear()).coeffs() << std::endl;
+		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
+                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
@@ -974,7 +989,7 @@ void Task::updateHook()
       else if (!strcmp(cam, "WAC_R")) {
 	char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 2", cam, WACR_index++);
-    	_camera_mast_process_image_trigger.write(filename);
+    	_camera_mast_process_image_trigger.write(true);
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, WACR_index-1);
         std::ofstream metadata;
         metadata.open(filename);
@@ -983,6 +998,13 @@ void Task::updateHook()
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
         metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
+	Eigen::Affine3d tf;
+	base::Time time = base::Time::now();
+	if (_left_camera_bb32lab.get(time, tf, false))
+	{
+		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
+                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
+	}
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
@@ -997,7 +1019,7 @@ void Task::updateHook()
       else if (!strcmp(cam, "PAN_STEREO")) {
 	char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left.png 1", cam, PAN_STEREO_index++);
-    	_camera_mast_process_image_trigger.write(filename);
+    	_camera_mast_process_image_trigger.write(true);
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left_metadata.txt", cam, PAN_STEREO_index-1);
         std::ofstream metadata;
         metadata.open(filename);
@@ -1006,7 +1028,14 @@ void Task::updateHook()
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
         metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
-        
+ 	Eigen::Affine3d tf;
+	base::Time time = base::Time::now();
+	if (_left_camera_bb32lab.get(time, tf, false))
+	{
+		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
+                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
+	}
+       
         char filename2[240];
         //sprintf (filename2, "/home/exoter/Desktop/Images/%s_%d_right.png 2", cam, PAN_STEREO_index-1);
     	//_camera_mast_store_image_filename.write(filename2);
@@ -1018,6 +1047,11 @@ void Task::updateHook()
         metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata2 << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
         metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
+	if (_left_camera_bb32lab.get(time, tf, false))
+	{
+		metadata2 << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
+                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
+	}
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
@@ -1038,7 +1072,7 @@ void Task::updateHook()
       if (!strcmp(cam, "FLOC_L")) {
         char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 1", cam, FLOCL_index++);
-	_camera_front_process_image_trigger.write(filename);
+	_camera_front_process_image_trigger.write(true);
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, FLOCL_index-1);
         std::ofstream metadata;
         metadata.open(filename);
@@ -1047,6 +1081,13 @@ void Task::updateHook()
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
         metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
+	Eigen::Affine3d tf;
+	base::Time time = base::Time::now();
+	if (_left_camera_bb2_front2lab.get(time, tf, false))
+	{
+		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
+                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
+	}
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -1061,7 +1102,7 @@ void Task::updateHook()
       else if (!strcmp(cam, "FLOC_R")) {
 	char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 2", cam, FLOCR_index++);
-	_camera_front_process_image_trigger.write(filename);
+	_camera_front_process_image_trigger.write(true);
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, FLOCR_index-1);
         std::ofstream metadata;
         metadata.open(filename);
@@ -1070,6 +1111,13 @@ void Task::updateHook()
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
         metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
+	Eigen::Affine3d tf;
+	base::Time time = base::Time::now();
+	if (_left_camera_bb2_front2lab.get(time, tf, false))
+	{
+		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
+                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
+	}
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -1084,7 +1132,7 @@ void Task::updateHook()
       else if (!strcmp(cam, "FLOC_STEREO")) {
 	char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d 3", cam, FLOC_STEREO_index++);
-	_camera_front_process_image_trigger.write(filename);
+	_camera_front_process_image_trigger.write(true);
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left_metadata.txt", cam, FLOC_STEREO_index-1);
         std::ofstream metadata;
         metadata.open(filename);
@@ -1093,7 +1141,14 @@ void Task::updateHook()
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
         metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
-        
+ 	Eigen::Affine3d tf;
+	base::Time time = base::Time::now();
+	if (_left_camera_bb2_front2lab.get(time, tf, false))
+	{
+		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
+                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
+	}
+       
 	sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, FLOC_STEREO_index-1);
         std::ofstream metadata2;
         metadata2.open(filename);
@@ -1102,6 +1157,11 @@ void Task::updateHook()
         metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata2 << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
         metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
+	if (_left_camera_bb2_front2lab.get(time, tf, false))
+	{
+		metadata2 << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
+                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
+	}
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -1122,7 +1182,7 @@ void Task::updateHook()
       if (!strcmp(cam, "RLOC_L")) {
         char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 1", cam, RLOCL_index++);
-	_camera_back_process_image_trigger.write(filename);
+	_camera_back_process_image_trigger.write(true);
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, RLOCL_index-1);
         std::ofstream metadata;
         metadata.open(filename);
@@ -1131,6 +1191,13 @@ void Task::updateHook()
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
         metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
+	Eigen::Affine3d tf;
+	base::Time time = base::Time::now();
+	if (_left_camera_bb2_back2lab.get(time, tf, false))
+	{
+		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
+                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
+	}
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -1145,7 +1212,7 @@ void Task::updateHook()
       else if (!strcmp(cam, "RLOC_R")) {
 	char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 2", cam, RLOCR_index++);
-	_camera_back_process_image_trigger.write(filename);
+	_camera_back_process_image_trigger.write(true);
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, RLOCR_index-1);
         std::ofstream metadata;
         metadata.open(filename);
@@ -1154,6 +1221,13 @@ void Task::updateHook()
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
         metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
+	Eigen::Affine3d tf;
+	base::Time time = base::Time::now();
+	if (_left_camera_bb2_back2lab.get(time, tf, false))
+	{
+		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
+                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
+	}
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -1168,7 +1242,7 @@ void Task::updateHook()
       else if (!strcmp(cam, "RLOC_STEREO")) {
 	char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d 3", cam, RLOC_STEREO_index++);
-	_camera_back_process_image_trigger.write(filename);
+	_camera_back_process_image_trigger.write(true);
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left_metadata.txt", cam, RLOC_STEREO_index-1);
         std::ofstream metadata;
         metadata.open(filename);
@@ -1177,7 +1251,14 @@ void Task::updateHook()
         metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
         metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
         metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
-        
+ 	Eigen::Affine3d tf;
+	base::Time time = base::Time::now();
+	if (_left_camera_bb2_back2lab.get(time, tf, false))
+	{
+		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
+                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
+	}
+       
 	sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, RLOC_STEREO_index-1);
         std::ofstream metadata2;
         metadata2.open(filename);
@@ -1186,6 +1267,11 @@ void Task::updateHook()
         metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
 	metadata2 << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
         metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
+	if (_left_camera_bb2_back2lab.get(time, tf, false))
+	{
+		metadata2 << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
+                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
+	}
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;

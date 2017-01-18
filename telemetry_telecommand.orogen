@@ -61,9 +61,9 @@ task_context "Task" do
     output_port "locomotion_command", "base/commands/Motion2D"
     output_port "trajectory", "/std/vector<base/Waypoint>"
     output_port "ptu_command", "base/commands/Joints"
-    output_port "camera_mast_process_image_trigger", "/std/string"
-    output_port "camera_front_process_image_trigger", "/std/string"
-    output_port "camera_back_process_image_trigger", "/std/string"
+    output_port "camera_mast_process_image_trigger", "bool"
+    output_port "camera_front_process_image_trigger", "bool"
+    output_port "camera_back_process_image_trigger", "bool"
 
     transformer do
         transform "left_camera_bb3", "lab"
