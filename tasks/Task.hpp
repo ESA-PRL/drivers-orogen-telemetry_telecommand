@@ -72,6 +72,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         double targetSpeed; //meters per second
         double targetTranslation;
         double targetRotation;
+        double transformation[7];
         std::vector<base::Waypoint> trajectory;
         base::Waypoint waypoint;
         bool target_reached;
@@ -204,6 +205,8 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
          * travelled angle.
          */
         double getTravelledAngle();
+
+        void getTransform(Eigen::Affine3d& tf);
 
         /** Calculates the parameters to be sent as motion commands (2D). Translation (m/s) and Rotation (rad/s)
          * are calculated.

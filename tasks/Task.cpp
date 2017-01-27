@@ -124,10 +124,17 @@ bool Task::startHook()
   bool useTopics = true;
   bool sessionTransacted = false;
   int numMessages = 2000;
-  activemqTMSender = new ActiveMQTMSender(numMessages, useTopics, false, "");
-  activemqAdmin = new ActiveMQAdmin(numMessages, useTopics);
-  std::string brokerURI = "failover:(tcp://192.168.200.219:9009)";
-  //std::string brokerURI = _activeMQ_brokerURI.value();
+
+  std::string brokerURI = _activeMQ_brokerURI.value();
+  //std::string brokerURI = "failover:(tcp://192.168.200.241:9009)";
+  
+  activemqTMSender = new ActiveMQTMSender(brokerURI, 
+					  numMessages, 
+					  useTopics, 
+					  false, "");
+  
+  activemqAdmin = new ActiveMQAdmin(brokerURI, numMessages, useTopics);
+  
   activemqTCReceiver = new ActiveMQTCReceiver(brokerURI, 
 					      2000, // numMessages, 
 					      true, // useTopics, 
@@ -366,100 +373,101 @@ void Task::updateHook()
 
     if (_image_mast_filename.read(image_filename) == RTT::NewData)
     {
-        std::cout << "check1: sending image " << std::endl;
+        std::cout << "check1: sending image " << image_filename << std::endl;
         std::ifstream input(image_filename.c_str(), std::ios::binary);
 	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         auto size = buffer.size();
         char* data = &buffer[0];
         int seq=1;
-        long time=2;
+        long time=PAN_STEREO_index-1;
         std::cout << "check2: sending image" << std::endl;
-        Eigen::Affine3d tf;
-	base::Time time2 = base::Time::now();
-	if (_left_camera_bb32lab.get(time2, tf, false))
-	{
-		std::cout << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-	double transformation[7] = {tf.translation().x(), tf.translation().y(), tf.translation().z(), Eigen::Quaterniond(tf.linear()).x(), Eigen::Quaterniond(tf.linear()).y(), Eigen::Quaterniond(tf.linear()).z(), Eigen::Quaterniond(tf.linear()).w()};
         if (activemqTMSender->isConnected){
-            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageProducerMonitoring, transformation);
+            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imagePanCamProducerMonitoring, transformation);
             std::cout << "check3: sending image finished" << std::endl;
         }
     }
 
-    if (_image_front_filename.read(image_filename) == RTT::NewData)
+    if (_image_front_left_filename.read(image_filename) == RTT::NewData)
     {
         std::cout << "check1: sending image " << image_filename << std::endl;
-	sleep(2);        
 	std::ifstream input(image_filename.c_str(), std::ios::binary);
 	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_1_copy.png", std::ios::binary);
         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         auto size = buffer.size();
         char* data = &buffer[0];
         int seq=1;
-        long time=2;
+        long time=FLOC_STEREO_index-1;
         std::cout << "check2: sending image" << std::endl;
-        Eigen::Affine3d tf;
-	base::Time time2 = base::Time::now();
-	if (_left_camera_bb2_front2lab.get(time2, tf, false))
-	{
-		std::cout << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-	double transformation[7] = {tf.translation().x(), tf.translation().y(), tf.translation().z(), Eigen::Quaterniond(tf.linear()).x(), Eigen::Quaterniond(tf.linear()).y(), Eigen::Quaterniond(tf.linear()).z(), Eigen::Quaterniond(tf.linear()).w()};
         if (activemqTMSender->isConnected){
-            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageProducerMonitoring, transformation);
+            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageFLocProducerMonitoring, transformation);
             std::cout << "check3: sending image finished" << std::endl;
         }
     }
 
-    if (_image_back_filename.read(image_filename) == RTT::NewData)
+    if (_image_front_right_filename.read(image_filename) == RTT::NewData)
     {
-        std::cout << "check1: sending image " << std::endl;
+        std::cout << "check1: sending image " << image_filename << std::endl;
+	std::ifstream input(image_filename.c_str(), std::ios::binary);
+	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_1_copy.png", std::ios::binary);
+        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+        auto size = buffer.size();
+        char* data = &buffer[0];
+        int seq=1;
+        long time=FLOC_STEREO_index-1;
+        std::cout << "check2: sending image" << std::endl;
+        if (activemqTMSender->isConnected){
+            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageFLocProducerMonitoring, transformation);
+            std::cout << "check3: sending image finished" << std::endl;
+        }
+    }
+
+    if (_image_back_left_filename.read(image_filename) == RTT::NewData)
+    {
+        std::cout << "check1: sending image " << image_filename << std::endl;
         std::ifstream input(image_filename.c_str(), std::ios::binary);
 	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         auto size = buffer.size();
         char* data = &buffer[0];
         int seq=1;
-        long time=2;
+        long time=RLOC_STEREO_index-1;
         std::cout << "check2: sending image" << std::endl;
-	Eigen::Affine3d tf;
-	base::Time time2 = base::Time::now();
-	if (_left_camera_bb2_back2lab.get(time2, tf, false))
-	{
-		std::cout << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-	double transformation[7] = {tf.translation().x(), tf.translation().y(), tf.translation().z(), Eigen::Quaterniond(tf.linear()).x(), Eigen::Quaterniond(tf.linear()).y(), Eigen::Quaterniond(tf.linear()).z(), Eigen::Quaterniond(tf.linear()).w()};
         if (activemqTMSender->isConnected){
-            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageProducerMonitoring, transformation);
+            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageRLocProducerMonitoring, transformation);
+            std::cout << "check3: sending image finished" << std::endl;
+        }
+    }
+
+    if (_image_back_right_filename.read(image_filename) == RTT::NewData)
+    {
+        std::cout << "check1: sending image " << image_filename << std::endl;
+        std::ifstream input(image_filename.c_str(), std::ios::binary);
+	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
+        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+        auto size = buffer.size();
+        char* data = &buffer[0];
+        int seq=1;
+        long time=RLOC_STEREO_index-1;
+        std::cout << "check2: sending image" << std::endl;
+        if (activemqTMSender->isConnected){
+            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageRLocProducerMonitoring, transformation);
             std::cout << "check3: sending image finished" << std::endl;
         }
     }
 
     if (_dem_mast_filename.read(dem_filename) == RTT::NewData)
     {
-        std::cout << "check1: sending dem " << std::endl;
+        std::cout << "check1: sending dem " << dem_filename << std::endl;
         std::ifstream input(dem_filename.c_str(), std::ios::binary);
 	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
         int seq=1;
-        long time=2;
+        long time=(long)PAN_STEREO_index-1;
         std::cout << "check2: sending dem" << std::endl;
-        Eigen::Affine3d tf;
-	base::Time time2 = base::Time::now();
-	if (_left_camera_bb32lab.get(time2, tf, false))
-	{
-		std::cout << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        double transformation[7] = {tf.translation().x(), tf.translation().y(), tf.translation().z(), Eigen::Quaterniond(tf.linear()).x(), Eigen::Quaterniond(tf.linear()).y(), Eigen::Quaterniond(tf.linear()).z(), Eigen::Quaterniond(tf.linear()).w()};
         if (activemqTMSender->isConnected){
-            tmComm->sendDEMMessage(seq, time, data.size(), data, activemqTMSender->demProducerMonitoring, transformation);
+            tmComm->sendDEMMessage(seq, time, data.size(), data, activemqTMSender->demPanCamProducerMonitoring, transformation);
             std::cout << "check3: sending dem finished" << std::endl;
         }
     }
@@ -467,47 +475,31 @@ void Task::updateHook()
     if (_dem_front_filename.read(dem_filename) == RTT::NewData)
     {
         std::cout << "check1: sending dem " << dem_filename << std::endl;
-        //std::ifstream input(dem_filename.c_str(), std::ios::binary);
-	std::ifstream input("/home/exoter/Desktop/Images/FLOC_1_copy.obj", std::ios::binary);
+        std::ifstream input(dem_filename.c_str(), std::ios::binary);
+	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_1_copy.obj", std::ios::binary);
         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
         int seq=1;
-        long time=2;
+        long time=(long)FLOC_STEREO_index-1;
         std::cout << "check2: sending dem" << std::endl;
-        Eigen::Affine3d tf;
-	base::Time time2 = base::Time::now();
-	if (_left_camera_bb2_front2lab.get(time2, tf, false))
-	{
-		std::cout << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        double transformation[7] = {tf.translation().x(), tf.translation().y(), tf.translation().z(), Eigen::Quaterniond(tf.linear()).x(), Eigen::Quaterniond(tf.linear()).y(), Eigen::Quaterniond(tf.linear()).z(), Eigen::Quaterniond(tf.linear()).w()};
         if (activemqTMSender->isConnected){
-            tmComm->sendDEMMessage(seq, time, data.size(), data, activemqTMSender->demProducerMonitoring, transformation);
+            tmComm->sendDEMMessage(seq, time, data.size(), data, activemqTMSender->demFLocProducerMonitoring, transformation);
             std::cout << "check3: sending dem finished" << std::endl;
         }
     }
 
     if (_dem_back_filename.read(dem_filename) == RTT::NewData)
     {
-        std::cout << "check1: sending dem " << std::endl;
+        std::cout << "check1: sending dem " << dem_filename << std::endl;
         std::ifstream input(dem_filename.c_str(), std::ios::binary);
 	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
         int seq=1;
-        long time=2;
+        long time=(long)RLOC_STEREO_index-1;
         std::cout << "check2: sending dem" << std::endl;
-	Eigen::Affine3d tf;
-	base::Time time2 = base::Time::now();
-	if (_left_camera_bb2_back2lab.get(time2, tf, false))
-	{
-		std::cout << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        double transformation[7] = {tf.translation().x(), tf.translation().y(), tf.translation().z(), Eigen::Quaterniond(tf.linear()).x(), Eigen::Quaterniond(tf.linear()).y(), Eigen::Quaterniond(tf.linear()).z(), Eigen::Quaterniond(tf.linear()).w()};
         if (activemqTMSender->isConnected){
-            tmComm->sendDEMMessage(seq, time, data.size(), data, activemqTMSender->demProducerMonitoring, transformation);
+            tmComm->sendDEMMessage(seq, time, data.size(), data, activemqTMSender->demRLocProducerMonitoring, transformation);
             std::cout << "check3: sending dem finished" << std::endl;
         }
     }
@@ -975,7 +967,8 @@ void Task::updateHook()
 		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
-
+        getTransform(tf);
+        
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
         }
@@ -1005,6 +998,7 @@ void Task::updateHook()
 		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        getTransform(tf);
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
@@ -1016,7 +1010,7 @@ void Task::updateHook()
            std::cout << "Error setting PanCamState" << std::endl;
         }
       }
-      else if (!strcmp(cam, "PAN_STEREO")) {
+      else if (!strcmp(cam, "PANCAM_STEREO")) {
 	char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left.png 1", cam, PAN_STEREO_index++);
     	_camera_mast_process_image_trigger.write(true);
@@ -1035,7 +1029,8 @@ void Task::updateHook()
 		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
-       
+        getTransform(tf);
+
         char filename2[240];
         //sprintf (filename2, "/home/exoter/Desktop/Images/%s_%d_right.png 2", cam, PAN_STEREO_index-1);
     	//_camera_mast_store_image_filename.write(filename2);
@@ -1052,6 +1047,7 @@ void Task::updateHook()
 		metadata2 << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        getTransform(tf);
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting PanCamState" << std::endl;
@@ -1088,6 +1084,7 @@ void Task::updateHook()
 		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        getTransform(tf);
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -1118,6 +1115,7 @@ void Task::updateHook()
 		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        getTransform(tf);
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -1148,6 +1146,7 @@ void Task::updateHook()
 		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        getTransform(tf);
        
 	sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, FLOC_STEREO_index-1);
         std::ofstream metadata2;
@@ -1162,6 +1161,7 @@ void Task::updateHook()
 		metadata2 << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        getTransform(tf);
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -1198,6 +1198,7 @@ void Task::updateHook()
 		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        getTransform(tf);
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -1228,6 +1229,7 @@ void Task::updateHook()
 		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        getTransform(tf);
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -1258,6 +1260,7 @@ void Task::updateHook()
 		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        getTransform(tf);
        
 	sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, RLOC_STEREO_index-1);
         std::ofstream metadata2;
@@ -1272,6 +1275,7 @@ void Task::updateHook()
 		metadata2 << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
                     << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
 	}
+        getTransform(tf);
 
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
            std::cout << "Error getting LocCamState" << std::endl;
@@ -1292,7 +1296,7 @@ void Task::updateHook()
       switch (inPanCamActivity) {
 	case 0:
           currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	  pan = 50.0*DEG2RAD;
+	  pan = 45.0*DEG2RAD;
 	  tilt = tilt*DEG2RAD;
           sendPtuCommand();
 	  inPanCamActivity++;
@@ -1300,14 +1304,14 @@ void Task::updateHook()
       	case 1:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    strcpy(cam,"PAN_STEREO");
+	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
 	  }
 	  break;
 	case 2:
 	  if (currentActivity == -1) {
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	    pan = 0.0*DEG2RAD;
+	    pan = 10.0*DEG2RAD;
 	    //tilt = tilt*DEG2RAD;
 	    sendPtuCommand();
             inPanCamActivity++;
@@ -1316,14 +1320,14 @@ void Task::updateHook()
 	case 3:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    strcpy(cam,"PAN_STEREO");
+	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
 	  }
 	  break;
 	case 4:
 	  if (currentActivity == -1) {
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	    pan = -60.0*DEG2RAD;
+	    pan = -25.0*DEG2RAD;
 	    //tilt = tilt*DEG2RAD;
 	    sendPtuCommand();
             inPanCamActivity++;
@@ -1332,14 +1336,14 @@ void Task::updateHook()
 	case 5:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    strcpy(cam,"PAN_STEREO");
+	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
 	  }
 	  break;
 	case 6:
 	  if (currentActivity == -1) {
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	    pan = -120.0*DEG2RAD;
+	    pan = -60.0*DEG2RAD;
 	    //tilt = tilt*DEG2RAD;
 	    sendPtuCommand();
             inPanCamActivity++;
@@ -1348,14 +1352,14 @@ void Task::updateHook()
 	case 7:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    strcpy(cam,"PAN_STEREO");
+	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
 	  }
 	  break;
 	case 8:
 	  if (currentActivity == -1) {
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	    pan = -180.0*DEG2RAD;
+	    pan = -95.0*DEG2RAD;
 	    //tilt = tilt*DEG2RAD;
 	    sendPtuCommand();
             inPanCamActivity++;
@@ -1364,14 +1368,14 @@ void Task::updateHook()
 	case 9:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    strcpy(cam,"PAN_STEREO");
+	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
 	  }
 	  break;
-	case 10:
+        case 10:
 	  if (currentActivity == -1) {
 	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-	    pan = -235.0*DEG2RAD;
+	    pan = -130.0*DEG2RAD;
 	    //tilt = tilt*DEG2RAD;
 	    sendPtuCommand();
             inPanCamActivity++;
@@ -1380,11 +1384,59 @@ void Task::updateHook()
 	case 11:
 	  if (currentActivity == -1) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	    strcpy(cam,"PAN_STEREO");
+	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
 	  }
 	  break;
-	case 12:
+        case 12:
+	  if (currentActivity == -1) {
+	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
+	    pan = -165.0*DEG2RAD;
+	    //tilt = tilt*DEG2RAD;
+	    sendPtuCommand();
+            inPanCamActivity++;
+	  }
+	  break;
+        case 13:
+	  if (currentActivity == -1) {
+	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
+	    strcpy(cam,"PANCAM_STEREO");
+	    inPanCamActivity++;
+	  }
+	  break;
+        case 14:
+	  if (currentActivity == -1) {
+	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
+	    pan = -200.0*DEG2RAD;
+	    //tilt = tilt*DEG2RAD;
+	    sendPtuCommand();
+            inPanCamActivity++;
+	  }
+	  break;
+	case 15:
+	  if (currentActivity == -1) {
+	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
+	    strcpy(cam,"PANCAM_STEREO");
+	    inPanCamActivity++;
+	  }
+	  break;
+        case 16:
+	  if (currentActivity == -1) {
+	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
+	    pan = -235.0*DEG2RAD;
+	    //tilt = tilt*DEG2RAD;
+	    sendPtuCommand();
+            inPanCamActivity++;
+	  }
+	  break;
+	case 17:
+	  if (currentActivity == -1) {
+	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
+	    strcpy(cam,"PANCAM_STEREO");
+	    inPanCamActivity++;
+	  }
+	  break;
+	case 18:
 	  if (currentActivity == -1) {
  	    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
             pan = 0.0;
@@ -1393,7 +1445,7 @@ void Task::updateHook()
 	    inPanCamActivity++;
 	  }
 	  break;
-        case 13:
+        case 19:
           if (currentActivity == -1) {
             inPanCamActivity=0;
           }
@@ -1437,6 +1489,17 @@ double Task::getTravelledAngle()
     double angle =0.0;
     angle = std::abs(pose.getYaw()-initial_imu.getYaw());
     return (angle*RAD2DEG);
+}
+
+void Task::getTransform(Eigen::Affine3d& tf)
+{
+	transformation[0] = tf.translation().x();
+	transformation[1] = tf.translation().y();
+	transformation[2] = tf.translation().z();
+	transformation[3] = Eigen::Quaterniond(tf.linear()).x();
+	transformation[4] = Eigen::Quaterniond(tf.linear()).y();
+	transformation[5] = Eigen::Quaterniond(tf.linear()).z();
+	transformation[6] = Eigen::Quaterniond(tf.linear()).w();
 }
 
 void Task::motionCommand()
