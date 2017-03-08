@@ -52,6 +52,9 @@ task_context "Task" do
     input_port "dem_mast_filename", "std/string"
     input_port "dem_front_filename", "std/string"
     input_port "dem_back_filename", "std/string"
+    input_port "dist_mast_filename", "std/string"
+    input_port "dist_front_filename", "std/string"
+    input_port "dist_back_filename", "std/string"
     # An output port, i.e. an object to which the component pushes data so that
     # it is transmitted to other components' inputs
     #

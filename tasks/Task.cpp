@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <regex>
 #include "Task.hpp"
 
 #define TC_SERVER_PORT_NUMBER 7031
@@ -269,6 +270,7 @@ bool Task::startHook()
 */
   currentActivity = -1;
   abort_activity=false;
+  files_sent=false;
     return true;
 }
 void Task::updateHook()
@@ -407,18 +409,16 @@ void Task::updateHook()
 
     if (_image_front_right_filename.read(image_filename) == RTT::NewData)
     {
-        std::cout << "check1: sending image " << image_filename << std::endl;
-	std::ifstream input(image_filename.c_str(), std::ios::binary);
-	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_1_copy.png", std::ios::binary);
+        std::cout << "check1: sending image file " << image_filename << std::endl;
+        std::ifstream input(image_filename.c_str(), std::ios::binary);
         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         auto size = buffer.size();
         char* data = &buffer[0];
-        int seq=1;
-        long time=FLOC_STEREO_index-1;
-        std::cout << "check2: sending image" << std::endl;
+        std::cout << "check2: sending image file with size " << size << std::endl;
+        image_filename.replace(0, 28, "");
         if (activemqTMSender->isConnected){
-            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageFLocProducerMonitoring, transformation);
-            std::cout << "check3: sending image finished" << std::endl;
+            tmComm->sendFileMessage(image_filename.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+            std::cout << "check3: sending image file finished" << std::endl;
         }
     }
 
@@ -441,18 +441,16 @@ void Task::updateHook()
 
     if (_image_back_right_filename.read(image_filename) == RTT::NewData)
     {
-        std::cout << "check1: sending image " << image_filename << std::endl;
+        std::cout << "check1: sending image file " << image_filename << std::endl;
         std::ifstream input(image_filename.c_str(), std::ios::binary);
-	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         auto size = buffer.size();
         char* data = &buffer[0];
-        int seq=1;
-        long time=RLOC_STEREO_index-1;
-        std::cout << "check2: sending image" << std::endl;
+        std::cout << "check2: sending image file with size " << size << std::endl;
+        image_filename.replace(0, 28, "");
         if (activemqTMSender->isConnected){
-            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageRLocProducerMonitoring, transformation);
-            std::cout << "check3: sending image finished" << std::endl;
+            tmComm->sendFileMessage(image_filename.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+            std::cout << "check3: sending image file finished" << std::endl;
         }
     }
 
@@ -466,9 +464,27 @@ void Task::updateHook()
         int seq=1;
         long time=(long)PAN_STEREO_index-1;
         std::cout << "check2: sending dem" << std::endl;
+        std::string filename = dem_filename;
+        filename.replace(0, 28, "");
         if (activemqTMSender->isConnected){
-            tmComm->sendDEMMessage(seq, time, data.size(), data, activemqTMSender->demPanCamProducerMonitoring, transformation);
+            tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demPanCamProducerMonitoring, transformation);
             std::cout << "check3: sending dem finished" << std::endl;
+        }
+
+        std::string mtl_filename = dem_filename.replace(dem_filename.find("obj"), 3, "mtl");
+        std::cout << "check1: sending file " << mtl_filename << std::endl;
+        char command[256];
+        sprintf(command,  "sed -ie 's/\\/home\\/exoter\\/Desktop\\/Images\\///g' %s", mtl_filename.c_str());
+        system(command);
+        std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+        std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+        auto size2 = buffer2.size();
+        char* data2 = &buffer2[0];
+        std::cout << "check2: sending file with size " << size2 << std::endl;
+        mtl_filename.replace(0, 28, "");
+        if (activemqTMSender->isConnected){
+            tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+            std::cout << "check3: sending file finished" << std::endl;
         }
     }
 
@@ -482,9 +498,27 @@ void Task::updateHook()
         int seq=1;
         long time=(long)FLOC_STEREO_index-1;
         std::cout << "check2: sending dem" << std::endl;
+        std::string filename = dem_filename;
+        filename.replace(0, 28, "");
         if (activemqTMSender->isConnected){
-            tmComm->sendDEMMessage(seq, time, data.size(), data, activemqTMSender->demFLocProducerMonitoring, transformation);
+            tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demFLocProducerMonitoring, transformation);
             std::cout << "check3: sending dem finished" << std::endl;
+        }
+
+        std::string mtl_filename = dem_filename.replace(dem_filename.find("obj"), 3, "mtl");
+        std::cout << "check1: sending file " << mtl_filename << std::endl;
+        char command[256];
+        sprintf(command,  "sed -ie 's/\\/home\\/exoter\\/Desktop\\/Images\\///g' %s", mtl_filename.c_str());
+        system(command);
+        std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+        std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+        auto size2 = buffer2.size();
+        char* data2 = &buffer2[0];
+        std::cout << "check2: sending file with size " << size2 << std::endl;
+        mtl_filename.replace(0, 28, "");
+        if (activemqTMSender->isConnected){
+            tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+            std::cout << "check3: sending file finished" << std::endl;
         }
     }
 
@@ -498,12 +532,77 @@ void Task::updateHook()
         int seq=1;
         long time=(long)RLOC_STEREO_index-1;
         std::cout << "check2: sending dem" << std::endl;
+        std::string filename = dem_filename;
+        filename.replace(0, 28, "");
         if (activemqTMSender->isConnected){
-            tmComm->sendDEMMessage(seq, time, data.size(), data, activemqTMSender->demRLocProducerMonitoring, transformation);
+            tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demRLocProducerMonitoring, transformation);
             std::cout << "check3: sending dem finished" << std::endl;
+        }
+
+        std::string mtl_filename = dem_filename.replace(dem_filename.find("obj"), 3, "mtl");
+        std::cout << "check1: sending file " << mtl_filename << std::endl;
+        char command[256];
+        sprintf(command,  "sed -ie 's/\\/home\\/exoter\\/Desktop\\/Images\\///g' %s", mtl_filename.c_str());
+        system(command);
+        std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+        std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+        auto size2 = buffer2.size();
+        char* data2 = &buffer2[0];
+        std::cout << "check2: sending file with size " << size2 << std::endl;
+        mtl_filename.replace(0, 28, "");
+        if (activemqTMSender->isConnected){
+            tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+            std::cout << "check3: sending file finished" << std::endl;
         }
     }
 
+    if (_dist_mast_filename.read(dist_filename) == RTT::NewData)
+    {
+        std::cout << "check1: sending file " << dist_filename << std::endl;
+        std::ifstream input(dist_filename.c_str(), std::ios::binary);
+        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+        auto size = buffer.size();
+        char* data = &buffer[0];
+        std::cout << "check2: sending file with size " << size << std::endl;
+        dist_filename.replace(0, 28, "");
+        if (activemqTMSender->isConnected){
+            tmComm->sendFileMessage(dist_filename.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+            std::cout << "check3: sending file finished" << std::endl;
+        }
+        files_sent=true;
+    }
+
+    if (_dist_front_filename.read(dist_filename) == RTT::NewData)
+    {
+        std::cout << "check1: sending file " << dist_filename << std::endl;
+        std::ifstream input(dist_filename.c_str(), std::ios::binary);
+        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+        auto size = buffer.size();
+        char* data = &buffer[0];
+        std::cout << "check2: sending file with size " << size << std::endl;
+        dist_filename.replace(0, 28, "");
+        if (activemqTMSender->isConnected){
+            tmComm->sendFileMessage(dist_filename.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+            std::cout << "check3: sending file finished" << std::endl;
+        }
+        files_sent=true;
+    }
+
+    if (_dist_back_filename.read(dist_filename) == RTT::NewData)
+    {
+        std::cout << "check1: sending file " << dist_filename << std::endl;
+        std::ifstream input(dist_filename.c_str(), std::ios::binary);
+        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+        auto size = buffer.size();
+        char* data = &buffer[0];
+        std::cout << "check2: sending file with size " << size << std::endl;
+        dist_filename.replace(0, 28, "");
+        if (activemqTMSender->isConnected){
+            tmComm->sendFileMessage(dist_filename.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+            std::cout << "check3: sending file finished" << std::endl;
+        }
+        files_sent=true;
+    }
 
     CommandInfo* cmd_info = activemqTCReceiver->extractCommandInfo();
     // CommandInfo* cmd_info = tcComm->extractCommandInfo();
@@ -1306,6 +1405,7 @@ void Task::updateHook()
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
+            files_sent=false;
 	  }
 	  break;
 	case 2:
@@ -1318,10 +1418,11 @@ void Task::updateHook()
 	  }
 	  break;
 	case 3:
-	  if (currentActivity == -1) {
+	  if ((currentActivity == -1) && files_sent) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
+            files_sent=false;
 	  }
 	  break;
 	case 4:
@@ -1334,10 +1435,11 @@ void Task::updateHook()
 	  }
 	  break;
 	case 5:
-	  if (currentActivity == -1) {
+	  if ((currentActivity == -1) && files_sent) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
+            files_sent=false;
 	  }
 	  break;
 	case 6:
@@ -1350,10 +1452,11 @@ void Task::updateHook()
 	  }
 	  break;
 	case 7:
-	  if (currentActivity == -1) {
+	  if ((currentActivity == -1) && files_sent) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
+            files_sent=false;
 	  }
 	  break;
 	case 8:
@@ -1366,10 +1469,11 @@ void Task::updateHook()
 	  }
 	  break;
 	case 9:
-	  if (currentActivity == -1) {
+	  if ((currentActivity == -1) && files_sent) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
+            files_sent=false;
 	  }
 	  break;
         case 10:
@@ -1382,10 +1486,11 @@ void Task::updateHook()
 	  }
 	  break;
 	case 11:
-	  if (currentActivity == -1) {
+	  if ((currentActivity == -1) && files_sent) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
+            files_sent=false;
 	  }
 	  break;
         case 12:
@@ -1398,10 +1503,11 @@ void Task::updateHook()
 	  }
 	  break;
         case 13:
-	  if (currentActivity == -1) {
+	  if ((currentActivity == -1) && files_sent) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
+            files_sent=false;
 	  }
 	  break;
         case 14:
@@ -1414,10 +1520,11 @@ void Task::updateHook()
 	  }
 	  break;
 	case 15:
-	  if (currentActivity == -1) {
+	  if ((currentActivity == -1) && files_sent) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
+            files_sent=false;
 	  }
 	  break;
         case 16:
@@ -1430,10 +1537,11 @@ void Task::updateHook()
 	  }
 	  break;
 	case 17:
-	  if (currentActivity == -1) {
+	  if ((currentActivity == -1) && files_sent) {
 	    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	    strcpy(cam,"PANCAM_STEREO");
 	    inPanCamActivity++;
+            files_sent=false;
 	  }
 	  break;
 	case 18:

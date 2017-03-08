@@ -45,6 +45,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
         int currentActivity;
         bool abort_activity;
+        bool files_sent;
         std::string currentParams;
         int WACL_index, WACR_index, PAN_STEREO_index;
         int FLOCL_index, FLOCR_index, FLOC_STEREO_index;
@@ -88,6 +89,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         char cam[80], dummy_param[80];
         std::string image_filename;
         std::string dem_filename;
+        std::string dist_filename;
 
         // PanCam_WAC_RRGB parameters
         int inPanCamActivity;
