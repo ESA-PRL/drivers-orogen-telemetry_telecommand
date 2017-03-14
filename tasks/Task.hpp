@@ -207,6 +207,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
          * travelled angle.
          */
         double getTravelledAngle();
+        bool angleReached();
 
         void getTransform(Eigen::Affine3d& tf);
 

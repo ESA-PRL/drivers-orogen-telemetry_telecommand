@@ -35,6 +35,7 @@ const double TILTLIMIT = 90*DEG2RAD;
 const double BEMALIMIT = 95;
 const double TARGET_WINDOW = 0.01;
 const double TARGET_WINDOW2 = 0.01;
+const double TARGET_WINDOW3 = 2.0;
 
 using namespace telemetry_telecommand;
 //using namespace frame_helper;
@@ -377,13 +378,12 @@ void Task::updateHook()
     {
         std::cout << "check1: sending image " << image_filename << std::endl;
         std::ifstream input(image_filename.c_str(), std::ios::binary);
-	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         auto size = buffer.size();
         char* data = &buffer[0];
         int seq=1;
         long time=PAN_STEREO_index-1;
-        std::cout << "check2: sending image" << std::endl;
+        std::cout << "check2: sending image with size " << size << std::endl;
         if (activemqTMSender->isConnected){
             tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imagePanCamProducerMonitoring, transformation);
             std::cout << "check3: sending image finished" << std::endl;
@@ -394,13 +394,12 @@ void Task::updateHook()
     {
         std::cout << "check1: sending image " << image_filename << std::endl;
 	std::ifstream input(image_filename.c_str(), std::ios::binary);
-	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_1_copy.png", std::ios::binary);
         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         auto size = buffer.size();
         char* data = &buffer[0];
         int seq=1;
         long time=FLOC_STEREO_index-1;
-        std::cout << "check2: sending image" << std::endl;
+        std::cout << "check2: sending image with size " << size << std::endl;
         if (activemqTMSender->isConnected){
             tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageFLocProducerMonitoring, transformation);
             std::cout << "check3: sending image finished" << std::endl;
@@ -426,13 +425,12 @@ void Task::updateHook()
     {
         std::cout << "check1: sending image " << image_filename << std::endl;
         std::ifstream input(image_filename.c_str(), std::ios::binary);
-	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         auto size = buffer.size();
         char* data = &buffer[0];
         int seq=1;
         long time=RLOC_STEREO_index-1;
-        std::cout << "check2: sending image" << std::endl;
+        std::cout << "check2: sending image with size " << size << std::endl;
         if (activemqTMSender->isConnected){
             tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageRLocProducerMonitoring, transformation);
             std::cout << "check3: sending image finished" << std::endl;
@@ -458,12 +456,11 @@ void Task::updateHook()
     {
         std::cout << "check1: sending dem " << dem_filename << std::endl;
         std::ifstream input(dem_filename.c_str(), std::ios::binary);
-	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
         int seq=1;
         long time=(long)PAN_STEREO_index-1;
-        std::cout << "check2: sending dem" << std::endl;
+        std::cout << "check2: sending dem with size " << data.size() << std::endl;
         std::string filename = dem_filename;
         filename.replace(0, 28, "");
         if (activemqTMSender->isConnected){
@@ -474,7 +471,7 @@ void Task::updateHook()
         std::string mtl_filename = dem_filename.replace(dem_filename.find("obj"), 3, "mtl");
         std::cout << "check1: sending file " << mtl_filename << std::endl;
         char command[256];
-        sprintf(command,  "sed -ie 's/\\/home\\/exoter\\/Desktop\\/Images\\///g' %s", mtl_filename.c_str());
+        sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
         system(command);
         std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
         std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
@@ -492,12 +489,11 @@ void Task::updateHook()
     {
         std::cout << "check1: sending dem " << dem_filename << std::endl;
         std::ifstream input(dem_filename.c_str(), std::ios::binary);
-	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_1_copy.obj", std::ios::binary);
         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
         int seq=1;
         long time=(long)FLOC_STEREO_index-1;
-        std::cout << "check2: sending dem" << std::endl;
+        std::cout << "check2: sending dem with size " << data.size() << std::endl;
         std::string filename = dem_filename;
         filename.replace(0, 28, "");
         if (activemqTMSender->isConnected){
@@ -508,7 +504,7 @@ void Task::updateHook()
         std::string mtl_filename = dem_filename.replace(dem_filename.find("obj"), 3, "mtl");
         std::cout << "check1: sending file " << mtl_filename << std::endl;
         char command[256];
-        sprintf(command,  "sed -ie 's/\\/home\\/exoter\\/Desktop\\/Images\\///g' %s", mtl_filename.c_str());
+        sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
         system(command);
         std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
         std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
@@ -526,12 +522,11 @@ void Task::updateHook()
     {
         std::cout << "check1: sending dem " << dem_filename << std::endl;
         std::ifstream input(dem_filename.c_str(), std::ios::binary);
-	//std::ifstream input("/home/exoter/Desktop/Images/FLOC_L_1.png", std::ios::binary);
         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
         int seq=1;
         long time=(long)RLOC_STEREO_index-1;
-        std::cout << "check2: sending dem" << std::endl;
+        std::cout << "check2: sending dem with size " << data.size() << std::endl;
         std::string filename = dem_filename;
         filename.replace(0, 28, "");
         if (activemqTMSender->isConnected){
@@ -542,7 +537,7 @@ void Task::updateHook()
         std::string mtl_filename = dem_filename.replace(dem_filename.find("obj"), 3, "mtl");
         std::cout << "check1: sending file " << mtl_filename << std::endl;
         char command[256];
-        sprintf(command,  "sed -ie 's/\\/home\\/exoter\\/Desktop\\/Images\\///g' %s", mtl_filename.c_str());
+        sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
         system(command);
         std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
         std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
@@ -611,6 +606,7 @@ void Task::updateHook()
       if (!strcmp((cmd_info->activityName).c_str(), "ABORT"))
       {
           abort_activity=true;
+          std::cout << "Abort message received!" << std::endl;
       }
       //! Check if there is NO running activity
       else if ((currentActivity == -1) && (inPanCamActivity == 0))
@@ -638,9 +634,9 @@ void Task::updateHook()
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &targetOrientationTheta);
+          initial_imu = pose;
           motionCommand();
 	  travelledAngle = 0.0;
-          initial_imu = pose;
 	  std::cout <<  "GNC_LLO_TURNSPOT angle:" << targetOrientationTheta << std::endl;
           sendMotionCommand();
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
@@ -882,8 +878,9 @@ void Task::updateHook()
       }
     }
     else if (currentActivity == GNC_LLO_TURNSPOT_ACTIVITY) {
-      travelledAngle = getTravelledAngle();
-      if ((travelledAngle >= targetOrientationTheta) || abort_activity) {
+      //travelledAngle = getTravelledAngle();
+      if ( angleReached() || abort_activity) {
+        std::cout << "Finish Turnspot" << std::endl;
         abort_activity=false;
       	travelledAngle = 0.0;
 	targetOrientationTheta = 0.0;
@@ -1592,11 +1589,18 @@ double Task::getTravelledDistance()
     return distance;
 }
 
-double Task::getTravelledAngle()
+double Task::getTravelledAngle() //! Not used anymore as it does not work when the angles jumps from 180 to -180.
 {
     double angle =0.0;
     angle = std::abs(pose.getYaw()-initial_imu.getYaw());
     return (angle*RAD2DEG);
+}
+
+bool Task::angleReached()
+{
+    double angle =0.0;
+    angle = std::abs(pose.getYaw()*RAD2DEG-targetOrientationTheta);
+    return angle<TARGET_WINDOW3;
 }
 
 void Task::getTransform(Eigen::Affine3d& tf)
@@ -1631,10 +1635,19 @@ void Task::motionCommand()
         targetTranslation=0.0;
         if (targetOrientationTheta>=0) {
             targetRotation=0.05; //ToDo Change this to parameter in the command
+            targetOrientationTheta+=(initial_imu.getYaw()*RAD2DEG);
+            if (targetOrientationTheta>180.0)
+            {
+                targetOrientationTheta-=360.0;
+            }
         }
         else {
             targetRotation=-0.05; //ToDo Change this to parameter in the command
-            targetOrientationTheta=-targetOrientationTheta;
+            targetOrientationTheta+=(initial_imu.getYaw()*RAD2DEG);
+            if (targetOrientationTheta<-180.0)
+            {
+                targetOrientationTheta+=360.0;
+            }
         }
     }
 }
