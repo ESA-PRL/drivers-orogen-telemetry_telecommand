@@ -16,7 +16,7 @@
 #include "telemetry_telecommand/ActiveMQAdmin.h"
 #include "telemetry_telecommand/ActiveMQTCReceiver.h"
 
-
+#include "telemetry_telecommand/Messages.hpp"
 //#include "frame_helper/FrameHelper.h"
 
 namespace telemetry_telecommand {
@@ -90,6 +90,10 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         std::string image_filename;
         std::string dem_filename;
         std::string dist_filename;
+        messages::Telemetry tm_in;
+        messages::Telecommand tc_out;
+        messages::ProductType productType;
+        messages::Mode productMode;
 
         // PanCam_WAC_RRGB parameters
         int inPanCamActivity;
@@ -242,6 +246,11 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
          *  rotation speed need to be previously set
          */
         void sendMotionCommand();
+
+	/** Sends the file (image, distance, etc.) specified in the tm message.
+	 *  It clasifies the file depending its type and source
+         */
+        void sendFile(messages::Telemetry tm_in);
 
     };
 }

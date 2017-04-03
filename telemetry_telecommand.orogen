@@ -5,14 +5,13 @@ name "telemetry_telecommand"
 # If new data types need to be defined, they have to be put in a separate C++
 # header, and this header will be loaded here
 using_library "telemetry_telecommand"
-#using_library "frame_helper"
 # Finally, it is pretty common that headers are directly loaded from an external
 # library. In this case, the library must be first used (the name is the
 # library's pkg-config name) and then the header can be used. Following Rock
 # conventions, a common use-case would be:
-#
 import_types_from "base"
 import_types_from "telemetry_telecommandTypes.hpp"
+import_types_from "telemetry_telecommand/Messages.hpp"
 
 # If this project uses data types that are defined in other oroGen projects,
 # these projects should be imported there as well.
@@ -32,7 +31,6 @@ task_context "Task" do
     property "activeMQ_brokerURI", "/std/string"
     property "initial_pose", "/base/samples/RigidBodyState" 
 
-
     # An input port, i.e. an object from which the component gets data from
     # other components' outputs
     #
@@ -41,20 +39,29 @@ task_context "Task" do
     # input is connected to an output or not.
     input_port "current_pose", "/base/samples/RigidBodyState"
     input_port "current_ptu", "base/samples/Joints"
+    input_port "current_pan", "double"
+    input_port "current_tilt", "double"
     input_port "current_imu", "base/samples/RigidBodyState"
     input_port "current_bema", "base/samples/Joints"
+    input_port "joint_samples", "base/samples/Joints"
+    input_port "motor_temperatures", "/std/vector<base/Temperature>"
     input_port "trajectory_status", "int"
     input_port "image_mast_filename", "std/string"
     input_port "image_front_left_filename", "std/string"
     input_port "image_front_right_filename", "std/string"
     input_port "image_back_left_filename", "std/string"
     input_port "image_back_right_filename", "std/string"
+    input_port "image_haz_front_left_filename", "std/string"
+    input_port "image_haz_front_right_filename", "std/string"
     input_port "dem_mast_filename", "std/string"
     input_port "dem_front_filename", "std/string"
     input_port "dem_back_filename", "std/string"
+    input_port "dem_haz_front_filename", "std/string"
     input_port "dist_mast_filename", "std/string"
     input_port "dist_front_filename", "std/string"
     input_port "dist_back_filename", "std/string"
+    input_port "dist_haz_front_filename", "std/string"
+    input_port "telemetry_file", "telemetry_telecommand/messages/Telemetry"
     # An output port, i.e. an object to which the component pushes data so that
     # it is transmitted to other components' inputs
     #
@@ -66,9 +73,20 @@ task_context "Task" do
     output_port "locomotion_command", "base/commands/Motion2D"
     output_port "trajectory", "/std/vector<base/Waypoint>"
     output_port "ptu_command", "base/commands/Joints"
-    output_port "camera_mast_process_image_trigger", "bool"
-    output_port "camera_front_process_image_trigger", "bool"
-    output_port "camera_back_process_image_trigger", "bool"
+    output_port "mast_pan", "double"
+    output_port "mast_tilt", "double"
+    output_port "panorama_trigger", "double"
+    output_port "camera_mast_process_image_trigger", "telemetry_telecommand/messages/Telecommand"
+    output_port "camera_front_process_image_trigger", "telemetry_telecommand/messages/Telecommand"
+    output_port "camera_back_process_image_trigger", "telemetry_telecommand/messages/Telecommand"
+    output_port "camera_haz_front_process_image_trigger", "telemetry_telecommand/messages/Telecommand"
+    output_port "tof_trigger", "telemetry_telecommand/messages/Telecommand"
+    #output_port "tof_depth_trigger", "bool"
+    #output_port "tof_intensity_trigger", "bool"
+    output_port "lidar_trigger", "telemetry_telecommand/messages/Telecommand"
+    #output_port "lidar_depth_trigger", "bool"
+    #output_port "lidar_intensity_trigger", "bool"
+    output_port "telecommand_product", "telemetry_telecommand/messages/Telecommand"
 
     transformer do
         transform "left_camera_bb3", "lab"

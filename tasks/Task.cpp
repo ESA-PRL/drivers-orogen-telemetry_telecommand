@@ -13,35 +13,38 @@
 #define TC_REPLY_SERVER_PORT_NUMBER 7033
 
 const int GNC_LLO_ACKERMANN_ACTIVITY = 1;
-const int GNC_LLO_TURNSPOT_ACTIVITY = 8;
-const int GNC_LLO_TRAJECTORY_ACTIVITY = 11;
-const int PANCAM_WAC_GET_IMAGE_ACTIVITY = 2;
-const int MAST_PTU_MOVE_TO_ACTIVITY = 3;
-const int PANCAM_WAC_RRGB_ACTIVITY = 4;
-const int LOCCAMFRONT_GET_IMAGE_ACTIVITY = 5;
-const int LOCCAMREAR_GET_IMAGE_ACTIVITY = 9;
-const int BEMA_DEPLOY_1_ACTIVITY = 6;
-const int BEMA_DEPLOY_2_ACTIVITY = 7;
-const int BEMA_DEPLOY_3_ACTIVITY = 10;
+const int GNC_LLO_TURNSPOT_ACTIVITY = 2;
+const int GNC_LLO_TRAJECTORY_ACTIVITY = 3;
+const int MAST_PTU_MOVE_TO_ACTIVITY = 4;
+const int PANCAM_WAC_GET_IMAGE_ACTIVITY = 5;
+const int PANCAM_WAC_RRGB_ACTIVITY = 6;
+const int LOCCAMFRONT_GET_IMAGE_ACTIVITY = 7;
+const int LOCCAMREAR_GET_IMAGE_ACTIVITY = 8; //ExoTeR
+const int HAZCAMFRONT_GET_IMAGE_ACTIVITY = 9; //HDPR
+const int TOF_GET_IMAGE_ACTIVITY = 10; //HDPR
+const int LIDAR_GET_IMAGE_ACTIVITY = 12; //HDPR
+const int BEMA_DEPLOY_1_ACTIVITY = 13; //ExoTeR
+const int BEMA_DEPLOY_2_ACTIVITY = 14; //ExoTeR
+const int BEMA_DEPLOY_3_ACTIVITY = 15; //ExoTeR
+const int GNC_UPDATE_ACTIVITY = 16;
 
 const double DEG2RAD = 3.141592/180;
 const double RAD2DEG = 180/3.141592;
 
+const double MIN_ACK_RADIUS = 0.6;
 const double OMEGA = 0.02;  //in Rad/s the commanded angular velocity to the walking actuators when deploying
 
-const double PANLIMIT_LEFT = 50*DEG2RAD;
-const double PANLIMIT_RIGHT = -235*DEG2RAD;
-const double TILTLIMIT = 90*DEG2RAD;
-const double BEMALIMIT = 95;
-const double TARGET_WINDOW = 0.01;
-const double TARGET_WINDOW2 = 0.01;
-const double TARGET_WINDOW3 = 2.0;
+const double PANLIMIT_LEFT = 50*DEG2RAD; //ExoTeR
+const double PANLIMIT_RIGHT = -235*DEG2RAD; //ExoTeR
+const double TILTLIMIT = 90*DEG2RAD; //ExoTeR
+const double BEMALIMIT = 95; //ExoTeR
+const double TARGET_WINDOW = 0.01; //ExoTeR
+const double TARGET_WINDOW2 = 0.01; //ExoTeR
+const double TARGET_WINDOW3 = 2.0; //ExoTeR
 
 using namespace telemetry_telecommand;
-//using namespace frame_helper;
 
-
-RobotProcedure*  theRobotProcedure;// = new RobotProcedure("exoter");
+RobotProcedure*  theRobotProcedure;
 
 RobotTask* GetRTFromName (char* rtname) {
   RobotTask* RT = ( RobotTask* ) theRobotProcedure->GetRTFromName((char*)rtname);
@@ -121,7 +124,7 @@ bool Task::startHook()
   if (! TaskBase::startHook())
     return false;
   //    signal(SIGPIPE, SIG_IGN);
-  
+
   activemq::library::ActiveMQCPP::initializeLibrary();
   bool useTopics = true;
   bool sessionTransacted = false;
@@ -129,78 +132,83 @@ bool Task::startHook()
 
   std::string brokerURI = _activeMQ_brokerURI.value();
   //std::string brokerURI = "failover:(tcp://192.168.200.241:9009)";
-  
-  activemqTMSender = new ActiveMQTMSender(brokerURI, 
-					  numMessages, 
-					  useTopics, 
+
+  activemqTMSender = new ActiveMQTMSender(brokerURI,
+					  numMessages,
+					  useTopics,
 					  false, "");
-  
+
   activemqAdmin = new ActiveMQAdmin(brokerURI, numMessages, useTopics);
-  
-  activemqTCReceiver = new ActiveMQTCReceiver(brokerURI, 
-					      2000, // numMessages, 
-					      true, // useTopics, 
+
+  activemqTCReceiver = new ActiveMQTCReceiver(brokerURI,
+					      2000, // numMessages,
+					      true, // useTopics,
 					      false // sessionTransacted
 					      );
 
   theRobotProcedure = new RobotProcedure("exoter");
-  tcComm = new CommTcServer( TC_SERVER_PORT_NUMBER); 
+  tcComm = new CommTcServer( TC_SERVER_PORT_NUMBER);
   tmComm = new CommTmServer( TM_SERVER_PORT_NUMBER, theRobotProcedure, activemqTMSender);
   tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NUMBER );
 
 
-  RobotTask* rt1 = new RobotTask("ADE_LEFT_Initialise"); // Simulated
-  RobotTask* rt2 = new RobotTask("ADE_LEFT_conf");  // Simulated
-  RobotTask* rt3 = new RobotTask("ADE_LEFT_ReleaseHDRM"); // Simulated
-  RobotTask* rt4 = new RobotTask("ADE_LEFT_SwitchOff"); // Simulated
-  RobotTask* rt5 = new RobotTask("ADE_RIGHT_Initialise"); // Simulated
-  RobotTask* rt6 = new RobotTask("ADE_RIGHT_conf"); // Simulated
-  RobotTask* rt7 = new RobotTask("ADE_RIGHT_ReleaseHDRM"); // Simulated
-  RobotTask* rt8 = new RobotTask("ADE_RIGHT_SwitchOff"); // Simulated
+  RobotTask* rt1 = new RobotTask("ADE_LEFT_Initialise");        // Simulated
+  RobotTask* rt2 = new RobotTask("ADE_LEFT_conf");              // Simulated
+  RobotTask* rt3 = new RobotTask("ADE_LEFT_ReleaseHDRM");       // Simulated
+  RobotTask* rt4 = new RobotTask("ADE_LEFT_SwitchOff");         // Simulated
+  RobotTask* rt5 = new RobotTask("ADE_RIGHT_Initialise");       // Simulated
+  RobotTask* rt6 = new RobotTask("ADE_RIGHT_conf");             // Simulated
+  RobotTask* rt7 = new RobotTask("ADE_RIGHT_ReleaseHDRM");      // Simulated
+  RobotTask* rt8 = new RobotTask("ADE_RIGHT_SwitchOff");        // Simulated
 
-  RobotTask* rt9 = new RobotTask("SA_LEFT_Initialise"); // Simulated
-  RobotTask* rt10 = new RobotTask("SA_LEFT_PrimaryMoveTo"); // Simulated
-  RobotTask* rt11 = new RobotTask("SA_LEFT_SecondaryMoveTo"); // Simulated
-  RobotTask* rt12 = new RobotTask("SA_LEFT_SwitchOff"); // Simulated
-  RobotTask* rt13 = new RobotTask("SA_RIGHT_Initialise"); // Simulated
-  RobotTask* rt14 = new RobotTask("SA_RIGHT_PrimaryMoveTo"); // Simulated
-  RobotTask* rt15 = new RobotTask("SA_RIGHT_SecondaryMoveTo"); // Simulated
-  RobotTask* rt16 = new RobotTask("SA_RIGHT_SwitchOff"); // Simulated
+  RobotTask* rt9 = new RobotTask("SA_LEFT_Initialise");         // Simulated
+  RobotTask* rt10 = new RobotTask("SA_LEFT_PrimaryMoveTo");     // Simulated
+  RobotTask* rt11 = new RobotTask("SA_LEFT_SecondaryMoveTo");   // Simulated
+  RobotTask* rt12 = new RobotTask("SA_LEFT_SwitchOff");         // Simulated
+  RobotTask* rt13 = new RobotTask("SA_RIGHT_Initialise");       // Simulated
+  RobotTask* rt14 = new RobotTask("SA_RIGHT_PrimaryMoveTo");    // Simulated
+  RobotTask* rt15 = new RobotTask("SA_RIGHT_SecondaryMoveTo");  // Simulated
+  RobotTask* rt16 = new RobotTask("SA_RIGHT_SwitchOff");        // Simulated
 
-  RobotTask* rt17 = new RobotTask("PanCam_Initialise"); // Simulated
-  RobotTask* rt18 = new RobotTask("PanCam_InitWACs"); // Simulated
-  RobotTask* rt19 = new RobotTask("PanCam_SwitchOn"); // Simulated
-  RobotTask* rt20 = new RobotTask("PanCam_WACAcqImage"); // Simulated
-  RobotTask* rt21 = new RobotTask("PanCam_WACGetImage"); // Executed (params WAC_L, WAC_R)
-  RobotTask* rt22 = new RobotTask("PanCam_SwitchOff"); // Simulated 
-  RobotTask* rt23 = new RobotTask("PanCam_PIUSwitchOff"); // Simulated 
-  RobotTask* rt24 = new RobotTask("PANCAM_WAC_RRGB"); // Executed (params TBD)
-  RobotTask* rt25 = new RobotTask("PanCam_FilterSel"); // Simulated  
-  RobotTask* rt251 = new RobotTask("FrontLocCam_GetImage"); // Executed  
-  RobotTask* rt252 = new RobotTask("RearLocCam_GetImage"); // Executed  
+  RobotTask* rt17 = new RobotTask("PanCam_Initialise");         // Simulated
+  RobotTask* rt18 = new RobotTask("PanCam_InitWACs");           // Simulated
+  RobotTask* rt19 = new RobotTask("PanCam_SwitchOn");           // Simulated
+  RobotTask* rt20 = new RobotTask("PanCam_WACAcqImage");        // Simulated
+  RobotTask* rt21 = new RobotTask("PanCam_WACGetImage");        // Executed (params WAC_L, WAC_R)
+  RobotTask* rt211 = new RobotTask("HazCamFront_GetImage");     // Executed in HDPR (params TBD)
+  RobotTask* rt212 = new RobotTask("Tof_GetImage");             // Executed in HDPR (params TBD)
+  RobotTask* rt213 = new RobotTask("Lidar_GetImage");           // Executed in HDPR (params TBD)
+  RobotTask* rt22 = new RobotTask("PanCam_SwitchOff");          // Simulated
+  RobotTask* rt23 = new RobotTask("PanCam_PIUSwitchOff");       // Simulated
+  RobotTask* rt24 = new RobotTask("PANCAM_WAC_RRGB");           // Executed (params tilt angle in deg)
+  RobotTask* rt25 = new RobotTask("PanCam_FilterSel");          // Simulated
+  RobotTask* rt251 = new RobotTask("FrontLocCam_GetImage");     // Executed
+  RobotTask* rt252 = new RobotTask("RearLocCam_GetImage");      // Executed
 
-  RobotTask* rt26 = new RobotTask("MAST_DEP_Initialise"); // Simulated  
-  RobotTask* rt27 = new RobotTask("MAST_DEP_Deploy"); // Simulated 
-  RobotTask* rt28 = new RobotTask("MAST_PTU_Initialise"); // Simulated 
-  RobotTask* rt29 = new RobotTask("MAST_PTU_MoveTo"); // Executed (params: pan, tilt (deg, deg))
-  RobotTask* rt30 = new RobotTask("MAST_SwitchOff"); // Simulated 
+  RobotTask* rt26 = new RobotTask("MAST_DEP_Initialise");       // Simulated
+  RobotTask* rt27 = new RobotTask("MAST_DEP_Deploy");           // Simulated
+  RobotTask* rt28 = new RobotTask("MAST_PTU_Initialise");       // Simulated
+  RobotTask* rt29 = new RobotTask("MAST_PTU_MoveTo");           // Executed (params: pan, tilt (deg, deg))
+  RobotTask* rt30 = new RobotTask("MAST_SwitchOff");            // Simulated
 
-  RobotTask* rt31 = new RobotTask("GNC_Initialise"); // Simulated 
-  RobotTask* rt32 = new RobotTask("GNC_LLO_ACKERMANN"); // Executed  (params: distance, speed (m, m/hour))
-  RobotTask* rt321 = new RobotTask("GNC_LLO_TURNSPOT"); // Executed  (params: distance, speed (m, m/hour))
-  RobotTask* rt322 = new RobotTask("GNC_LLO_TRAJECTORY"); // Executed  (params: number of waypoints, vector of waypoints(x,y,h))
-  RobotTask* rt33 = new RobotTask("GNC_SwitchOff"); // Simulated 
-  RobotTask* rt331 = new RobotTask("BEMA_Deploy_1"); // Simulated or Executed 
-  RobotTask* rt332 = new RobotTask("BEMA_Deploy_2"); // Simulated or Executed
+  RobotTask* rt31 = new RobotTask("GNC_Initialise");            // Simulated
+  RobotTask* rt311 = new RobotTask("GNC_Update");               // Executed  (params: x,y,z in meters rx,ry,rz in degrees)
+  RobotTask* rt32 = new RobotTask("GNC_LLO_ACKERMANN");         // Executed  (params: distance, speed (m, m/hour))
+  RobotTask* rt321 = new RobotTask("GNC_LLO_TURNSPOT");         // Executed  (params: distance, speed (m, m/hour))
+  RobotTask* rt322 = new RobotTask("GNC_LLO_TRAJECTORY");       // Executed  (params: number of waypoints, vector of waypoints(x,y,h))
+  RobotTask* rt33 = new RobotTask("GNC_SwitchOff");             // Simulated
+  RobotTask* rt331 = new RobotTask("BEMA_Deploy_1");            // Executed  (params: deploy angle in deg)
+  RobotTask* rt332 = new RobotTask("BEMA_Deploy_2");            // Executed  (params: deploy angle in deg)
+  RobotTask* rt333 = new RobotTask("BEMA_Deploy_3");            // Executed  (params: deploy angle in deg)
 
-  RobotTask* rt34 = new RobotTask("RV_WakeUp"); // Simulated  
-  RobotTask* rt35 = new RobotTask("MMS_WaitAbsTime"); // Simulated 
-  RobotTask* rt36 = new RobotTask("RV_Prepare4Comms"); // Simulated 
-  RobotTask* rt37 = new RobotTask("RV_PostComms"); // Simulated 
-  RobotTask* rt38 = new RobotTask("DHS_Go2Nominal"); // Simulated 
-  RobotTask* rt39 = new RobotTask("RV_Prepare4Travel"); // Simulated 
-  RobotTask* rt40 = new RobotTask("RV_Prepare4Night"); // Simulated 
-  RobotTask* rt41 = new RobotTask("RV_Prepare4Dozing"); // Simulated 
+  RobotTask* rt34 = new RobotTask("RV_WakeUp");                 // Simulated
+  RobotTask* rt35 = new RobotTask("MMS_WaitAbsTime");           // Simulated
+  RobotTask* rt36 = new RobotTask("RV_Prepare4Comms");          // Simulated
+  RobotTask* rt37 = new RobotTask("RV_PostComms");              // Simulated
+  RobotTask* rt38 = new RobotTask("DHS_Go2Nominal");            // Simulated
+  RobotTask* rt39 = new RobotTask("RV_Prepare4Travel");         // Simulated
+  RobotTask* rt40 = new RobotTask("RV_Prepare4Night");          // Simulated
+  RobotTask* rt41 = new RobotTask("RV_Prepare4Dozing");         // Simulated
 
 
   theRobotProcedure->insertRT(rt1);
@@ -224,6 +232,9 @@ bool Task::startHook()
   theRobotProcedure->insertRT(rt19);
   theRobotProcedure->insertRT(rt20);
   theRobotProcedure->insertRT(rt21);
+  theRobotProcedure->insertRT(rt211);
+  theRobotProcedure->insertRT(rt212);
+  theRobotProcedure->insertRT(rt213);
   theRobotProcedure->insertRT(rt22);
   theRobotProcedure->insertRT(rt23);
   theRobotProcedure->insertRT(rt24);
@@ -235,12 +246,14 @@ bool Task::startHook()
   theRobotProcedure->insertRT(rt29);
   theRobotProcedure->insertRT(rt30);
   theRobotProcedure->insertRT(rt31);
+  theRobotProcedure->insertRT(rt311);
   theRobotProcedure->insertRT(rt32);
   theRobotProcedure->insertRT(rt321);
   theRobotProcedure->insertRT(rt322);
   theRobotProcedure->insertRT(rt33);
   theRobotProcedure->insertRT(rt331);
   theRobotProcedure->insertRT(rt332);
+  theRobotProcedure->insertRT(rt333);
   theRobotProcedure->insertRT(rt34);
   theRobotProcedure->insertRT(rt35);
   theRobotProcedure->insertRT(rt36);
@@ -344,6 +357,30 @@ void Task::updateHook()
             std::cout << "Error setting MastState" << std::endl;
         }
     }
+    if (_current_pan.read(pan) == RTT::NewData)
+    {
+        ptu[0].position=pan;
+        if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
+          std::cout << "Error getting MastState" << std::endl;
+        }
+	int aux = (int)(ptu[0].position*RAD2DEG*100);
+        MastState[MAST_CURRENT_Q2_INDEX]=(double)((double)aux/100.0);
+        if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
+            std::cout << "Error setting MastState" << std::endl;
+        }
+    }
+    if (_current_tilt.read(tilt) == RTT::NewData)
+    {
+        ptu[1].position=tilt;
+        if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
+          std::cout << "Error getting MastState" << std::endl;
+        }
+	int aux = (int)(ptu[1].position*RAD2DEG*100);
+        MastState[MAST_CURRENT_Q3_INDEX]=(double)((double)aux/100.0);
+        if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
+            std::cout << "Error setting MastState" << std::endl;
+        }
+    }
     if (_current_imu.read(imu) == RTT::NewData)
     {
         //if (first_estimate){
@@ -372,6 +409,11 @@ void Task::updateHook()
             abort_activity=true;
         else;
             //! Nothing to do in other status
+    }
+
+    if (_telemetry_file.read(tm_in) == RTT::NewData)
+    {
+        sendFile(tm_in);
     }
 
     if (_image_mast_filename.read(image_filename) == RTT::NewData)
@@ -774,8 +816,10 @@ void Task::updateHook()
 	  currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	  currentParams = cmd_info->activityParams; //! LOC_CAM, NAV_CAM, PAN_CAM
 	  int ackid;
-	  sscanf(currentParams.c_str(), "%d %s %s", &ackid, cam, dummy_param);
-	  std::cout <<  "PanCam WAC Get Image from:" << cam << std::endl;
+	  sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+          tc_out.productType = productType;
+          tc_out.productMode = productMode;
+	  std::cout <<  "PanCam WAC Get Image type " << productType << " and mode: " << productMode << std::endl;
           if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
               std::cout << "Error getting PanCamState" << std::endl;
           }
@@ -1044,6 +1088,18 @@ void Task::updateHook()
       }
     }
     else if (currentActivity == PANCAM_WAC_GET_IMAGE_ACTIVITY) {
+      _camera_mast_process_image_trigger.write(tc_out);
+      if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+         std::cout << "Error getting PanCamState" << std::endl;
+      }
+      PanCamState[PANCAM_PAN_STEREO_INDEX]=PAN_STEREO_index-1;
+      PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+      PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+      if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+         std::cout << "Error setting PanCamState" << std::endl;
+      }
+      currentActivity=-1;
+/*
       if (!strcmp(cam, "WAC_L")) {
         char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 1", cam, WACL_index++);
@@ -1159,8 +1215,21 @@ void Task::updateHook()
 	std::cout << "Please select one of the existing cameras WAC_L or WAC_R" << std::endl;
       }
       currentActivity = -1;
+*/
     }
     else if (currentActivity == LOCCAMFRONT_GET_IMAGE_ACTIVITY) {
+      _camera_front_process_image_trigger.write(tc_out);
+      if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+         std::cout << "Error getting LocCamState" << std::endl;
+      }
+      PanCamState[LOCCAM_FLOC_STEREO_INDEX]=FLOC_STEREO_index-1;
+      PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+      PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+      if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+         std::cout << "Error setting LocCamState" << std::endl;
+      }
+      currentActivity=-1;
+/*
       if (!strcmp(cam, "FLOC_L")) {
         char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 1", cam, FLOCL_index++);
@@ -1273,8 +1342,21 @@ void Task::updateHook()
 	std::cout << "Please select one of the existing cameras LOC_L or LOC_R" << std::endl;
       }
       currentActivity = -1;
+*/
     }
     else if (currentActivity == LOCCAMREAR_GET_IMAGE_ACTIVITY) {
+      _camera_back_process_image_trigger.write(tc_out);
+      if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+         std::cout << "Error getting LocCamState" << std::endl;
+      }
+      PanCamState[LOCCAM_RLOC_STEREO_INDEX]=RLOC_STEREO_index-1;
+      PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+      PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+      if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+         std::cout << "Error setting LocCamState" << std::endl;
+      }
+      currentActivity=-1;
+/*
       if (!strcmp(cam, "RLOC_L")) {
         char filename[240];
         sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 1", cam, RLOCL_index++);
@@ -1387,8 +1469,12 @@ void Task::updateHook()
 	std::cout << "Please select one of the existing cameras LOC_L or LOC_R" << std::endl;
       }
       currentActivity = -1;
+*/
     }
     else if ((currentActivity == PANCAM_WAC_RRGB_ACTIVITY) || inPanCamActivity) {
+        _panorama_trigger.write(tilt);
+        currentActivity=-1;
+        inPanCamActivity=-1;
       switch (inPanCamActivity) {
 	case 0:
           currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
@@ -1625,6 +1711,14 @@ void Task::motionCommand()
             return;
         }
         double radius = (targetPositionX*targetPositionX + targetPositionY*targetPositionY)/(2*targetPositionY); //ToDo Check minimum radius and exit if requested command has a radius that is too small. Propose a Turnspot
+        if (radius<MIN_ACK_RADIUS)
+        {
+            std::cout << "Telemetry_Telecommand: Aborting Ackerman activity. Radius of curvature too small. Try Point Turn first." << std::endl;
+            targetTranslation=0.0;
+            targetRotation=0.0;
+            currentActivity=-1;
+            return;
+        }
         double theta = atan(targetPositionX/std::abs(radius-targetPositionY));
         double sign = (targetPositionX < 0 ? -1 : 1);
         targetTranslation = targetSpeed*sign;
@@ -1744,11 +1838,14 @@ void Task::sendPtuCommand()
 	tilt = TILTLIMIT;
     else if (tilt < -TILTLIMIT)
 	tilt = - TILTLIMIT;
-    ptu_command[0].position=pan;
-    ptu_command[0].speed=base::NaN<float>();
-    ptu_command[1].position=tilt;
-    ptu_command[1].speed=base::NaN<float>();
-    _ptu_command.write(ptu_command);
+    _mast_pan.write(pan);
+    _mast_tilt.write(tilt);
+
+    //ptu_command[0].position=pan;
+    //ptu_command[0].speed=base::NaN<float>();
+    //ptu_command[1].position=tilt;
+    //ptu_command[1].speed=base::NaN<float>();
+    //_ptu_command.write(ptu_command);
 }
 void Task::sendMotionCommand()
 {
@@ -1756,3 +1853,403 @@ void Task::sendMotionCommand()
     motion_command.rotation = targetRotation;
     _locomotion_command.write(motion_command);
 }
+
+
+void Task::sendFile(messages::Telemetry tm)
+    {
+	switch (tm.productSource) {
+        case messages::Producer::MAST:
+            switch (tm.type)
+            {
+                case messages::ProductType::IMAGE:
+                {
+                    std::cout << "Telemetry: sending image from Mast " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    auto size = buffer.size();
+                    char* data = &buffer[0];
+                    int seq=1;
+                    long time=PAN_STEREO_index-1;
+                    //int seq=tm.sequenceCounter;
+                    //longtime=tm.timestamp;		
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imagePanCamProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent image with size " << size << std::endl;
+                    }
+                    break;
+                }
+                case messages::ProductType::DISTANCE:
+                {
+                    std::cout << "Telemetry: sending distance file from Mast " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    auto size = buffer.size();
+                    char* data = &buffer[0];
+                    tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+                        std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                    }
+                    break;
+                }
+                case messages::ProductType::POINT_CLOUD:
+                {
+                    std::cout << "Telemetry: sending point cloud file from Mast " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    auto size = buffer.size();
+                    char* data = &buffer[0];
+                    tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoteri
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+                        std::cout << "Telemetry: sent point cloud file with size " << size << std::endl;
+                    }
+                    break;
+                }
+                case messages::ProductType::DEM:
+                {
+                    std::cout << "Telemetry: sending dem from Mast " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                    int seq=1;
+                    long time=(long)PAN_STEREO_index-1;
+                    //int seq=tm.sequenceCounter;
+                    //long time=tm.timestamp;
+                    std::string filename = tm.productPath;
+                    filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demPanCamProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent dem  with size " << data.size() << std::endl;
+                    }
+                    std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                    std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
+                    char command[256];
+                    sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
+                    system(command);
+                    std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+                    std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+                    auto size2 = buffer2.size();
+                    char* data2 = &buffer2[0];
+                    mtl_filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+                        std::cout << "Telemetry: sent file with size " << size2 << std::endl;
+                    }
+                    files_sent=true;
+                    break;
+        	}
+            }
+            break;
+        case messages::Producer::LIDAR:
+            break;
+        case messages::Producer::FRONT:
+	    switch (tm.type) {
+                case messages::ProductType::IMAGE:
+                {
+			std::cout << "Telemetry: sending image from Front " << tm.productPath << std::endl;
+		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+		        auto size = buffer.size();
+		        char* data = &buffer[0];
+		        int seq=1;
+		        long time=FLOC_STEREO_index-1;
+		        //int seq=tm.sequenceCounter;
+		        //long time=tm.timestamp;
+                        Eigen::Affine3d tf;
+                	if (_left_camera_bb2_front2lab.get(tm.timestamp, tf, false))
+                	{
+                            getTransform(tf);
+                	}
+		        if (activemqTMSender->isConnected){
+        		    tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageFLocProducerMonitoring, transformation);
+		            std::cout << "Telemetry: sent image with size " << size << std::endl;
+		        }
+        	        break;
+                }
+                case messages::ProductType::DISTANCE:
+                {
+			std::cout << "Telemetry: sending distance file from Front " << tm.productPath << std::endl;
+		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+		        auto size = buffer.size();
+		        char* data = &buffer[0];
+		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                        Eigen::Affine3d tf;
+                	if (_left_camera_bb2_front2lab.get(tm.timestamp, tf, false))
+                	{
+                            getTransform(tf);
+                	}
+		        if (activemqTMSender->isConnected){
+		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+		            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+		        }
+        	        break;
+                }
+        	case messages::ProductType::POINT_CLOUD:
+                {
+			std::cout << "Telemetry: sending point cloud file from Front " << tm.productPath << std::endl;
+		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+		        auto size = buffer.size();
+		        char* data = &buffer[0];
+		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                        Eigen::Affine3d tf;
+                	if (_left_camera_bb2_front2lab.get(tm.timestamp, tf, false))
+                	{
+                            getTransform(tf);
+                	}
+		        if (activemqTMSender->isConnected){
+		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+		            std::cout << "Telemetry: sent point cloud file with size " << size << std::endl;
+		        }
+        	        break;
+                }
+        	case messages::ProductType::DEM:
+                {
+			std::cout << "Telemetry: sending dem from Front " << tm.productPath << std::endl;
+			std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+			std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+			std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+			int seq=1;
+			long time=(long)FLOC_STEREO_index-1;
+			//int seq=tm.sequenceCounter;
+		        //long time=tm.timestamp;
+			std::string filename = tm.productPath;
+			filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                        Eigen::Affine3d tf;
+                	if (_left_camera_bb2_front2lab.get(tm.timestamp, tf, false))
+                	{
+                            getTransform(tf);
+                	}
+			if (activemqTMSender->isConnected){
+			    tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demFLocProducerMonitoring, transformation);
+			    std::cout << "Telemetry: sent dem  with size " << data.size() << std::endl;
+			}
+			std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+			std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
+			char command[256];
+			sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
+			system(command);
+			std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+			auto size2 = buffer2.size();
+			char* data2 = &buffer2[0];
+			mtl_filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+			if (activemqTMSender->isConnected){
+			    tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+			    std::cout << "Telemetry: sent file with size " << size2 << std::endl;
+			}
+		        files_sent=true;
+        	        break;
+                }
+            }
+            break;
+        case messages::Producer::TOF:
+            break;
+        case messages::Producer::HAZCAM:
+	    switch (tm.type) {
+                case messages::ProductType::IMAGE:
+                {
+			std::cout << "Telemetry: sending image from Hazcam " << tm.productPath << std::endl;
+		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+		        auto size = buffer.size();
+		        char* data = &buffer[0];
+		        int seq=1;
+		        long time=RLOC_STEREO_index-1;
+		        //int seq=tm.sequenceCounter;
+		        //long time=tm.timestamp;			
+		        if (activemqTMSender->isConnected){
+        		    tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageRLocProducerMonitoring, transformation);
+		            std::cout << "Telemetry: sent image with size " << size << std::endl;
+		        }
+        	        break;
+                }
+                case messages::ProductType::DISTANCE:
+                {
+			std::cout << "Telemetry: sending distance file from Hazcam " << tm.productPath << std::endl;
+		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+		        auto size = buffer.size();
+		        char* data = &buffer[0];
+		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+		        if (activemqTMSender->isConnected){
+		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+		            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+		        }
+        	        break;
+                }
+                case messages::ProductType::POINT_CLOUD:
+                {
+			std::cout << "Telemetry: sending point cloud file from Hazcam " << tm.productPath << std::endl;
+		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+		        auto size = buffer.size();
+		        char* data = &buffer[0];
+		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+		        if (activemqTMSender->isConnected){
+		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+		            std::cout << "Telemetry: sent point cloud file with size " << size << std::endl;
+		        }
+        	        break;
+                }
+                case messages::ProductType::DEM:
+                {
+			std::cout << "Telemetry: sending dem from Hazcam " << tm.productPath << std::endl;
+			std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+			std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+			std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+			int seq=1;
+			long time=(long)RLOC_STEREO_index-1;
+			//int seq=tm.sequenceCounter;
+		        //long time=tm.timestamp;
+			std::string filename = tm.productPath;
+			filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+			if (activemqTMSender->isConnected){
+			    tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demRLocProducerMonitoring, transformation);
+			    std::cout << "Telemetry: sent dem  with size " << data.size() << std::endl;
+			}
+			std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+			std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
+			char command[256];
+			sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
+			system(command);
+			std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+			auto size2 = buffer2.size();
+			char* data2 = &buffer2[0];
+			mtl_filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+			if (activemqTMSender->isConnected){
+			    tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+			    std::cout << "Telemetry: sent file with size " << size2 << std::endl;
+			}
+		        files_sent=true;
+        	        break;
+                }
+	    }
+            break;
+        case messages::Producer::REAR:
+	    switch (tm.type) {
+                case messages::ProductType::IMAGE:
+                {
+			std::cout << "Telemetry: sending image from Rear " << tm.productPath << std::endl;
+		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+		        auto size = buffer.size();
+		        char* data = &buffer[0];
+		        int seq=1;
+		        long time=RLOC_STEREO_index-1;
+		        //int seq=tm.sequenceCounter;
+		        //long time=tm.timestamp;
+                        Eigen::Affine3d tf;
+                	if (_left_camera_bb2_back2lab.get(tm.timestamp, tf, false))
+                	{
+                            getTransform(tf);
+                	}
+		        if (activemqTMSender->isConnected){
+        		    tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageRLocProducerMonitoring, transformation);
+		            std::cout << "Telemetry: sent image with size " << size << std::endl;
+		        }
+        	        break;
+                }
+                case messages::ProductType::DISTANCE:
+                {
+			std::cout << "Telemetry: sending distance file from Rear " << tm.productPath << std::endl;
+		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+		        auto size = buffer.size();
+		        char* data = &buffer[0];
+		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                        Eigen::Affine3d tf;
+                	if (_left_camera_bb2_back2lab.get(tm.timestamp, tf, false))
+                	{
+                            getTransform(tf);
+                	}
+		        if (activemqTMSender->isConnected){
+		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+		            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+		        }
+        	        break;
+                }
+                case messages::ProductType::POINT_CLOUD:
+                {
+			std::cout << "Telemetry: sending point cloud file from Rear " << tm.productPath << std::endl;
+		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+		        auto size = buffer.size();
+		        char* data = &buffer[0];
+		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                        Eigen::Affine3d tf;
+                	if (_left_camera_bb2_back2lab.get(tm.timestamp, tf, false))
+                	{
+                            getTransform(tf);
+                	}
+		        if (activemqTMSender->isConnected){
+		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+		            std::cout << "Telemetry: sent point cloud file with size " << size << std::endl;
+		        }
+        	        break;
+                }
+                case messages::ProductType::DEM:
+                {
+			std::cout << "Telemetry: sending dem from Rear " << tm.productPath << std::endl;
+			std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+			std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+			std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+			int seq=1;
+			long time=(long)RLOC_STEREO_index-1;
+			//int seq=tm.sequenceCounter;
+		        //long time=tm.timestamp;
+			std::string filename = tm.productPath;
+			filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                        Eigen::Affine3d tf;
+                	if (_left_camera_bb2_back2lab.get(tm.timestamp, tf, false))
+                	{
+                            getTransform(tf);
+                	}
+			if (activemqTMSender->isConnected){
+			    tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demRLocProducerMonitoring, transformation);
+			    std::cout << "Telemetry: sent dem  with size " << data.size() << std::endl;
+			}
+			std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+			std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
+			char command[256];
+			sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
+			system(command);
+			std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+			auto size2 = buffer2.size();
+			char* data2 = &buffer2[0];
+			mtl_filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+			if (activemqTMSender->isConnected){
+			    tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+			    std::cout << "Telemetry: sent file with size " << size2 << std::endl;
+			}
+		        files_sent=true;
+        	        break;
+                }
+	    }
+            break;
+        }
+    }
