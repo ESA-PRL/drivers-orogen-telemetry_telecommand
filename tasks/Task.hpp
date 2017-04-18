@@ -50,6 +50,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         int WACL_index, WACR_index, PAN_STEREO_index;
         int FLOCL_index, FLOCR_index, FLOC_STEREO_index;
         int RLOCL_index, RLOCR_index, RLOC_STEREO_index;
+        int TOF_index, LIDAR_index, FHAZ_STEREO_index;
 
         // State variables definition
         double State[MAX_STATE_SIZE];
@@ -113,6 +114,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         base::samples::RigidBodyState pose;
         base::samples::Joints ptu;
         base::samples::Joints bema;
+        std::vector<base::Temperature> motor_temperatures;
         base::samples::RigidBodyState imu;
         base::samples::RigidBodyState initial_3Dpose;
         base::samples::RigidBodyState absolute_pose;

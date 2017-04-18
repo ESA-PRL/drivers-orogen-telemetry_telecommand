@@ -112,6 +112,10 @@ bool Task::configureHook()
     RLOCL_index = 1;
     RLOCR_index = 1;
     RLOC_STEREO_index = 1;
+    FHAZ_STEREO_index = 1;
+    TOF_index = 1;
+    LIDAR_index = 1;
+
     //first_estimate=true;
     //first_imu_estimate_yaw=0.0;
     initial_3Dpose=_initial_pose;
@@ -342,6 +346,28 @@ void Task::updateHook()
           std::cout << "Error setting GNCState" << std::endl;
         }
     }
+    if (_motor_temperatures.read(motor_temperatures) == RTT::NewData)
+    {
+        //! new TM packet with updated motor temperature values
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+          std::cout << "Error getting GNCState" << std::endl;
+        }
+        int aux = (int)(motor_temperatures[0].getCelsius()*10);
+        GNCState[GNC_TEMPERATURE_WHEEL1_INDEX]=(double)((double)aux/10.0);
+	aux = (int)(motor_temperatures[1].getCelsius()*10);
+        GNCState[GNC_TEMPERATURE_WHEEL2_INDEX]=(double)((double)aux/10.0);
+	aux = (int)(motor_temperatures[2].getCelsius()*10);
+        GNCState[GNC_TEMPERATURE_WHEEL3_INDEX]=(double)((double)aux/10.0);
+	aux = (int)(motor_temperatures[3].getCelsius()*10);
+        GNCState[GNC_TEMPERATURE_WHEEL4_INDEX]=(double)((double)aux/10.0);
+	aux = (int)(motor_temperatures[4].getCelsius()*10);
+        GNCState[GNC_TEMPERATURE_WHEEL5_INDEX]=(double)((double)aux/10.0);
+	aux = (int)(motor_temperatures[5].getCelsius()*10);
+        GNCState[GNC_TEMPERATURE_WHEEL6_INDEX]=(double)((double)aux/10.0);
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+          std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
     if (_current_ptu.read(ptu) == RTT::NewData)
     {
         //! std::cout << "received ptu: " << ptu[0].position << " " << ptu[1].position << std::endl; // DEBUG
@@ -409,6 +435,14 @@ void Task::updateHook()
             abort_activity=true;
         else;
             //! Nothing to do in other status
+    
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+          std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_TRAJECTORY_STATUS_INDEX]=(double)(tj_status);
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+          std::cout << "Error setting GNCState" << std::endl;
+        }
     }
 
     if (_telemetry_file.read(tm_in) == RTT::NewData)
@@ -723,6 +757,22 @@ void Task::updateHook()
               std::cout << "Error setting GNCState" << std::endl;
           }
         }
+    else if (!strcmp((cmd_info->activityName).c_str(), "GNC_Update")) {
+	  currentActivity = GNC_UPDATE_ACTIVITY;
+	  currentParams = cmd_info->activityParams;
+	  int ackid;
+	  sscanf(currentParams.c_str(), "%d %lf %lf %lf", &ackid, &targetPositionX, &targetPositionY, &targetOrientationTheta);
+      initial_3Dpose.position[0]=targetPositionX;
+      initial_3Dpose.position[1]=targetPositionY;
+      initial_absolute_heading=targetOrientationTheta;
+          if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error getting GNCState" << std::endl;
+          }
+          //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
+          if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error setting GNCState" << std::endl;
+          }
+    }
  	else if (!strcmp((cmd_info->activityName).c_str(), "BEMA_Deploy_1")) {
 	  currentActivity = BEMA_DEPLOY_1_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
@@ -814,28 +864,40 @@ void Task::updateHook()
         }
 	else if (!strcmp((cmd_info->activityName).c_str(), "PanCam_WACGetImage")) {
 	  currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-	  currentParams = cmd_info->activityParams; //! LOC_CAM, NAV_CAM, PAN_CAM
+	  currentParams = cmd_info->activityParams;
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
-          tc_out.productType = productType;
+      tc_out.productType = productType;
+      if (productMode>0){
+          tc_out.productMode=messages::Mode::PERIODIC;
+          tc_out.usecPeriod=productMode*1000;
+      } else{
           tc_out.productMode = productMode;
+      }
 	  std::cout <<  "PanCam WAC Get Image type " << productType << " and mode: " << productMode << std::endl;
-          if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-              std::cout << "Error getting PanCamState" << std::endl;
-          }
-          PanCamState[PANCAM_ACTION_ID_INDEX]=50;
-          PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-          //PanCamState[]=;
-          if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-              std::cout << "Error setting PanCamState" << std::endl;
-          }
+      if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+          std::cout << "Error getting PanCamState" << std::endl;
+      }
+      PanCamState[PANCAM_ACTION_ID_INDEX]=50;
+      PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+      //PanCamState[]=;
+      if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+          std::cout << "Error setting PanCamState" << std::endl;
+      }
 	}
-        else if (!strcmp((cmd_info->activityName).c_str(), "FrontLocCam_GetImage")) {
+    else if (!strcmp((cmd_info->activityName).c_str(), "FrontLocCam_GetImage")) {
 	  currentActivity = LOCCAMFRONT_GET_IMAGE_ACTIVITY;
-	  currentParams = cmd_info->activityParams; //! LOC_CAM, NAV_CAM, PAN_CAM
+	  currentParams = cmd_info->activityParams;
 	  int ackid;
-	  sscanf(currentParams.c_str(), "%d %s", &ackid, cam);
-	  std::cout <<  "LocCamFront Get Image from:" << cam << std::endl;
+	  sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+      tc_out.productType = productType;
+      if (productMode>0){
+          tc_out.productMode=messages::Mode::PERIODIC;
+          tc_out.usecPeriod=productMode*1000;
+      } else{
+          tc_out.productMode = productMode;
+      }
+	  std::cout <<  "LocCamFront Get Image type " << productType << " and mode: " << productMode << std::endl;
           if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
               std::cout << "Error getting LocCamState" << std::endl;
           }
@@ -846,16 +908,92 @@ void Task::updateHook()
               std::cout << "Error setting LocCamState" << std::endl;
           }
 	}
-        else if (!strcmp((cmd_info->activityName).c_str(), "RearLocCam_GetImage")) {
+    else if (!strcmp((cmd_info->activityName).c_str(), "RearLocCam_GetImage")) {
 	  currentActivity = LOCCAMREAR_GET_IMAGE_ACTIVITY;
-	  currentParams = cmd_info->activityParams; //! LOC_CAM, NAV_CAM, PAN_CAM
+	  currentParams = cmd_info->activityParams;
 	  int ackid;
-	  sscanf(currentParams.c_str(), "%d %s", &ackid, cam);
-	  std::cout <<  "LocCamRear Get Image from:" << cam << std::endl;
+	  sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+      tc_out.productType = productType;
+      if (productMode>0){
+          tc_out.productMode=messages::Mode::PERIODIC;
+          tc_out.usecPeriod=productMode*1000;
+      } else{
+          tc_out.productMode = productMode;
+      }
+	  std::cout <<  "LocCamRear Get Image type " << productType << " and mode: " << productMode << std::endl;
           if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
               std::cout << "Error getting LocCamState" << std::endl;
           }
           PanCamState[PANCAM_ACTION_ID_INDEX]=52;
+          PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+          //PanCamState[]=;
+          if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+              std::cout << "Error setting LocCamState" << std::endl;
+          }
+	}
+    else if (!strcmp((cmd_info->activityName).c_str(), "HazCamFront_GetImage")) {
+	  currentActivity = HAZCAMFRONT_GET_IMAGE_ACTIVITY;
+	  currentParams = cmd_info->activityParams;
+	  int ackid;
+	  sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+      tc_out.productType = productType;
+      if (productMode>0){
+          tc_out.productMode=messages::Mode::PERIODIC;
+          tc_out.usecPeriod=productMode*1000;
+      } else{
+          tc_out.productMode = productMode;
+      }
+	  std::cout <<  "HazCamFront Get Image type " << productType << " and mode: " << productMode << std::endl;
+          if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+              std::cout << "Error getting LocCamState" << std::endl;
+          }
+          PanCamState[PANCAM_ACTION_ID_INDEX]=53;
+          PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+          //PanCamState[]=;
+          if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+              std::cout << "Error setting LocCamState" << std::endl;
+          }
+	}
+    else if (!strcmp((cmd_info->activityName).c_str(), "Tof_GetImage")) {
+	  currentActivity = TOF_GET_IMAGE_ACTIVITY;
+	  currentParams = cmd_info->activityParams;
+	  int ackid;
+	  sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+      tc_out.productType = productType;
+      if (productMode>0){
+          tc_out.productMode=messages::Mode::PERIODIC;
+          tc_out.usecPeriod=productMode*1000;
+      } else{
+          tc_out.productMode = productMode;
+      }
+	  std::cout <<  "Tof Get Image type " << productType << " and mode: " << productMode << std::endl;
+          if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+              std::cout << "Error getting LocCamState" << std::endl;
+          }
+          PanCamState[PANCAM_ACTION_ID_INDEX]=53;
+          PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+          //PanCamState[]=;
+          if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+              std::cout << "Error setting LocCamState" << std::endl;
+          }
+	}
+    else if (!strcmp((cmd_info->activityName).c_str(), "Lidar_GetImage")) {
+	  currentActivity = LIDAR_GET_IMAGE_ACTIVITY;
+	  currentParams = cmd_info->activityParams;
+	  int ackid;
+	  sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+      tc_out.productType = productType;
+      if (productMode>0){
+          tc_out.productMode=messages::Mode::PERIODIC;
+          tc_out.usecPeriod=productMode*1000;
+      } else{
+          tc_out.productMode = productMode;
+      }
+	  std::cout <<  "Lidar Get Image type " << productType << " and mode: " << productMode << std::endl;
+          if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+              std::cout << "Error getting LocCamState" << std::endl;
+          }
+          PanCamState[PANCAM_ACTION_ID_INDEX]=53;
           PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
           //PanCamState[]=;
           if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
@@ -983,6 +1121,9 @@ void Task::updateHook()
             std::cout << "Error setting GNCState" << std::endl;
         }
       }
+    }
+    else if (currentActivity == GNC_UPDATE_ACTIVITY) {
+        //Add logic to handle an Update command. Probably need to trigger a restart of the odometry related component.
     }
     else if (currentActivity == BEMA_DEPLOY_1_ACTIVITY) {
       if (bema1TargetReached() || abort_activity) {
@@ -1346,6 +1487,7 @@ void Task::updateHook()
     }
     else if (currentActivity == LOCCAMREAR_GET_IMAGE_ACTIVITY) {
       _camera_back_process_image_trigger.write(tc_out);
+      RLOC_STEREO_index++;
       if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
          std::cout << "Error getting LocCamState" << std::endl;
       }
@@ -1470,6 +1612,48 @@ void Task::updateHook()
       }
       currentActivity = -1;
 */
+    }
+    else if (currentActivity == HAZCAMFRONT_GET_IMAGE_ACTIVITY) {
+      _camera_haz_front_process_image_trigger.write(tc_out);
+      FHAZ_STEREO_index++;
+      if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+         std::cout << "Error getting LocCamState" << std::endl;
+      }
+      PanCamState[HAZCAM_FHAZ_STEREO_INDEX]=FHAZ_STEREO_index-1;
+      PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+      PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+      if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+         std::cout << "Error setting LocCamState" << std::endl;
+      }
+      currentActivity=-1;
+    }
+    else if (currentActivity == TOF_GET_IMAGE_ACTIVITY) {
+      _tof_trigger.write(tc_out);
+      TOF_index++;
+      if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+         std::cout << "Error getting LocCamState" << std::endl;
+      }
+      PanCamState[TOF_INDEX]=TOF_index-1;
+      PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+      PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+      if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+         std::cout << "Error setting LocCamState" << std::endl;
+      }
+      currentActivity=-1;
+    }
+    else if (currentActivity == LIDAR_GET_IMAGE_ACTIVITY) {
+      _lidar_trigger.write(tc_out);
+      LIDAR_index++;
+      if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+         std::cout << "Error getting LocCamState" << std::endl;
+      }
+      PanCamState[LIDAR_INDEX]=LIDAR_index-1;
+      PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+      PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+      if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
+         std::cout << "Error setting LocCamState" << std::endl;
+      }
+      currentActivity=-1;
     }
     else if ((currentActivity == PANCAM_WAC_RRGB_ACTIVITY) || inPanCamActivity) {
         _panorama_trigger.write(tilt);
