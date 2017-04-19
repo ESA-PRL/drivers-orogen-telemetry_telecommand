@@ -2129,7 +2129,9 @@ void Task::sendFile(messages::Telemetry tm)
                     std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
                     std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
                     char command[256];
-                    sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
+                    std::string folder = _productsFolder.value();
+                    //sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
+                    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
@@ -2233,7 +2235,9 @@ void Task::sendFile(messages::Telemetry tm)
 			std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
 			std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
 			char command[256];
-			sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
+            std::string folder = _productsFolder.value();
+            //sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
+            sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
 			system(command);
 			std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
 			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
@@ -2317,7 +2321,9 @@ void Task::sendFile(messages::Telemetry tm)
 			std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
 			std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
 			char command[256];
-			sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
+            std::string folder = _productsFolder.value();
+            //sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
+            sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
 			system(command);
 			std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
 			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
@@ -2419,7 +2425,9 @@ void Task::sendFile(messages::Telemetry tm)
 			std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
 			std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
 			char command[256];
-			sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
+            std::string folder = _productsFolder.value();
+            //sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
+            sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
 			system(command);
 			std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
 			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
