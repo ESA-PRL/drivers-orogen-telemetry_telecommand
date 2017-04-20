@@ -252,7 +252,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 	/** Sends the file (image, distance, etc.) specified in the tm message.
 	 *  It clasifies the file depending its type and source
          */
-        void sendFile(messages::Telemetry tm_in);
+        void sendProduct(messages::Telemetry tm_in);
 
     };
 }

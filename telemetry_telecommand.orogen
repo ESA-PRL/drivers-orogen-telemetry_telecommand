@@ -62,7 +62,7 @@ task_context "Task" do
     input_port "dist_front_filename", "std/string"
     input_port "dist_back_filename", "std/string"
     input_port "dist_haz_front_filename", "std/string"
-    input_port "telemetry_file", "telemetry_telecommand/messages/Telemetry"
+    input_port "telemetry_product", "telemetry_telecommand/messages/Telemetry"
     # An output port, i.e. an object to which the component pushes data so that
     # it is transmitted to other components' inputs
     #
@@ -77,10 +77,10 @@ task_context "Task" do
     output_port "mast_pan", "double"
     output_port "mast_tilt", "double"
     output_port "panorama_trigger", "double"
-    output_port "camera_mast_process_image_trigger", "telemetry_telecommand/messages/Telecommand"
-    output_port "camera_front_process_image_trigger", "telemetry_telecommand/messages/Telecommand"
-    output_port "camera_back_process_image_trigger", "telemetry_telecommand/messages/Telecommand"
-    output_port "camera_haz_front_process_image_trigger", "telemetry_telecommand/messages/Telecommand"
+    output_port "mast_trigger", "telemetry_telecommand/messages/Telecommand"
+    output_port "front_trigger", "telemetry_telecommand/messages/Telecommand"
+    output_port "rear_trigger", "telemetry_telecommand/messages/Telecommand"
+    output_port "haz_front_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "tof_trigger", "telemetry_telecommand/messages/Telecommand"
     #output_port "tof_depth_trigger", "bool"
     #output_port "tof_intensity_trigger", "bool"
