@@ -12,6 +12,7 @@ using_library "telemetry_telecommand"
 import_types_from "base"
 import_types_from "telemetry_telecommandTypes.hpp"
 import_types_from "telemetry_telecommand/Messages.hpp"
+import_types_from "temperature/temperatureTypes.hpp"
 
 # If this project uses data types that are defined in other oroGen projects,
 # these projects should be imported there as well.
@@ -45,7 +46,7 @@ task_context "Task" do
     input_port "current_imu", "base/samples/RigidBodyState"
     input_port "current_bema", "base/samples/Joints"
     input_port "joint_samples", "base/samples/Joints"
-    input_port "motor_temperatures", "/std/vector<base/Temperature>"
+    input_port "motor_temperatures", "/temperature/samples/Temperature"
     input_port "trajectory_status", "int"
     input_port "image_mast_filename", "std/string"
     input_port "image_front_left_filename", "std/string"

@@ -17,6 +17,7 @@
 #include "telemetry_telecommand/ActiveMQTCReceiver.h"
 
 #include "telemetry_telecommand/Messages.hpp"
+#include "temperature/temperatureTypes.hpp"
 //#include "frame_helper/FrameHelper.h"
 
 namespace telemetry_telecommand {
@@ -114,7 +115,8 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         base::samples::RigidBodyState pose;
         base::samples::Joints ptu;
         base::samples::Joints bema;
-        std::vector<base::Temperature> motor_temperatures;
+        base::samples::Joints joint_samples;
+        temperature::samples::Temperature motor_temperatures;
         base::samples::RigidBodyState imu;
         base::samples::RigidBodyState initial_3Dpose;
         base::samples::RigidBodyState absolute_pose;

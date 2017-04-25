@@ -34,9 +34,10 @@ const double RAD2DEG = 180/3.141592;
 const double MIN_ACK_RADIUS = 0.6;
 const double OMEGA = 0.02;  //in Rad/s the commanded angular velocity to the walking actuators when deploying
 
-const double PANLIMIT_LEFT = 50*DEG2RAD; //ExoTeR
-const double PANLIMIT_RIGHT = -235*DEG2RAD; //ExoTeR
-const double TILTLIMIT = 90*DEG2RAD; //ExoTeR
+const double PANLIMIT_LEFT = 155*DEG2RAD; //HDPR
+const double PANLIMIT_RIGHT = -155*DEG2RAD; //HDPR
+const double TILTLIMIT_LOW = -25*DEG2RAD; //HDPR
+const double TILTLIMIT_HIGH= 45*DEG2RAD; //HDPR
 const double BEMALIMIT = 95; //ExoTeR
 const double TARGET_WINDOW = 0.01; //ExoTeR
 const double TARGET_WINDOW2 = 0.01; //ExoTeR
@@ -102,6 +103,7 @@ bool Task::configureHook()
     ptu_command.names[1]= "MAST_TILT";
     ptu.resize(2);
     bema.resize(6);
+    joint_samples.resize(14);
     inPanCamActivity=0;
     WACL_index = 1;
     WACR_index = 1;
@@ -178,16 +180,16 @@ bool Task::startHook()
   RobotTask* rt18 = new RobotTask("PanCam_InitWACs");           // Simulated
   RobotTask* rt19 = new RobotTask("PanCam_SwitchOn");           // Simulated
   RobotTask* rt20 = new RobotTask("PanCam_WACAcqImage");        // Simulated
-  RobotTask* rt21 = new RobotTask("PanCam_WACGetImage");        // Executed (params WAC_L, WAC_R)
-  RobotTask* rt211 = new RobotTask("HazCamFront_GetImage");     // Executed in HDPR (params TBD)
-  RobotTask* rt212 = new RobotTask("Tof_GetImage");             // Executed in HDPR (params TBD)
-  RobotTask* rt213 = new RobotTask("Lidar_GetImage");           // Executed in HDPR (params TBD)
+  RobotTask* rt21 = new RobotTask("MAST_ACQ");                  // Executed (params WAC_L, WAC_R)
+  RobotTask* rt211 = new RobotTask("HAZCAM_ACQ");               // Executed in HDPR (params TBD)
+  RobotTask* rt212 = new RobotTask("LIDAR_ACQ");                // Executed in HDPR (params TBD)
+  RobotTask* rt213 = new RobotTask("TOF_ACQ");                  // Executed in HDPR (params TBD)
   RobotTask* rt22 = new RobotTask("PanCam_SwitchOff");          // Simulated
   RobotTask* rt23 = new RobotTask("PanCam_PIUSwitchOff");       // Simulated
   RobotTask* rt24 = new RobotTask("PANCAM_WAC_RRGB");           // Executed (params tilt angle in deg)
   RobotTask* rt25 = new RobotTask("PanCam_FilterSel");          // Simulated
-  RobotTask* rt251 = new RobotTask("FrontLocCam_GetImage");     // Executed
-  RobotTask* rt252 = new RobotTask("RearLocCam_GetImage");      // Executed
+  RobotTask* rt251 = new RobotTask("FRONT_ACQ");                // Executed
+  RobotTask* rt252 = new RobotTask("REAR_ACQ");                 // Executed
 
   RobotTask* rt26 = new RobotTask("MAST_DEP_Initialise");       // Simulated
   RobotTask* rt27 = new RobotTask("MAST_DEP_Deploy");           // Simulated
@@ -346,23 +348,74 @@ void Task::updateHook()
           std::cout << "Error setting GNCState" << std::endl;
         }
     }
+    if (_joint_samples.read(joint_samples) == RTT::NewData)
+    {
+        //! new TM packet with updated joint samples
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+          std::cout << "Error getting GNCState" << std::endl;
+        }
+        int aux = (int)(joint_samples[0].speed*RAD2DEG*100);
+        GNCState[GNC_ROVER_WHEEL1_SPEED_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[1].speed*RAD2DEG*100);
+        GNCState[GNC_ROVER_WHEEL2_SPEED_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[2].speed*RAD2DEG*100);
+        GNCState[GNC_ROVER_WHEEL3_SPEED_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[3].speed*RAD2DEG*100);
+        GNCState[GNC_ROVER_WHEEL4_SPEED_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[4].speed*RAD2DEG*100);
+        GNCState[GNC_ROVER_WHEEL5_SPEED_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[5].speed*RAD2DEG*100);
+        GNCState[GNC_ROVER_WHEEL6_SPEED_INDEX]=(double)((double)aux/100.0);
+    aux = (int)(joint_samples[6].position*RAD2DEG*100);
+        GNCState[GNC_ROVER_STEER1_POSITION_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[7].position*RAD2DEG*100);
+        GNCState[GNC_ROVER_STEER2_POSITION_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[8].position*RAD2DEG*100);
+        GNCState[GNC_ROVER_STEER5_POSITION_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[9].position*RAD2DEG*100);
+        GNCState[GNC_ROVER_STEER6_POSITION_INDEX]=(double)((double)aux/100.0);
+    aux = (int)(joint_samples[0].raw*100);
+        GNCState[GNC_ROVER_WHEEL1_CURRENT_INDEX]=(double)((double)aux/100.0);
+    aux = (int)(joint_samples[1].raw*100);
+        GNCState[GNC_ROVER_WHEEL2_CURRENT_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[2].raw*100);
+        GNCState[GNC_ROVER_WHEEL3_CURRENT_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[3].raw*100);
+        GNCState[GNC_ROVER_WHEEL4_CURRENT_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[4].raw*100);
+        GNCState[GNC_ROVER_WHEEL5_CURRENT_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[5].raw*100);
+        GNCState[GNC_ROVER_WHEEL6_CURRENT_INDEX]=(double)((double)aux/100.0);
+    aux = (int)(joint_samples[10].position*RAD2DEG*100);
+        GNCState[GNC_ROVER_LEFT_ROCKER_INDEX]=(double)((double)aux/100.0);
+    aux = (int)(joint_samples[11].position*RAD2DEG*100);
+        GNCState[GNC_ROVER_RIGHT_ROCKER_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[12].position*RAD2DEG*100);
+        GNCState[GNC_ROVER_LEFT_BOGIE_INDEX]=(double)((double)aux/100.0);
+	aux = (int)(joint_samples[13].position*RAD2DEG*100);
+        GNCState[GNC_ROVER_RIGHT_BOGIE_INDEX]=(double)((double)aux/100.0);
+
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+          std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
     if (_motor_temperatures.read(motor_temperatures) == RTT::NewData)
     {
         //! new TM packet with updated motor temperature values
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
           std::cout << "Error getting GNCState" << std::endl;
         }
-        int aux = (int)(motor_temperatures[0].getCelsius()*10);
+        int aux = (int)(motor_temperatures.temp[0].getCelsius()*10);
         GNCState[GNC_TEMPERATURE_WHEEL1_INDEX]=(double)((double)aux/10.0);
-	aux = (int)(motor_temperatures[1].getCelsius()*10);
+	aux = (int)(motor_temperatures.temp[1].getCelsius()*10);
         GNCState[GNC_TEMPERATURE_WHEEL2_INDEX]=(double)((double)aux/10.0);
-	aux = (int)(motor_temperatures[2].getCelsius()*10);
+	aux = (int)(motor_temperatures.temp[2].getCelsius()*10);
         GNCState[GNC_TEMPERATURE_WHEEL3_INDEX]=(double)((double)aux/10.0);
-	aux = (int)(motor_temperatures[3].getCelsius()*10);
+	aux = (int)(motor_temperatures.temp[3].getCelsius()*10);
         GNCState[GNC_TEMPERATURE_WHEEL4_INDEX]=(double)((double)aux/10.0);
-	aux = (int)(motor_temperatures[4].getCelsius()*10);
+	aux = (int)(motor_temperatures.temp[4].getCelsius()*10);
         GNCState[GNC_TEMPERATURE_WHEEL5_INDEX]=(double)((double)aux/10.0);
-	aux = (int)(motor_temperatures[5].getCelsius()*10);
+	aux = (int)(motor_temperatures.temp[5].getCelsius()*10);
         GNCState[GNC_TEMPERATURE_WHEEL6_INDEX]=(double)((double)aux/10.0);
         if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
           std::cout << "Error setting GNCState" << std::endl;
@@ -397,7 +450,7 @@ void Task::updateHook()
     }
     if (_current_tilt.read(tilt) == RTT::NewData)
     {
-        ptu[1].position=tilt;
+        ptu[1].position=tilt/4; // HDPR tilt value comes with a factor of 4
         if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
           std::cout << "Error getting MastState" << std::endl;
         }
@@ -862,7 +915,7 @@ void Task::updateHook()
               std::cout << "Error setting MastState" << std::endl;
           }
         }
-	else if (!strcmp((cmd_info->activityName).c_str(), "PanCam_WACGetImage")) {
+	else if (!strcmp((cmd_info->activityName).c_str(), "MAST_ACQ")) {
 	  currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
@@ -885,7 +938,7 @@ void Task::updateHook()
           std::cout << "Error setting PanCamState" << std::endl;
       }
 	}
-    else if (!strcmp((cmd_info->activityName).c_str(), "FrontLocCam_GetImage")) {
+    else if (!strcmp((cmd_info->activityName).c_str(), "FRONT_ACQ")) {
 	  currentActivity = LOCCAMFRONT_GET_IMAGE_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
@@ -908,7 +961,7 @@ void Task::updateHook()
               std::cout << "Error setting LocCamState" << std::endl;
           }
 	}
-    else if (!strcmp((cmd_info->activityName).c_str(), "RearLocCam_GetImage")) {
+    else if (!strcmp((cmd_info->activityName).c_str(), "REAR_ACQ")) {
 	  currentActivity = LOCCAMREAR_GET_IMAGE_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
@@ -931,7 +984,7 @@ void Task::updateHook()
               std::cout << "Error setting LocCamState" << std::endl;
           }
 	}
-    else if (!strcmp((cmd_info->activityName).c_str(), "HazCamFront_GetImage")) {
+    else if (!strcmp((cmd_info->activityName).c_str(), "HAZCAM_ACQ")) {
 	  currentActivity = HAZCAMFRONT_GET_IMAGE_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
@@ -954,7 +1007,7 @@ void Task::updateHook()
               std::cout << "Error setting LocCamState" << std::endl;
           }
 	}
-    else if (!strcmp((cmd_info->activityName).c_str(), "Tof_GetImage")) {
+    else if (!strcmp((cmd_info->activityName).c_str(), "TOF_ACQ")) {
 	  currentActivity = TOF_GET_IMAGE_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
@@ -977,7 +1030,7 @@ void Task::updateHook()
               std::cout << "Error setting LocCamState" << std::endl;
           }
 	}
-    else if (!strcmp((cmd_info->activityName).c_str(), "Lidar_GetImage")) {
+    else if (!strcmp((cmd_info->activityName).c_str(), "LIDAR_ACQ")) {
 	  currentActivity = LIDAR_GET_IMAGE_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
@@ -2018,12 +2071,12 @@ void Task::sendPtuCommand()
 	pan = PANLIMIT_LEFT;
     else if ( pan < PANLIMIT_RIGHT)
 	pan = PANLIMIT_RIGHT;
-    if (tilt > TILTLIMIT)
-	tilt = TILTLIMIT;
-    else if (tilt < -TILTLIMIT)
-	tilt = - TILTLIMIT;
+    if (tilt > TILTLIMIT_HIGH)
+	tilt = TILTLIMIT_HIGH;
+    else if (tilt < TILTLIMIT_LOW)
+	tilt = TILTLIMIT_LOW;
     _mast_pan.write(pan);
-    _mast_tilt.write(tilt);
+    _mast_tilt.write(tilt*4);
 
     //ptu_command[0].position=pan;
     //ptu_command[0].speed=base::NaN<float>();
@@ -2053,9 +2106,9 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    long time=PAN_STEREO_index-1;
+                    //long time=PAN_STEREO_index-1;
                     //int seq=tm.sequenceCounter;
-                    //longtime=tm.timestamp;		
+                    long time=tm.timestamp.toMilliseconds();		
                     Eigen::Affine3d tf;
                     if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
                     {
@@ -2074,14 +2127,18 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     auto size = buffer.size();
                     char* data = &buffer[0];
-                    tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                    int seq=1;
+                    //long time=PAN_STEREO_index-1;
+                    //int seq=tm.sequenceCounter;
+                    long time=tm.timestamp.toMilliseconds();		
+                    //tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->distPanCamProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                     }
                     break;
@@ -2090,18 +2147,23 @@ void Task::sendProduct(messages::Telemetry tm)
                 {
                     std::cout << "Telemetry: sending point cloud file from Mast " << tm.productPath << std::endl;
                     std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-                    auto size = buffer.size();
-                    char* data = &buffer[0];
-                    tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoteri
+                    std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                    //auto size = buffer.size();
+                    //char* data = &buffer[0];
+                    int seq=1;
+                    //long time=(long)PAN_STEREO_index-1;
+                    //int seq=tm.sequenceCounter;
+                    long time=tm.timestamp.toMilliseconds();
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-                        std::cout << "Telemetry: sent point cloud file with size " << size << std::endl;
+                        tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, data.size(), data, activemqTMSender->pcPanCamProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
                     }
                     break;
                 }
@@ -2112,11 +2174,11 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    long time=(long)PAN_STEREO_index-1;
+                    //long time=(long)PAN_STEREO_index-1;
                     //int seq=tm.sequenceCounter;
-                    //long time=tm.timestamp;
+                    long time=tm.timestamp.toMilliseconds();
                     std::string filename = tm.productPath;
-                    filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                    filename.replace(0, 21, ""); 
                     Eigen::Affine3d tf;
                     if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
                     {
@@ -2131,13 +2193,13 @@ void Task::sendProduct(messages::Telemetry tm)
                     char command[256];
                     std::string folder = _productsFolder.value();
                     //sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
-                    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
+        		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();
                     char* data2 = &buffer2[0];
-                    mtl_filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                    mtl_filename.replace(0, 21, "");
                     if (activemqTMSender->isConnected){
                         tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
                         std::cout << "Telemetry: sent file with size " << size2 << std::endl;
@@ -2158,9 +2220,9 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    long time=LIDAR_index-1;
+                    //long time=LIDAR_index-1;
                     //int seq=tm.sequenceCounter;
-                    //longtime=tm.timestamp;		
+                    long time=tm.timestamp.toMilliseconds();		
                     Eigen::Affine3d tf;
                     if (_lidar2lab.get(tm.timestamp, tf, false))
                     {
@@ -2179,7 +2241,7 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     auto size = buffer.size();
                     char* data = &buffer[0];
-                    tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_lidar2lab.get(tm.timestamp, tf, false))
                     {
@@ -2198,7 +2260,7 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     auto size = buffer.size();
                     char* data = &buffer[0];
-                    tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoteri
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_lidar2lab.get(tm.timestamp, tf, false))
                     {
@@ -2217,11 +2279,11 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    long time=(long)LIDAR_index-1;
+                    //long time=(long)LIDAR_index-1;
                     //int seq=tm.sequenceCounter;
-                    //long time=tm.timestamp;
+                    long time=tm.timestamp.toMilliseconds();
                     std::string filename = tm.productPath;
-                    filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                    filename.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_lidar2lab.get(tm.timestamp, tf, false))
                     {
@@ -2242,7 +2304,7 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();
                     char* data2 = &buffer2[0];
-                    mtl_filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+                    mtl_filename.replace(0, 21, "");
                     if (activemqTMSender->isConnected){
                         tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
                         std::cout << "Telemetry: sent file with size " << size2 << std::endl;
@@ -2262,9 +2324,9 @@ void Task::sendProduct(messages::Telemetry tm)
 		        auto size = buffer.size();
 		        char* data = &buffer[0];
 		        int seq=1;
-		        long time=FLOC_STEREO_index-1;
+		        //long time=FLOC_STEREO_index-1;
 		        //int seq=tm.sequenceCounter;
-		        //long time=tm.timestamp;
+		        long time=tm.timestamp.toMilliseconds();
                         Eigen::Affine3d tf;
                 	if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
                 	{
@@ -2283,7 +2345,7 @@ void Task::sendProduct(messages::Telemetry tm)
 		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
 		        auto size = buffer.size();
 		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+		        tm.productPath.replace(0, 21, "");
                         Eigen::Affine3d tf;
                 	if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
                 	{
@@ -2302,7 +2364,7 @@ void Task::sendProduct(messages::Telemetry tm)
 		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
 		        auto size = buffer.size();
 		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+		        tm.productPath.replace(0, 21, ""); 
                         Eigen::Affine3d tf;
                 	if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
                 	{
@@ -2321,11 +2383,11 @@ void Task::sendProduct(messages::Telemetry tm)
 			std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
 			std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
 			int seq=1;
-			long time=(long)FLOC_STEREO_index-1;
+			//long time=(long)FLOC_STEREO_index-1;
 			//int seq=tm.sequenceCounter;
-		        //long time=tm.timestamp;
+		    long time=tm.timestamp.toMilliseconds();
 			std::string filename = tm.productPath;
-			filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+			filename.replace(0, 21, "");
                         Eigen::Affine3d tf;
                 	if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
                 	{
@@ -2346,7 +2408,7 @@ void Task::sendProduct(messages::Telemetry tm)
 			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
 			auto size2 = buffer2.size();
 			char* data2 = &buffer2[0];
-			mtl_filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+			mtl_filename.replace(0, 21, "");
 			if (activemqTMSender->isConnected){
 			    tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
 			    std::cout << "Telemetry: sent file with size " << size2 << std::endl;
@@ -2366,9 +2428,9 @@ void Task::sendProduct(messages::Telemetry tm)
 		        auto size = buffer.size();
 		        char* data = &buffer[0];
 		        int seq=1;
-		        long time=TOF_index-1;
+		        //long time=TOF_index-1;
 		        //int seq=tm.sequenceCounter;
-		        //long time=tm.timestamp;
+		        long time=tm.timestamp.toMilliseconds();
                         Eigen::Affine3d tf;
                 	if (_tof2lab.get(tm.timestamp, tf, false))
                 	{
@@ -2387,7 +2449,7 @@ void Task::sendProduct(messages::Telemetry tm)
 		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
 		        auto size = buffer.size();
 		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+		        tm.productPath.replace(0, 21, "");
                         Eigen::Affine3d tf;
                 	if (_tof2lab.get(tm.timestamp, tf, false))
                 	{
@@ -2406,7 +2468,7 @@ void Task::sendProduct(messages::Telemetry tm)
 		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
 		        auto size = buffer.size();
 		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+		        tm.productPath.replace(0, 21, "");
                         Eigen::Affine3d tf;
                 	if (_tof2lab.get(tm.timestamp, tf, false))
                 	{
@@ -2425,11 +2487,11 @@ void Task::sendProduct(messages::Telemetry tm)
 			std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
 			std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
 			int seq=1;
-			long time=(long)TOF_index-1;
+			//long time=(long)TOF_index-1;
 			//int seq=tm.sequenceCounter;
-		        //long time=tm.timestamp;
+		    long time=tm.timestamp.toMilliseconds();
 			std::string filename = tm.productPath;
-			filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+			filename.replace(0, 21, ""); 
                         Eigen::Affine3d tf;
                 	if (_tof2lab.get(tm.timestamp, tf, false))
                 	{
@@ -2450,7 +2512,7 @@ void Task::sendProduct(messages::Telemetry tm)
 			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
 			auto size2 = buffer2.size();
 			char* data2 = &buffer2[0];
-			mtl_filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+			mtl_filename.replace(0, 21, "");
 			if (activemqTMSender->isConnected){
 			    tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
 			    std::cout << "Telemetry: sent file with size " << size2 << std::endl;
@@ -2470,9 +2532,9 @@ void Task::sendProduct(messages::Telemetry tm)
 		        auto size = buffer.size();
 		        char* data = &buffer[0];
 		        int seq=1;
-		        long time=FHAZ_STEREO_index-1;
+		        //long time=FHAZ_STEREO_index-1;
 		        //int seq=tm.sequenceCounter;
-		        //long time=tm.timestamp;
+		        long time=tm.timestamp.toMilliseconds();
                         Eigen::Affine3d tf;
                 	if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
                 	{
@@ -2491,7 +2553,7 @@ void Task::sendProduct(messages::Telemetry tm)
 		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
 		        auto size = buffer.size();
 		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+		        tm.productPath.replace(0, 21, "");
                         Eigen::Affine3d tf;
                 	if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
                 	{
@@ -2510,7 +2572,7 @@ void Task::sendProduct(messages::Telemetry tm)
 		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
 		        auto size = buffer.size();
 		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+		        tm.productPath.replace(0, 21, "");
                         Eigen::Affine3d tf;
                 	if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
                 	{
@@ -2529,11 +2591,11 @@ void Task::sendProduct(messages::Telemetry tm)
 			std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
 			std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
 			int seq=1;
-			long time=(long)FHAZ_STEREO_index-1;
+			//long time=(long)FHAZ_STEREO_index-1;
 			//int seq=tm.sequenceCounter;
-		        //long time=tm.timestamp;
+		    long time=tm.timestamp.toMilliseconds();
 			std::string filename = tm.productPath;
-			filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+			filename.replace(0, 21, "");
                         Eigen::Affine3d tf;
                 	if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
                 	{
@@ -2554,7 +2616,7 @@ void Task::sendProduct(messages::Telemetry tm)
 			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
 			auto size2 = buffer2.size();
 			char* data2 = &buffer2[0];
-			mtl_filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
+			mtl_filename.replace(0, 21, "");
 			if (activemqTMSender->isConnected){
 			    tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
 			    std::cout << "Telemetry: sent file with size " << size2 << std::endl;
