@@ -12,9 +12,9 @@
 #define TM_SERVER_PORT_NUMBER 7032
 #define TC_REPLY_SERVER_PORT_NUMBER 7033
 
-const int GNC_LLO_ACKERMANN_ACTIVITY = 1;
-const int GNC_LLO_TURNSPOT_ACTIVITY = 2;
-const int GNC_LLO_TRAJECTORY_ACTIVITY = 3;
+const int GNC_ACKERMANN_GOTO_ACTIVITY = 1;
+const int GNC_TURNSPOT_GOTO_ACTIVITY = 2;
+const int GNC_TRAJECTORY_ACTIVITY = 3;
 const int MAST_PTU_MOVE_TO_ACTIVITY = 4;
 const int PANCAM_WAC_GET_IMAGE_ACTIVITY = 5;
 const int PANCAM_WAC_RRGB_ACTIVITY = 6;
@@ -23,10 +23,12 @@ const int LOCCAMREAR_GET_IMAGE_ACTIVITY = 8; //ExoTeR
 const int HAZCAMFRONT_GET_IMAGE_ACTIVITY = 9; //HDPR
 const int TOF_GET_IMAGE_ACTIVITY = 10; //HDPR
 const int LIDAR_GET_IMAGE_ACTIVITY = 12; //HDPR
-const int BEMA_DEPLOY_1_ACTIVITY = 13; //ExoTeR
-const int BEMA_DEPLOY_2_ACTIVITY = 14; //ExoTeR
-const int BEMA_DEPLOY_3_ACTIVITY = 15; //ExoTeR
+const int DEPLOYMENT_ALL_ACTIVITY = 13; //ExoTeR
+const int DEPLOYMENT_FRONT_ACTIVITY = 14; //ExoTeR
+const int DEPLOYMENT_REAR_ACTIVITY = 15; //ExoTeR
 const int GNC_UPDATE_ACTIVITY = 16;
+const int GNC_ACKERMANN_DIRECT_ACTIVITY = 17;
+const int GNC_TURNSPOT_DIRECT_ACTIVITY = 18;
 
 const double DEG2RAD = 3.141592/180;
 const double RAD2DEG = 180/3.141592;
@@ -38,7 +40,7 @@ const double PANLIMIT_LEFT = 155*DEG2RAD; //HDPR
 const double PANLIMIT_RIGHT = -155*DEG2RAD; //HDPR
 const double TILTLIMIT_LOW = -25*DEG2RAD; //HDPR
 const double TILTLIMIT_HIGH= 45*DEG2RAD; //HDPR
-const double BEMALIMIT = 95; //ExoTeR
+const double DEPLOYMENTLIMIT = 95; //ExoTeR
 const double TARGET_WINDOW = 0.01; //ExoTeR
 const double TARGET_WINDOW2 = 0.01; //ExoTeR
 const double TARGET_WINDOW3 = 2.0; //ExoTeR
@@ -199,13 +201,15 @@ bool Task::startHook()
 
   RobotTask* rt31 = new RobotTask("GNC_Initialise");            // Simulated
   RobotTask* rt311 = new RobotTask("GNC_Update");               // Executed  (params: x,y,z in meters rx,ry,rz in degrees)
-  RobotTask* rt32 = new RobotTask("GNC_LLO_ACKERMANN");         // Executed  (params: distance, speed (m, m/hour))
-  RobotTask* rt321 = new RobotTask("GNC_LLO_TURNSPOT");         // Executed  (params: distance, speed (m, m/hour))
-  RobotTask* rt322 = new RobotTask("GNC_LLO_TRAJECTORY");       // Executed  (params: number of waypoints, vector of waypoints(x,y,h))
+  RobotTask* rt32 = new RobotTask("GNC_ACKERMANN_GOTO");         // Executed  (params: distance, speed (m, m/hour))
+  RobotTask* rt321 = new RobotTask("GNC_TUNRSPOT_GOTO");         // Executed  (params: distance, speed (m, m/hour))
+  RobotTask* rt322 = new RobotTask("GNC_ACKERMANN_DIRECT");         // Executed  (params: distance, speed (m, m/hour))
+  RobotTask* rt323 = new RobotTask("GNC_TUNRSPOT_DIRECT");         // Executed  (params: distance, speed (m, m/hour))
+  RobotTask* rt324 = new RobotTask("GNC_TRAJECTORY");       // Executed  (params: number of waypoints, vector of waypoints(x,y,h))
   RobotTask* rt33 = new RobotTask("GNC_SwitchOff");             // Simulated
-  RobotTask* rt331 = new RobotTask("BEMA_Deploy_1");            // Executed  (params: deploy angle in deg)
-  RobotTask* rt332 = new RobotTask("BEMA_Deploy_2");            // Executed  (params: deploy angle in deg)
-  RobotTask* rt333 = new RobotTask("BEMA_Deploy_3");            // Executed  (params: deploy angle in deg)
+  RobotTask* rt331 = new RobotTask("Deployment_All");            // Executed  (params: deploy angle in deg)
+  RobotTask* rt332 = new RobotTask("Deployment_Front");            // Executed  (params: deploy angle in deg)
+  RobotTask* rt333 = new RobotTask("Deployment_Rear");            // Executed  (params: deploy angle in deg)
 
   RobotTask* rt34 = new RobotTask("RV_WakeUp");                 // Simulated
   RobotTask* rt35 = new RobotTask("MMS_WaitAbsTime");           // Simulated
@@ -246,6 +250,7 @@ bool Task::startHook()
   theRobotProcedure->insertRT(rt24);
   theRobotProcedure->insertRT(rt25);
   theRobotProcedure->insertRT(rt251);
+  theRobotProcedure->insertRT(rt252);
   theRobotProcedure->insertRT(rt26);
   theRobotProcedure->insertRT(rt27);
   theRobotProcedure->insertRT(rt28);
@@ -256,6 +261,8 @@ bool Task::startHook()
   theRobotProcedure->insertRT(rt32);
   theRobotProcedure->insertRT(rt321);
   theRobotProcedure->insertRT(rt322);
+  theRobotProcedure->insertRT(rt323);
+  theRobotProcedure->insertRT(rt324);
   theRobotProcedure->insertRT(rt33);
   theRobotProcedure->insertRT(rt331);
   theRobotProcedure->insertRT(rt332);
@@ -279,9 +286,9 @@ bool Task::startHook()
    * Routine to send the bema command to the rover stowed position (beggining of Egress)
    */
 /*
-  currentActivity = BEMA_DEPLOY_1_ACTIVITY;
+  currentActivity = DEPLOYMENT_ALL_ACTIVITY;
   bema_command=-90.0;
-  std::cout <<  "BEMA Deploy 1: " << bema_command << std::endl;
+  std::cout <<  "Deployment All: " << bema_command << std::endl;
   bema_command = bema_command*DEG2RAD;
   _bema_command.write(-2.0*OMEGA);
 
@@ -333,17 +340,17 @@ void Task::updateHook()
           std::cout << "Error getting GNCState" << std::endl;
         }
         int aux = (int)(bema[0].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_BEMA_Q1_INDEX]=(double)((double)aux/100.0);
+        GNCState[GNC_ROVER_DEPLOYMENT_Q1_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(bema[1].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_BEMA_Q2_INDEX]=(double)((double)aux/100.0);
+        GNCState[GNC_ROVER_DEPLOYMENT_Q2_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(bema[2].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_BEMA_Q3_INDEX]=(double)((double)aux/100.0);
+        GNCState[GNC_ROVER_DEPLOYMENT_Q3_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(bema[3].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_BEMA_Q4_INDEX]=(double)((double)aux/100.0);
+        GNCState[GNC_ROVER_DEPLOYMENT_Q4_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(bema[4].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_BEMA_Q5_INDEX]=(double)((double)aux/100.0);
+        GNCState[GNC_ROVER_DEPLOYMENT_Q5_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(bema[5].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_BEMA_Q6_INDEX]=(double)((double)aux/100.0);
+        GNCState[GNC_ROVER_DEPLOYMENT_Q6_INDEX]=(double)((double)aux/100.0);
         if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
           std::cout << "Error setting GNCState" << std::endl;
         }
@@ -503,7 +510,7 @@ void Task::updateHook()
         sendProduct(tm_in);
     }
 
-    if (_image_mast_filename.read(image_filename) == RTT::NewData)
+/*    if (_image_mast_filename.read(image_filename) == RTT::NewData)
     {
         std::cout << "check1: sending image " << image_filename << std::endl;
         std::ifstream input(image_filename.c_str(), std::ios::binary);
@@ -727,7 +734,7 @@ void Task::updateHook()
         }
         files_sent=true;
     }
-
+*/
     CommandInfo* cmd_info = activemqTCReceiver->extractCommandInfo();
     // CommandInfo* cmd_info = tcComm->extractCommandInfo();
     if (cmd_info != NULL)
@@ -740,15 +747,15 @@ void Task::updateHook()
       //! Check if there is NO running activity
       else if ((currentActivity == -1) && (inPanCamActivity == 0))
       {
-	if (!strcmp((cmd_info->activityName).c_str(), "GNC_LLO_ACKERMANN")) {
-	  currentActivity = GNC_LLO_ACKERMANN_ACTIVITY;
+	if (!strcmp((cmd_info->activityName).c_str(), "GNC_ACKERMANN_GOTO")) {
+	  currentActivity = GNC_ACKERMANN_GOTO_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %lf %lf %lf", &ackid, &targetPositionX, &targetPositionY, &targetSpeed);
           motionCommand();
 	  travelledDistance = 0.0;
           initial_pose = pose;
-	  std::cout <<  "GNC_LLO_ACKERMANN X:" << targetPositionX << " Y:" << targetPositionY << " speed:" << targetSpeed << std::endl;
+	  std::cout <<  "GNC_ACKERMANN_GOTO X:" << targetPositionX << " Y:" << targetPositionY << " speed:" << targetSpeed << std::endl;
           sendMotionCommand();
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error getting GNCState" << std::endl;
@@ -758,15 +765,31 @@ void Task::updateHook()
               std::cout << "Error setting GNCState" << std::endl;
           }
         }
-        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_LLO_TURNSPOT")) {
-	  currentActivity = GNC_LLO_TURNSPOT_ACTIVITY;
+        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_ACKERMANN_DIRECT")) {
+    	  currentActivity = GNC_ACKERMANN_DIRECT_ACTIVITY;
+    	  currentParams = cmd_info->activityParams;
+    	  int ackid;
+    	  sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetTranslation, &targetRotation);
+    	  std::cout <<  "GNC_ACKERMANN_DIRECT Translation:" << targetTranslation << " Rotation:" << targetRotation << std::endl;
+          sendMotionCommand();
+          if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error getting GNCState" << std::endl;
+          }
+          //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
+          if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error setting GNCState" << std::endl;
+          }
+          currentActivity = -1;
+        }
+        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TUNRSPOT_GOTO")) {
+	  currentActivity = GNC_TURNSPOT_GOTO_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &targetOrientationTheta);
           initial_imu = pose;
           motionCommand();
 	  travelledAngle = 0.0;
-	  std::cout <<  "GNC_LLO_TURNSPOT angle:" << targetOrientationTheta << std::endl;
+	  std::cout <<  "GNC_TUNRSPOT_GOTO angle:" << targetOrientationTheta << std::endl;
           sendMotionCommand();
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error getting GNCState" << std::endl;
@@ -776,8 +799,25 @@ void Task::updateHook()
               std::cout << "Error setting GNCState" << std::endl;
           }
         }
-        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_LLO_TRAJECTORY")) {
-	  currentActivity = GNC_LLO_TRAJECTORY_ACTIVITY;
+        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TUNRSPOT_DIRECT")) {
+    	  currentActivity = GNC_TURNSPOT_GOTO_ACTIVITY;
+	      currentParams = cmd_info->activityParams;
+	      int ackid;
+	      sscanf(currentParams.c_str(), "%d %lf", &ackid, &targetRotation);
+          targetTranslation=0.0;
+    	  std::cout <<  "GNC_TUNRSPOT_DIRECT Rotation:" << targetRotation << std::endl;
+          sendMotionCommand();
+          if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error getting GNCState" << std::endl;
+          }
+          //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
+          if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
+              std::cout << "Error setting GNCState" << std::endl;
+          }
+          currentActivity = -1;
+        }
+        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TRAJECTORY")) {
+	  currentActivity = GNC_TRAJECTORY_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid; 
           char *token_str; 
@@ -801,7 +841,7 @@ void Task::updateHook()
           trajectory.back().heading = targetOrientationTheta*DEG2RAD;
           target_reached=false;
           _trajectory.write(trajectory);
-	  std::cout <<  "GNC_LLO_TRAJECTORY #ofWaypoints:" << NofWaypoints << std::endl;
+	  std::cout <<  "GNC_TRAJECTORY #ofWaypoints:" << NofWaypoints << std::endl;
           if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
               std::cout << "Error getting GNCState" << std::endl;
           }
@@ -826,16 +866,16 @@ void Task::updateHook()
               std::cout << "Error setting GNCState" << std::endl;
           }
     }
- 	else if (!strcmp((cmd_info->activityName).c_str(), "BEMA_Deploy_1")) {
-	  currentActivity = BEMA_DEPLOY_1_ACTIVITY;
+ 	else if (!strcmp((cmd_info->activityName).c_str(), "Deployment_All")) {
+	  currentActivity = DEPLOYMENT_ALL_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
-          if (bema_command>BEMALIMIT)
-              bema_command=BEMALIMIT;
-          else if (bema_command<-BEMALIMIT)
-              bema_command=-BEMALIMIT;
-	  std::cout <<  "BEMA Deploy 1: " << bema_command << std::endl;
+          if (bema_command>DEPLOYMENTLIMIT)
+              bema_command=DEPLOYMENTLIMIT;
+          else if (bema_command<-DEPLOYMENTLIMIT)
+              bema_command=-DEPLOYMENTLIMIT;
+	  std::cout <<  "Deployment All: " << bema_command << std::endl;
           bema_command = bema_command*DEG2RAD;
           if (bema_command>bema[0].position){
               _bema_command.write(OMEGA);
@@ -850,16 +890,16 @@ void Task::updateHook()
               std::cout << "Error setting GNCState" << std::endl;
           }
         }
-        else if (!strcmp((cmd_info->activityName).c_str(), "BEMA_Deploy_2")) {
-	  currentActivity = BEMA_DEPLOY_2_ACTIVITY;
+        else if (!strcmp((cmd_info->activityName).c_str(), "Deployment_Front")) {
+	  currentActivity = DEPLOYMENT_FRONT_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
-	  if (bema_command>BEMALIMIT)
-              bema_command=BEMALIMIT;
-          else if (bema_command<-BEMALIMIT)
-              bema_command=-BEMALIMIT;
-          std::cout <<  "BEMA Deploy 2: " << bema_command << std::endl;
+	  if (bema_command>DEPLOYMENTLIMIT)
+              bema_command=DEPLOYMENTLIMIT;
+          else if (bema_command<-DEPLOYMENTLIMIT)
+              bema_command=-DEPLOYMENTLIMIT;
+          std::cout <<  "Deployment Front: " << bema_command << std::endl;
           bema_command = bema_command*DEG2RAD;
           if (bema_command>bema[0].position){
               _walking_command_front.write(OMEGA);
@@ -874,16 +914,16 @@ void Task::updateHook()
               std::cout << "Error setting GNCState" << std::endl;
           }
         }
-        else if (!strcmp((cmd_info->activityName).c_str(), "BEMA_Deploy_3")) {
-	  currentActivity = BEMA_DEPLOY_3_ACTIVITY;
+        else if (!strcmp((cmd_info->activityName).c_str(), "Deployment_Rear")) {
+	  currentActivity = DEPLOYMENT_REAR_ACTIVITY;
 	  currentParams = cmd_info->activityParams;
 	  int ackid;
 	  sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
-	  if (bema_command>BEMALIMIT)
-              bema_command=BEMALIMIT;
-          else if (bema_command<-BEMALIMIT)
-              bema_command=-BEMALIMIT;
-          std::cout <<  "BEMA Deploy 3: " << bema_command << std::endl;
+	  if (bema_command>DEPLOYMENTLIMIT)
+              bema_command=DEPLOYMENTLIMIT;
+          else if (bema_command<-DEPLOYMENTLIMIT)
+              bema_command=-DEPLOYMENTLIMIT;
+          std::cout <<  "Deployment Rear: " << bema_command << std::endl;
           bema_command = bema_command*DEG2RAD;
           if (bema_command>bema[4].position){
               _walking_command_rear.write(OMEGA);
@@ -1078,7 +1118,7 @@ void Task::updateHook()
 	}
       }
     }
-    if (currentActivity == GNC_LLO_ACKERMANN_ACTIVITY) {
+    if (currentActivity == GNC_ACKERMANN_GOTO_ACTIVITY) {
       travelledDistance = getTravelledDistance();
       if ((travelledDistance >= targetDistance) || abort_activity) {
         abort_activity=false;
@@ -1112,7 +1152,7 @@ void Task::updateHook()
         }
       }
     }
-    else if (currentActivity == GNC_LLO_TURNSPOT_ACTIVITY) {
+    else if (currentActivity == GNC_TURNSPOT_GOTO_ACTIVITY) {
       //travelledAngle = getTravelledAngle();
       if ( angleReached() || abort_activity) {
         std::cout << "Finish Turnspot" << std::endl;
@@ -1144,7 +1184,7 @@ void Task::updateHook()
         }
       }
     }
-    else if (currentActivity == GNC_LLO_TRAJECTORY_ACTIVITY) {
+    else if (currentActivity == GNC_TRAJECTORY_ACTIVITY) {
       if (target_reached || abort_activity) {
         abort_activity=false;
         target_reached=false;
@@ -1178,7 +1218,7 @@ void Task::updateHook()
     else if (currentActivity == GNC_UPDATE_ACTIVITY) {
         //Add logic to handle an Update command. Probably need to trigger a restart of the odometry related component.
     }
-    else if (currentActivity == BEMA_DEPLOY_1_ACTIVITY) {
+    else if (currentActivity == DEPLOYMENT_ALL_ACTIVITY) {
       if (bema1TargetReached() || abort_activity) {
         //bema_command = 0.0;
         abort_activity=false;
@@ -1204,7 +1244,7 @@ void Task::updateHook()
         }
       }
     }
-    else if (currentActivity == BEMA_DEPLOY_2_ACTIVITY) {
+    else if (currentActivity == DEPLOYMENT_FRONT_ACTIVITY) {
       if (bema2TargetReached() || abort_activity) {
         abort_activity=false;
         //bema_command = 0.0;
@@ -1230,7 +1270,7 @@ void Task::updateHook()
         }
       }
     }
-    else if (currentActivity == BEMA_DEPLOY_3_ACTIVITY) {
+    else if (currentActivity == DEPLOYMENT_REAR_ACTIVITY) {
       if (bema3TargetReached() || abort_activity) {
         abort_activity=false;
         //bema_command = 0.0;
@@ -1939,7 +1979,7 @@ void Task::getTransform(Eigen::Affine3d& tf)
 
 void Task::motionCommand()
 {
-    if (currentActivity == GNC_LLO_ACKERMANN_ACTIVITY){
+    if (currentActivity == GNC_ACKERMANN_GOTO_ACTIVITY){
         if (targetPositionY == 0){ // Straight line command
             targetDistance = std::abs(targetPositionX);
             double sign = (targetPositionX < 0 ? -1 : 1);
@@ -1962,7 +2002,7 @@ void Task::motionCommand()
         targetRotation = targetTranslation/radius;
         targetDistance = std::abs(theta*radius);
     }
-    else if (currentActivity == GNC_LLO_TURNSPOT_ACTIVITY){
+    else if (currentActivity == GNC_TURNSPOT_GOTO_ACTIVITY){
         targetTranslation=0.0;
         if (targetOrientationTheta>=0) {
             targetRotation=0.05; //ToDo Change this to parameter in the command
@@ -2106,8 +2146,7 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //long time=PAN_STEREO_index-1;
-                    //int seq=tm.sequenceCounter;
+                    //int seq=PAN_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     Eigen::Affine3d tf;
                     if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
@@ -2115,45 +2154,40 @@ void Task::sendProduct(messages::Telemetry tm)
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imagePanCamProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imgMastProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent image with size " << size << std::endl;
                     }
                     break;
                 }
                 case messages::ProductType::DISTANCE:
                 {
-                    std::cout << "Telemetry: sending distance file from Mast " << tm.productPath << std::endl;
+                    std::cout << "Telemetry: sending distance from Mast " << tm.productPath << std::endl;
                     std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                     std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //long time=PAN_STEREO_index-1;
-                    //int seq=tm.sequenceCounter;
+                    //int seq=PAN_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();		
-                    //tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->distPanCamProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->distMastProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                     }
                     break;
                 }
                 case messages::ProductType::POINT_CLOUD:
                 {
-                    std::cout << "Telemetry: sending point cloud file from Mast " << tm.productPath << std::endl;
+                    std::cout << "Telemetry: sending point cloud from Mast " << tm.productPath << std::endl;
                     std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                    //auto size = buffer.size();
-                    //char* data = &buffer[0];
                     int seq=1;
-                    //long time=(long)PAN_STEREO_index-1;
-                    //int seq=tm.sequenceCounter;
+                    //int seq=PAN_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
@@ -2162,7 +2196,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, data.size(), data, activemqTMSender->pcPanCamProducerMonitoring, transformation);
+                        tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, data.size(), data, activemqTMSender->pcMastProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
                     }
                     break;
@@ -2174,8 +2208,7 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //long time=(long)PAN_STEREO_index-1;
-                    //int seq=tm.sequenceCounter;
+                    //int seq=PAN_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string filename = tm.productPath;
                     filename.replace(0, 21, ""); 
@@ -2185,14 +2218,13 @@ void Task::sendProduct(messages::Telemetry tm)
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demPanCamProducerMonitoring, transformation);
-                        std::cout << "Telemetry: sent dem  with size " << data.size() << std::endl;
+                        tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demMastProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
                     }
                     std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
-                    std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
+                    std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
                     char command[256];
                     std::string folder = _productsFolder.value();
-                    //sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
@@ -2202,9 +2234,8 @@ void Task::sendProduct(messages::Telemetry tm)
                     mtl_filename.replace(0, 21, "");
                     if (activemqTMSender->isConnected){
                         tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-                        std::cout << "Telemetry: sent file with size " << size2 << std::endl;
+                        std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
                     }
-                    files_sent=true;
                     break;
         	    }
             }
@@ -2220,8 +2251,7 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //long time=LIDAR_index-1;
-                    //int seq=tm.sequenceCounter;
+                    //int seq=LIDAR_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     Eigen::Affine3d tf;
                     if (_lidar2lab.get(tm.timestamp, tf, false))
@@ -2229,37 +2259,41 @@ void Task::sendProduct(messages::Telemetry tm)
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imagePanCamProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imgLidarProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent image with size " << size << std::endl;
                     }
                     break;
                 }
                 case messages::ProductType::DISTANCE:
                 {
-                    std::cout << "Telemetry: sending distance file from Lidar " << tm.productPath << std::endl;
+                    std::cout << "Telemetry: sending distance from Lidar " << tm.productPath << std::endl;
                     std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                     std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     auto size = buffer.size();
                     char* data = &buffer[0];
-                    tm.productPath.replace(0, 21, "");
+                    int seq=1;
+                    //int seq=LIDAR_index-1;
+                    long time=tm.timestamp.toMilliseconds();		
                     Eigen::Affine3d tf;
                     if (_lidar2lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->distLidarProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                     }
                     break;
                 }
                 case messages::ProductType::POINT_CLOUD:
                 {
-                    std::cout << "Telemetry: sending point cloud file from Lidar " << tm.productPath << std::endl;
+                    std::cout << "Telemetry: sending point cloud from Lidar " << tm.productPath << std::endl;
                     std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-                    auto size = buffer.size();
-                    char* data = &buffer[0];
+                    std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                    int seq=1;
+                    //int seq=LIDAR_index-1;
+                    long time=tm.timestamp.toMilliseconds();
                     tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_lidar2lab.get(tm.timestamp, tf, false))
@@ -2267,8 +2301,8 @@ void Task::sendProduct(messages::Telemetry tm)
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-                        std::cout << "Telemetry: sent point cloud file with size " << size << std::endl;
+                        tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, data.size(), data, activemqTMSender->pcLidarProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
                     }
                     break;
                 }
@@ -2279,26 +2313,24 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //long time=(long)LIDAR_index-1;
-                    //int seq=tm.sequenceCounter;
+                    //int seq=LIDAR_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string filename = tm.productPath;
-                    filename.replace(0, 21, "");
+                    filename.replace(0, 21, ""); 
                     Eigen::Affine3d tf;
                     if (_lidar2lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demPanCamProducerMonitoring, transformation);
+                        tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demLidarProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
                     }
                     std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
-                    std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
+                    std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
                     char command[256];
                     std::string folder = _productsFolder.value();
-                    //sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
-                    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
+        		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
@@ -2307,9 +2339,8 @@ void Task::sendProduct(messages::Telemetry tm)
                     mtl_filename.replace(0, 21, "");
                     if (activemqTMSender->isConnected){
                         tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-                        std::cout << "Telemetry: sent file with size " << size2 << std::endl;
+                        std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
                     }
-                    files_sent=true;
                     break;
         	    }
             }
@@ -2318,417 +2349,417 @@ void Task::sendProduct(messages::Telemetry tm)
     	    switch (tm.type) {
                 case messages::ProductType::IMAGE:
                 {
-			std::cout << "Telemetry: sending image from Front " << tm.productPath << std::endl;
-		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-		        auto size = buffer.size();
-		        char* data = &buffer[0];
-		        int seq=1;
-		        //long time=FLOC_STEREO_index-1;
-		        //int seq=tm.sequenceCounter;
-		        long time=tm.timestamp.toMilliseconds();
-                        Eigen::Affine3d tf;
-                	if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-		        if (activemqTMSender->isConnected){
-        		    tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageFLocProducerMonitoring, transformation);
-		            std::cout << "Telemetry: sent image with size " << size << std::endl;
-		        }
-        	        break;
+                    std::cout << "Telemetry: sending image from Front " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    auto size = buffer.size();
+                    char* data = &buffer[0];
+                    int seq=1;
+                    //int seq=FLOC_STEREO_index-1;
+                    long time=tm.timestamp.toMilliseconds();		
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imgFrontProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent image with size " << size << std::endl;
+                    }
+                    break;
                 }
                 case messages::ProductType::DISTANCE:
                 {
-			std::cout << "Telemetry: sending distance file from Front " << tm.productPath << std::endl;
-		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-		        auto size = buffer.size();
-		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 21, "");
-                        Eigen::Affine3d tf;
-                	if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-		        if (activemqTMSender->isConnected){
-		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-		            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
-		        }
-        	        break;
+                    std::cout << "Telemetry: sending distance from Front " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    auto size = buffer.size();
+                    char* data = &buffer[0];
+                    int seq=1;
+                    //int seq=FLOC_STEREO_index-1;
+                    long time=tm.timestamp.toMilliseconds();		
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->distFrontProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                    }
+                    break;
                 }
-        	case messages::ProductType::POINT_CLOUD:
+                case messages::ProductType::POINT_CLOUD:
                 {
-			std::cout << "Telemetry: sending point cloud file from Front " << tm.productPath << std::endl;
-		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-		        auto size = buffer.size();
-		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 21, ""); 
-                        Eigen::Affine3d tf;
-                	if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-		        if (activemqTMSender->isConnected){
-		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-		            std::cout << "Telemetry: sent point cloud file with size " << size << std::endl;
-		        }
-        	        break;
+                    std::cout << "Telemetry: sending point cloud from Front " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                    int seq=1;
+                    //int seq=FLOC_STEREO_index-1;
+                    long time=tm.timestamp.toMilliseconds();
+                    tm.productPath.replace(0, 21, "");
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, data.size(), data, activemqTMSender->pcFrontProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                    }
+                    break;
                 }
-        	case messages::ProductType::DEM:
+                case messages::ProductType::DEM:
                 {
-			std::cout << "Telemetry: sending dem from Front " << tm.productPath << std::endl;
-			std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-			std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-			std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-			int seq=1;
-			//long time=(long)FLOC_STEREO_index-1;
-			//int seq=tm.sequenceCounter;
-		    long time=tm.timestamp.toMilliseconds();
-			std::string filename = tm.productPath;
-			filename.replace(0, 21, "");
-                        Eigen::Affine3d tf;
-                	if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-			if (activemqTMSender->isConnected){
-			    tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demFLocProducerMonitoring, transformation);
-			    std::cout << "Telemetry: sent dem  with size " << data.size() << std::endl;
-			}
-			std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
-			std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
-			char command[256];
-            std::string folder = _productsFolder.value();
-            //sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
-            sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
-			system(command);
-			std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
-			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
-			auto size2 = buffer2.size();
-			char* data2 = &buffer2[0];
-			mtl_filename.replace(0, 21, "");
-			if (activemqTMSender->isConnected){
-			    tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-			    std::cout << "Telemetry: sent file with size " << size2 << std::endl;
-			}
-		        files_sent=true;
-        	        break;
-                }
+                    std::cout << "Telemetry: sending dem from Front " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                    int seq=1;
+                    //int seq=FLOC_STEREO_index-1;
+                    long time=tm.timestamp.toMilliseconds();
+                    std::string filename = tm.productPath;
+                    filename.replace(0, 21, ""); 
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demFrontProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                    }
+                    std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                    std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                    char command[256];
+                    std::string folder = _productsFolder.value();
+        		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
+                    system(command);
+                    std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+                    std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+                    auto size2 = buffer2.size();
+                    char* data2 = &buffer2[0];
+                    mtl_filename.replace(0, 21, "");
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+                        std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                    }
+                    break;
+        	    }
             }
             break;
         case messages::Producer::TOF:
     	    switch (tm.type) {
                 case messages::ProductType::IMAGE:
                 {
-			std::cout << "Telemetry: sending image from Front " << tm.productPath << std::endl;
-		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-		        auto size = buffer.size();
-		        char* data = &buffer[0];
-		        int seq=1;
-		        //long time=TOF_index-1;
-		        //int seq=tm.sequenceCounter;
-		        long time=tm.timestamp.toMilliseconds();
-                        Eigen::Affine3d tf;
-                	if (_tof2lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-		        if (activemqTMSender->isConnected){
-        		    tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageFLocProducerMonitoring, transformation);
-		            std::cout << "Telemetry: sent image with size " << size << std::endl;
-		        }
-        	        break;
+                    std::cout << "Telemetry: sending image from Tof " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    auto size = buffer.size();
+                    char* data = &buffer[0];
+                    int seq=1;
+                    //int seq=TOF_index-1;
+                    long time=tm.timestamp.toMilliseconds();		
+                    Eigen::Affine3d tf;
+                    if (_tof2lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imgTofProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent image with size " << size << std::endl;
+                    }
+                    break;
                 }
                 case messages::ProductType::DISTANCE:
                 {
-			std::cout << "Telemetry: sending distance file from Front " << tm.productPath << std::endl;
-		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-		        auto size = buffer.size();
-		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 21, "");
-                        Eigen::Affine3d tf;
-                	if (_tof2lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-		        if (activemqTMSender->isConnected){
-		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-		            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
-		        }
-        	        break;
+                    std::cout << "Telemetry: sending distance from Tof " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    auto size = buffer.size();
+                    char* data = &buffer[0];
+                    int seq=1;
+                    //int seq=TOF_index-1;
+                    long time=tm.timestamp.toMilliseconds();		
+                    Eigen::Affine3d tf;
+                    if (_tof2lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->distTofProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                    }
+                    break;
                 }
-        	case messages::ProductType::POINT_CLOUD:
+                case messages::ProductType::POINT_CLOUD:
                 {
-			std::cout << "Telemetry: sending point cloud file from Front " << tm.productPath << std::endl;
-		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-		        auto size = buffer.size();
-		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 21, "");
-                        Eigen::Affine3d tf;
-                	if (_tof2lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-		        if (activemqTMSender->isConnected){
-		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-		            std::cout << "Telemetry: sent point cloud file with size " << size << std::endl;
-		        }
-        	        break;
+                    std::cout << "Telemetry: sending point cloud from Tof " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                    int seq=1;
+                    //int seq=TOF_index-1;
+                    long time=tm.timestamp.toMilliseconds();
+                    tm.productPath.replace(0, 21, "");
+                    Eigen::Affine3d tf;
+                    if (_tof2lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, data.size(), data, activemqTMSender->pcTofProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                    }
+                    break;
                 }
-        	case messages::ProductType::DEM:
+                case messages::ProductType::DEM:
                 {
-			std::cout << "Telemetry: sending dem from Front " << tm.productPath << std::endl;
-			std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-			std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-			std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-			int seq=1;
-			//long time=(long)TOF_index-1;
-			//int seq=tm.sequenceCounter;
-		    long time=tm.timestamp.toMilliseconds();
-			std::string filename = tm.productPath;
-			filename.replace(0, 21, ""); 
-                        Eigen::Affine3d tf;
-                	if (_tof2lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-			if (activemqTMSender->isConnected){
-			    tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demFLocProducerMonitoring, transformation);
-			    std::cout << "Telemetry: sent dem  with size " << data.size() << std::endl;
-			}
-			std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
-			std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
-			char command[256];
-            std::string folder = _productsFolder.value();
-            //sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
-            sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
-			system(command);
-			std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
-			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
-			auto size2 = buffer2.size();
-			char* data2 = &buffer2[0];
-			mtl_filename.replace(0, 21, "");
-			if (activemqTMSender->isConnected){
-			    tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-			    std::cout << "Telemetry: sent file with size " << size2 << std::endl;
-			}
-		        files_sent=true;
-        	        break;
-                }
+                    std::cout << "Telemetry: sending dem from Tof " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                    int seq=1;
+                    //int seq=TOF_index-1;
+                    long time=tm.timestamp.toMilliseconds();
+                    std::string filename = tm.productPath;
+                    filename.replace(0, 21, ""); 
+                    Eigen::Affine3d tf;
+                    if (_tof2lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demTofProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                    }
+                    std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                    std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                    char command[256];
+                    std::string folder = _productsFolder.value();
+        		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
+                    system(command);
+                    std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+                    std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+                    auto size2 = buffer2.size();
+                    char* data2 = &buffer2[0];
+                    mtl_filename.replace(0, 21, "");
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+                        std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                    }
+                    break;
+        	    }
             }
             break;
         case messages::Producer::HAZCAM:
     	    switch (tm.type) {
                 case messages::ProductType::IMAGE:
                 {
-			std::cout << "Telemetry: sending image from FrontHaz " << tm.productPath << std::endl;
-		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-		        auto size = buffer.size();
-		        char* data = &buffer[0];
-		        int seq=1;
-		        //long time=FHAZ_STEREO_index-1;
-		        //int seq=tm.sequenceCounter;
-		        long time=tm.timestamp.toMilliseconds();
-                        Eigen::Affine3d tf;
-                	if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-		        if (activemqTMSender->isConnected){
-        		    tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageRLocProducerMonitoring, transformation);
-		            std::cout << "Telemetry: sent image with size " << size << std::endl;
-		        }
-        	        break;
+                    std::cout << "Telemetry: sending image from Hazcam " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    auto size = buffer.size();
+                    char* data = &buffer[0];
+                    int seq=1;
+                    //int seq=FHAZ_STEREO_index-1;
+                    long time=tm.timestamp.toMilliseconds();		
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imgHazcamProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent image with size " << size << std::endl;
+                    }
+                    break;
                 }
                 case messages::ProductType::DISTANCE:
                 {
-			std::cout << "Telemetry: sending distance file from FrontHaz " << tm.productPath << std::endl;
-		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-		        auto size = buffer.size();
-		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 21, "");
-                        Eigen::Affine3d tf;
-                	if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-		        if (activemqTMSender->isConnected){
-		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-		            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
-		        }
-        	        break;
+                    std::cout << "Telemetry: sending distance from Hazcam " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    auto size = buffer.size();
+                    char* data = &buffer[0];
+                    int seq=1;
+                    //int seq=FHAZ_STEREO_index-1;
+                    long time=tm.timestamp.toMilliseconds();		
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->distHazcamProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                    }
+                    break;
                 }
                 case messages::ProductType::POINT_CLOUD:
                 {
-			std::cout << "Telemetry: sending point cloud file from FrontHaz " << tm.productPath << std::endl;
-		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-		        auto size = buffer.size();
-		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 21, "");
-                        Eigen::Affine3d tf;
-                	if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-		        if (activemqTMSender->isConnected){
-		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-		            std::cout << "Telemetry: sent point cloud file with size " << size << std::endl;
-		        }
-        	        break;
+                    std::cout << "Telemetry: sending point cloud from Hazcam " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                    int seq=1;
+                    //int seq=FHAZ_STEREO_index-1;
+                    long time=tm.timestamp.toMilliseconds();
+                    tm.productPath.replace(0, 21, "");
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, data.size(), data, activemqTMSender->pcHazcamProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                    }
+                    break;
                 }
                 case messages::ProductType::DEM:
                 {
-			std::cout << "Telemetry: sending dem from FrontHaz " << tm.productPath << std::endl;
-			std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-			std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-			std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-			int seq=1;
-			//long time=(long)FHAZ_STEREO_index-1;
-			//int seq=tm.sequenceCounter;
-		    long time=tm.timestamp.toMilliseconds();
-			std::string filename = tm.productPath;
-			filename.replace(0, 21, "");
-                        Eigen::Affine3d tf;
-                	if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-			if (activemqTMSender->isConnected){
-			    tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demRLocProducerMonitoring, transformation);
-			    std::cout << "Telemetry: sent dem  with size " << data.size() << std::endl;
-			}
-			std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
-			std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
-			char command[256];
-            std::string folder = _productsFolder.value();
-            //sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
-            sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
-			system(command);
-			std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
-			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
-			auto size2 = buffer2.size();
-			char* data2 = &buffer2[0];
-			mtl_filename.replace(0, 21, "");
-			if (activemqTMSender->isConnected){
-			    tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-			    std::cout << "Telemetry: sent file with size " << size2 << std::endl;
-			}
-		        files_sent=true;
-        	        break;
-                }
-	    }
+                    std::cout << "Telemetry: sending dem from Hazcam " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                    int seq=1;
+                    //int seq=FHAZ_STEREO_index-1;
+                    long time=tm.timestamp.toMilliseconds();
+                    std::string filename = tm.productPath;
+                    filename.replace(0, 21, ""); 
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demHazcamProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                    }
+                    std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                    std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                    char command[256];
+                    std::string folder = _productsFolder.value();
+        		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
+                    system(command);
+                    std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+                    std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+                    auto size2 = buffer2.size();
+                    char* data2 = &buffer2[0];
+                    mtl_filename.replace(0, 21, "");
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+                        std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                    }
+                    break;
+        	    }
+	        }
             break;
         case messages::Producer::REAR:
-/*    	    switch (tm.type) {
+    	    switch (tm.type) {
                 case messages::ProductType::IMAGE:
                 {
-			std::cout << "Telemetry: sending image from Rear " << tm.productPath << std::endl;
-		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-		        auto size = buffer.size();
-		        char* data = &buffer[0];
-		        int seq=1;
-		        long time=RLOC_STEREO_index-1;
-		        //int seq=tm.sequenceCounter;
-		        //long time=tm.timestamp;
-                        Eigen::Affine3d tf;
-                	if (_left_camera_bb2_back2lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-		        if (activemqTMSender->isConnected){
-        		    tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageRLocProducerMonitoring, transformation);
-		            std::cout << "Telemetry: sent image with size " << size << std::endl;
-		        }
-        	        break;
+                    std::cout << "Telemetry: sending image from Rear " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    auto size = buffer.size();
+                    char* data = &buffer[0];
+                    int seq=1;
+                    //int seq=RLOC_STEREO_index-1;
+                    long time=tm.timestamp.toMilliseconds();		
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imgRearProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent image with size " << size << std::endl;
+                    }
+                    break;
                 }
                 case messages::ProductType::DISTANCE:
                 {
-			std::cout << "Telemetry: sending distance file from Rear " << tm.productPath << std::endl;
-		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-		        auto size = buffer.size();
-		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
-                        Eigen::Affine3d tf;
-                	if (_left_camera_bb2_back2lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-		        if (activemqTMSender->isConnected){
-		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-		            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
-		        }
-        	        break;
+                    std::cout << "Telemetry: sending distance from Rear " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    auto size = buffer.size();
+                    char* data = &buffer[0];
+                    int seq=1;
+                    //int seq=RLOC_STEREO_index-1;
+                    long time=tm.timestamp.toMilliseconds();		
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->distRearProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                    }
+                    break;
                 }
                 case messages::ProductType::POINT_CLOUD:
                 {
-			std::cout << "Telemetry: sending point cloud file from Rear " << tm.productPath << std::endl;
-		        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-		        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-		        auto size = buffer.size();
-		        char* data = &buffer[0];
-		        tm.productPath.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
-                        Eigen::Affine3d tf;
-                	if (_left_camera_bb2_back2lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-		        if (activemqTMSender->isConnected){
-		            tmComm->sendFileMessage(tm.productPath.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-		            std::cout << "Telemetry: sent point cloud file with size " << size << std::endl;
-		        }
-        	        break;
+                    std::cout << "Telemetry: sending point cloud from Rear " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                    int seq=1;
+                    //int seq=RLOC_STEREO_index-1;
+                    long time=tm.timestamp.toMilliseconds();
+                    tm.productPath.replace(0, 21, "");
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, data.size(), data, activemqTMSender->pcRearProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                    }
+                    break;
                 }
                 case messages::ProductType::DEM:
                 {
-			std::cout << "Telemetry: sending dem from Rear " << tm.productPath << std::endl;
-			std::ifstream input(tm.productPath.c_str(), std::ios::binary);
-			std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-			std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-			int seq=1;
-			long time=(long)RLOC_STEREO_index-1;
-			//int seq=tm.sequenceCounter;
-		        //long time=tm.timestamp;
-			std::string filename = tm.productPath;
-			filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
-                        Eigen::Affine3d tf;
-                	if (_left_camera_bb2_back2lab.get(tm.timestamp, tf, false))
-                	{
-                            getTransform(tf);
-                	}
-			if (activemqTMSender->isConnected){
-			    tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demRLocProducerMonitoring, transformation);
-			    std::cout << "Telemetry: sent dem  with size " << data.size() << std::endl;
-			}
-			std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
-			std::cout << "Telemetry: sending file " << mtl_filename << std::endl;
-			char command[256];
-            std::string folder = _productsFolder.value();
-            //sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
-            sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
-			system(command);
-			std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
-			std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
-			auto size2 = buffer2.size();
-			char* data2 = &buffer2[0];
-			mtl_filename.replace(0, 28, ""); // Check if 28 is correct for HDPR as well, probably is 26 as hdpr has 2 letters less than exoter
-			if (activemqTMSender->isConnected){
-			    tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-			    std::cout << "Telemetry: sent file with size " << size2 << std::endl;
-			}
-		        files_sent=true;
-        	        break;
-                }
-	        }*/
+                    std::cout << "Telemetry: sending dem from Rear " << tm.productPath << std::endl;
+                    std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                    std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                    std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                    int seq=1;
+                    //int seq=RLOC_STEREO_index-1;
+                    long time=tm.timestamp.toMilliseconds();
+                    std::string filename = tm.productPath;
+                    filename.replace(0, 21, ""); 
+                    Eigen::Affine3d tf;
+                    if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
+                    {
+                        getTransform(tf);
+                    }
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demRearProducerMonitoring, transformation);
+                        std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                    }
+                    std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                    std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                    char command[256];
+                    std::string folder = _productsFolder.value();
+        		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
+                    system(command);
+                    std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+                    std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+                    auto size2 = buffer2.size();
+                    char* data2 = &buffer2[0];
+                    mtl_filename.replace(0, 21, "");
+                    if (activemqTMSender->isConnected){
+                        tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+                        std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                    }
+                    break;
+        	    }
+	        }
             break;
     }
 }
