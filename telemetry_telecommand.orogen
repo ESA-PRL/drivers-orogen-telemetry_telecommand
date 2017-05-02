@@ -74,6 +74,7 @@ task_context "Task" do
     output_port "walking_command_rear", "double"
     output_port "locomotion_command", "base/commands/Motion2D"
     output_port "trajectory", "/std/vector<base/Waypoint>"
+    output_port "trajectory_speed", "double"
     output_port "ptu_command", "base/commands/Joints"
     output_port "mast_pan", "double"
     output_port "mast_tilt", "double"
@@ -83,11 +84,7 @@ task_context "Task" do
     output_port "rear_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "haz_front_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "tof_trigger", "telemetry_telecommand/messages/Telecommand"
-    #output_port "tof_depth_trigger", "bool"
-    #output_port "tof_intensity_trigger", "bool"
     output_port "lidar_trigger", "telemetry_telecommand/messages/Telecommand"
-    #output_port "lidar_depth_trigger", "bool"
-    #output_port "lidar_intensity_trigger", "bool"
     output_port "telecommand_product", "telemetry_telecommand/messages/Telecommand"
 
     transformer do
