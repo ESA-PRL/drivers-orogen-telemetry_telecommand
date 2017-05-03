@@ -2208,14 +2208,16 @@ void Task::sendProduct(messages::Telemetry tm)
                     char* data = &buffer[0];
                     int seq=1;
                     //int seq=PAN_STEREO_index-1;
-                    long time=tm.timestamp.toMilliseconds();		
+                    long time=tm.timestamp.toMilliseconds();
+		    std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+		    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
                     Eigen::Affine3d tf;
                     if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imgMastProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(seq, time, date, size, (const unsigned char *)data, activemqTMSender->imgMastProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent image with size " << size << std::endl;
                     }
                     break;
