@@ -58,6 +58,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         double ADEState[MAX_STATE_SIZE];
         double SAState[MAX_STATE_SIZE];
         double PanCamState[MAX_STATE_SIZE];
+        double LOCOMState[MAX_STATE_SIZE];
         double MastState[MAX_STATE_SIZE];
         double GNCState[MAX_STATE_SIZE];
 

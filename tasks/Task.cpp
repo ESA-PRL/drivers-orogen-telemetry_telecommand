@@ -354,83 +354,83 @@ void Task::updateHook()
     if (_joint_samples.read(joint_samples) == RTT::NewData)
     {
         //! new TM packet with updated joint samples
-        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
-          std::cout << "Error getting GNCState" << std::endl;
+        if ( theRobotProcedure->GetParameters()->get( "LOCOMState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) LOCOMState ) == ERROR ){
+          std::cout << "Error getting LOCOMState" << std::endl;
         }
         int aux = (int)(joint_samples[0].speed*RAD2DEG*100);
-        GNCState[GNC_ROVER_WHEEL1_SPEED_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_WHEEL1_SPEED_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[1].speed*RAD2DEG*100);
-        GNCState[GNC_ROVER_WHEEL2_SPEED_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_WHEEL2_SPEED_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[2].speed*RAD2DEG*100);
-        GNCState[GNC_ROVER_WHEEL3_SPEED_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_WHEEL3_SPEED_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[3].speed*RAD2DEG*100);
-        GNCState[GNC_ROVER_WHEEL4_SPEED_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_WHEEL4_SPEED_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[4].speed*RAD2DEG*100);
-        GNCState[GNC_ROVER_WHEEL5_SPEED_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_WHEEL5_SPEED_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[5].speed*RAD2DEG*100);
-        GNCState[GNC_ROVER_WHEEL6_SPEED_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_WHEEL6_SPEED_INDEX]=(double)((double)aux/100.0);
     aux = (int)(joint_samples[6].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_STEER1_POSITION_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_STEER1_POSITION_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[7].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_STEER2_POSITION_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_STEER2_POSITION_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[8].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_STEER5_POSITION_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_STEER5_POSITION_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[9].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_STEER6_POSITION_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_STEER6_POSITION_INDEX]=(double)((double)aux/100.0);
     aux = (int)(joint_samples[0].raw*100);
-        GNCState[GNC_ROVER_WHEEL1_CURRENT_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_WHEEL1_CURRENT_INDEX]=(double)((double)aux/100.0);
     aux = (int)(joint_samples[1].raw*100);
-        GNCState[GNC_ROVER_WHEEL2_CURRENT_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_WHEEL2_CURRENT_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[2].raw*100);
-        GNCState[GNC_ROVER_WHEEL3_CURRENT_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_WHEEL3_CURRENT_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[3].raw*100);
-        GNCState[GNC_ROVER_WHEEL4_CURRENT_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_WHEEL4_CURRENT_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[4].raw*100);
-        GNCState[GNC_ROVER_WHEEL5_CURRENT_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_WHEEL5_CURRENT_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[5].raw*100);
-        GNCState[GNC_ROVER_WHEEL6_CURRENT_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_WHEEL6_CURRENT_INDEX]=(double)((double)aux/100.0);
     aux = (int)(joint_samples[0].raw*100);
-        GNCState[GNC_ROVER_STEER1_CURRENT_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_STEER1_CURRENT_INDEX]=(double)((double)aux/100.0);
     aux = (int)(joint_samples[1].raw*100);
-        GNCState[GNC_ROVER_STEER2_CURRENT_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_STEER2_CURRENT_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[4].raw*100);
-        GNCState[GNC_ROVER_STEER5_CURRENT_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_STEER5_CURRENT_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[5].raw*100);
-        GNCState[GNC_ROVER_STEER6_CURRENT_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_STEER6_CURRENT_INDEX]=(double)((double)aux/100.0);
 
     aux = (int)(joint_samples[10].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_LEFT_ROCKER_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_LEFT_ROCKER_INDEX]=(double)((double)aux/100.0);
     aux = (int)(joint_samples[11].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_RIGHT_ROCKER_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_RIGHT_ROCKER_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[12].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_LEFT_BOGIE_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_LEFT_BOGIE_INDEX]=(double)((double)aux/100.0);
 	aux = (int)(joint_samples[13].position*RAD2DEG*100);
-        GNCState[GNC_ROVER_RIGHT_BOGIE_INDEX]=(double)((double)aux/100.0);
+        LOCOMState[GNC_ROVER_RIGHT_BOGIE_INDEX]=(double)((double)aux/100.0);
 
-        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
-          std::cout << "Error setting GNCState" << std::endl;
+        if ( theRobotProcedure->GetParameters()->set( "LOCOMState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) LOCOMState ) == ERROR ){
+          std::cout << "Error setting LOCOMState" << std::endl;
         }
     }
     if (_motor_temperatures.read(motor_temperatures) == RTT::NewData)
     {
         //! new TM packet with updated motor temperature values
-        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
-          std::cout << "Error getting GNCState" << std::endl;
+        if ( theRobotProcedure->GetParameters()->get( "LOCOMState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) LOCOMState ) == ERROR ){
+          std::cout << "Error getting LOCOMState" << std::endl;
         }
         int aux = (int)(motor_temperatures.temp[0].getCelsius()*10);
-        GNCState[GNC_ROVER_WHEEL1_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
+        LOCOMState[GNC_ROVER_WHEEL1_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
 	aux = (int)(motor_temperatures.temp[1].getCelsius()*10);
-        GNCState[GNC_ROVER_WHEEL2_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
+        LOCOMState[GNC_ROVER_WHEEL2_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
 	aux = (int)(motor_temperatures.temp[2].getCelsius()*10);
-        GNCState[GNC_ROVER_WHEEL3_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
+        LOCOMState[GNC_ROVER_WHEEL3_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
 	aux = (int)(motor_temperatures.temp[3].getCelsius()*10);
-        GNCState[GNC_ROVER_WHEEL4_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
+        LOCOMState[GNC_ROVER_WHEEL4_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
 	aux = (int)(motor_temperatures.temp[4].getCelsius()*10);
-        GNCState[GNC_ROVER_WHEEL5_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
+        LOCOMState[GNC_ROVER_WHEEL5_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
 	aux = (int)(motor_temperatures.temp[5].getCelsius()*10);
-        GNCState[GNC_ROVER_WHEEL6_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
-        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
-          std::cout << "Error setting GNCState" << std::endl;
+        LOCOMState[GNC_ROVER_WHEEL6_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
+        if ( theRobotProcedure->GetParameters()->set( "LOCOMState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) LOCOMState ) == ERROR ){
+          std::cout << "Error setting LOCOMState" << std::endl;
         }
     }
     if (_current_ptu.read(ptu) == RTT::NewData)
@@ -2210,7 +2210,9 @@ void Task::sendProduct(messages::Telemetry tm)
                     //int seq=PAN_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
            		    std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                    std::cout<< " Date string: "<< date << std::endl;
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    std::cout<< " Date string: "<< date << std::endl;
                     Eigen::Affine3d tf;
                     if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
                     {
