@@ -302,6 +302,11 @@ bool Task::startHook()
        target_reached=false;
        NofWaypoints=0;
        */
+
+    // target reached is only false when we are in trajectory_following activity
+    // without having reached the target
+    target_reached = true;
+
     currentActivity = -1;
     abort_activity=false;
     files_sent=false;
@@ -519,6 +524,7 @@ void Task::updateHook()
         else if (tj_status == 3) //! OUT_OF_BOUNDARIES
         {
             abort_activity=true;
+            target_reached=true;
             std::cout << "Rover out of trajectory boundaries. Aborting trajectory!" << std::endl;
         }
         else;
@@ -799,7 +805,6 @@ void Task::updateHook()
             int ackid;
             sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetTranslation, &targetRotation);
             std::cout <<  "GNC_ACKERMANN_DIRECT Translation:" << targetTranslation << " Rotation:" << targetRotation << std::endl;
-            sendMotionCommand();
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
             }
@@ -808,6 +813,27 @@ void Task::updateHook()
                 std::cout << "Error setting GNCState" << std::endl;
             }
             deadManSwitch();
+
+            // check if we are in direct or in path following mode
+            if (target_reached)
+            {
+                // if not in trajectory following, send complete (direct) command
+                sendMotionCommand();
+            }
+            else
+            {
+                // trajectory following cannot go into reverse
+                // TODO don't write speeds but change PID parameters
+                if (targetTranslation >= 0)
+                {
+                    _trajectory_speed.write(targetTranslation);
+                }
+                else
+                {
+                    _trajectory_speed.write(0.0);
+                }
+            }
+
             currentActivity = -1;
         }
         else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TURNSPOT_GOTO")) {
@@ -848,6 +874,7 @@ void Task::updateHook()
         }
         else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TRAJECTORY")) {
             currentActivity = GNC_TRAJECTORY_ACTIVITY;
+            target_reached=false;
             currentParams = cmd_info->activityParams;
             int ackid; 
             char *token_str; 
@@ -871,7 +898,6 @@ void Task::updateHook()
             trajectory.back().heading = targetOrientationTheta*DEG2RAD;
             token_str = strtok(NULL, " ");
             targetSpeed = atof(token_str);
-            target_reached=false;
             _trajectory.write(trajectory);
             if (targetSpeed>0){
                 _trajectory_speed.write(targetSpeed);
@@ -1245,7 +1271,7 @@ void Task::updateHook()
     else if (currentActivity == GNC_TRAJECTORY_ACTIVITY) {
         if (target_reached || abort_activity) {
             abort_activity=false;
-            target_reached=false;
+            target_reached=true;
             targetPositionX=0.0;
             targetPositionY=0.0;
             targetOrientationTheta=0.0;
