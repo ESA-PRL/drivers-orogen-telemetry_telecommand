@@ -96,6 +96,13 @@ Task::~Task()
 // hooks defined by Orocos::RTT. See Task.hpp for more detailed
 // documentation about them.
 
+void Task::deadManSwitch()
+{
+    lastDirectCommandTime = base::Time::now();
+    deadMan = false;
+    deadManSwitchRelevant = true;
+}
+
 bool Task::configureHook()
 {
     if (! TaskBase::configureHook())
@@ -303,6 +310,18 @@ bool Task::startHook()
 void Task::updateHook()
 {
     TaskBase::updateHook();
+
+    // Dead man: stop rover in case the direct command can be assumed to have crashed
+    if (!deadMan && deadManSwitchRelevant)// only send stop command once. when emergency stop command is sent, deadMan is true
+    {
+        base::Time elapsedTime = base::Time::now() - lastDirectCommandTime;
+        if (elapsedTime.toMicroseconds() > deadManTime)
+        {
+            targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
+            deadMan = true;
+            std::cout << "Dead man switch stopped motion" << std::endl;
+        }
+    }
 
     if (_current_pose.read(pose) == RTT::NewData)
     {
@@ -788,6 +807,7 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error setting GNCState" << std::endl;
             }
+            deadManSwitch();
             currentActivity = -1;
         }
         else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TURNSPOT_GOTO")) {
@@ -823,6 +843,7 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error setting GNCState" << std::endl;
             }
+            deadManSwitch();
             currentActivity = -1;
         }
         else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TRAJECTORY")) {

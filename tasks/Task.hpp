@@ -126,6 +126,17 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         //bool first_estimate;
         //double first_imu_estimate_yaw;
 
+        // Dead Man Switch
+        // if false, the time since the last direct command will be compared to the dead man time.
+        // if too much time has elapsed, a stop motion command will be sent and deadMan will be set to true.
+        bool deadMan = false;
+        base::Time lastDirectCommandTime;
+        int deadManTime = 2e6; //[usec]
+        // ignore dead man switch if direct activities were never used
+        bool deadManSwitchRelevant = false;
+        // deadManSwitch updates the lastDirectCommandTime, resets deadMan to false, and sets dmsRelevant to true
+        // this function is called after each direct command
+        void deadManSwitch();
 
     public:
         /** TaskContext constructor for Task
