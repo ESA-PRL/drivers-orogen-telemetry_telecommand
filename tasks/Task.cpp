@@ -398,13 +398,14 @@ void Task::updateHook()
 	aux = (int)(joint_samples[5].raw*100);
         LOCOMState[GNC_ROVER_STEER6_CURRENT_INDEX]=(double)((double)aux/100.0);
 
-    aux = (int)(joint_samples[10].position*RAD2DEG*100);
+        // joint samples for rocker and bogies are already in degrees
+    aux = (int)(joint_samples[10].position*100);
         LOCOMState[GNC_ROVER_LEFT_ROCKER_INDEX]=(double)((double)aux/100.0);
-    aux = (int)(joint_samples[11].position*RAD2DEG*100);
+    aux = (int)(joint_samples[11].position*100);
         LOCOMState[GNC_ROVER_RIGHT_ROCKER_INDEX]=(double)((double)aux/100.0);
-	aux = (int)(joint_samples[12].position*RAD2DEG*100);
+	aux = (int)(joint_samples[12].position*100);
         LOCOMState[GNC_ROVER_LEFT_BOGIE_INDEX]=(double)((double)aux/100.0);
-	aux = (int)(joint_samples[13].position*RAD2DEG*100);
+	aux = (int)(joint_samples[13].position*100);
         LOCOMState[GNC_ROVER_RIGHT_BOGIE_INDEX]=(double)((double)aux/100.0);
 
         if ( theRobotProcedure->GetParameters()->set( "LOCOMState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) LOCOMState ) == ERROR ){
