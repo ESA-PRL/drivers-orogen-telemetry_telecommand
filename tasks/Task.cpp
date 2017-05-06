@@ -776,6 +776,7 @@ void Task::updateHook()
         //else if ((currentActivity == -1) && (inPanCamActivity == 0))
         //{
         else if (!strcmp((cmd_info->activityName).c_str(), "GNC_ACKERMANN_GOTO")) {
+            isActiveACKERMANNGOTO = true;
             currentActivity = GNC_ACKERMANN_GOTO_ACTIVITY;
             currentParams = cmd_info->activityParams;
             int ackid;
@@ -812,6 +813,7 @@ void Task::updateHook()
         }
         else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TURNSPOT_GOTO")) {
             currentActivity = GNC_TURNSPOT_GOTO_ACTIVITY;
+            isActiveTURNSPOTGOTO=true;
             currentParams = cmd_info->activityParams;
             int ackid;
             sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetOrientationTheta, &targetRotation);
@@ -1178,7 +1180,7 @@ void Task::updateHook()
         }
         //    } // Close if statement for checking for running activities
     } // Close if statement for checking for TC in the queue
-    if (currentActivity == GNC_ACKERMANN_GOTO_ACTIVITY) {
+    if (currentActivity == GNC_ACKERMANN_GOTO_ACTIVITY || isActiveACKERMANNGOTO) {
         travelledDistance = getTravelledDistance();
         if ((travelledDistance >= targetDistance) || abort_activity) {
             abort_activity=false;
@@ -1190,6 +1192,7 @@ void Task::updateHook()
             targetPositionX=0.0;
             targetPositionY=0.0;
             targetSpeed=0.0;
+            isActiveACKERMANNGOTO=false;
             currentActivity = -1;
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
@@ -1212,7 +1215,7 @@ void Task::updateHook()
             }
         }
     }
-    else if (currentActivity == GNC_TURNSPOT_GOTO_ACTIVITY) {
+    else if (currentActivity == GNC_TURNSPOT_GOTO_ACTIVITY || isActiveTURNSPOTGOTO) {
         //travelledAngle = getTravelledAngle();
         if ( angleReached() || abort_activity) {
             std::cout << "Finish Turnspot" << std::endl;
@@ -1222,6 +1225,7 @@ void Task::updateHook()
             targetTranslation = 0.0;
             targetRotation = 0.0;
             sendMotionCommand();
+            isActiveTURNSPOTGOTO=false;
             currentActivity = -1;
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
@@ -2065,7 +2069,7 @@ void Task::getTransform(Eigen::Affine3d& tf)
 
 void Task::motionCommand()
 {
-    if (currentActivity == GNC_ACKERMANN_GOTO_ACTIVITY){
+    if (currentActivity == GNC_ACKERMANN_GOTO_ACTIVITY || isActiveACKERMANNGOTO){
         if (targetPositionY == 0){ // Straight line command
             targetDistance = std::abs(targetPositionX);
             double sign = (targetPositionX < 0 ? -1 : 1);
@@ -2079,6 +2083,7 @@ void Task::motionCommand()
             std::cout << "Telemetry_Telecommand: Aborting Ackerman activity. Radius of curvature too small. Try Point Turn first." << std::endl;
             targetTranslation=0.0;
             targetRotation=0.0;
+            isActiveACKERMANNGOTO=false;
             currentActivity=-1;
             return;
         }
@@ -2088,7 +2093,7 @@ void Task::motionCommand()
         targetRotation = targetTranslation/radius;
         targetDistance = std::abs(theta*radius);
     }
-    else if (currentActivity == GNC_TURNSPOT_GOTO_ACTIVITY){
+    else if (currentActivity == GNC_TURNSPOT_GOTO_ACTIVITY || isActiveTURNSPOTGOTO){
         targetTranslation=0.0;
         if (targetOrientationTheta>=0) {
             targetOrientationTheta+=(initial_imu.getYaw()*RAD2DEG);

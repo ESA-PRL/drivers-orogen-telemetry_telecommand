@@ -126,6 +126,10 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         //bool first_estimate;
         //double first_imu_estimate_yaw;
 
+        // Dirty fix to allow executing commands while executing GOTO commands 
+        bool isActiveACKERMANNGOTO = false;
+        bool isActiveTURNSPOTGOTO = false;
+
         // Dead Man Switch
         // if false, the time since the last direct command will be compared to the dead man time.
         // if too much time has elapsed, a stop motion command will be sent and deadMan will be set to true.
