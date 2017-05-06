@@ -815,6 +815,7 @@ void Task::updateHook()
             currentParams = cmd_info->activityParams;
             int ackid;
             sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetOrientationTheta, &targetRotation);
+            targetRotation *= DEG2RAD;
             initial_imu = pose;
             motionCommand();
             travelledAngle = 0.0;
@@ -833,6 +834,7 @@ void Task::updateHook()
             currentParams = cmd_info->activityParams;
             int ackid;
             sscanf(currentParams.c_str(), "%d %lf", &ackid, &targetRotation);
+            // TODO does the targetRotation(Speed) need to be multiplied by DEG2RAD here as well?
             targetTranslation=0.0;
             std::cout <<  "GNC_TURNSPOT_DIRECT Rotation:" << targetRotation << std::endl;
             sendMotionCommand();
