@@ -878,6 +878,7 @@ void Task::updateHook()
         }
         else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TRAJECTORY")) {
             currentActivity = GNC_TRAJECTORY_ACTIVITY;
+            isActiveTRAJECTORY = true;
             target_reached=false;
             currentParams = cmd_info->activityParams;
             int ackid; 
@@ -1274,7 +1275,7 @@ void Task::updateHook()
             }
         }
     }
-    else if (currentActivity == GNC_TRAJECTORY_ACTIVITY) {
+    else if (currentActivity == GNC_TRAJECTORY_ACTIVITY || isActiveTRAJECTORY) {
         if (target_reached || abort_activity) {
             abort_activity=false;
             target_reached=true;
@@ -1283,6 +1284,7 @@ void Task::updateHook()
             targetOrientationTheta=0.0;
             trajectory.clear();
             _trajectory.write(trajectory);
+            isActiveTRAJECTORY=false;
             currentActivity = -1;
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;

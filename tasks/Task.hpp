@@ -41,7 +41,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
      */
     class Task : public TaskBase
     {
-	friend class TaskBase;
+    friend class TaskBase;
     protected:
 
         int currentActivity;
@@ -100,8 +100,8 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
         // PanCam_WAC_RRGB parameters
         int inPanCamActivity;
-	
-	//ACTIVE MQ
+
+        //ACTIVE MQ
         ActiveMQTMSender* activemqTMSender;
         ActiveMQTCReceiver* activemqTCReceiver;
         ActiveMQAdmin* activemqAdmin;
@@ -126,9 +126,10 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         //bool first_estimate;
         //double first_imu_estimate_yaw;
 
-        // Dirty fix to allow executing commands while executing GOTO commands 
+        // Dirty fix to allow executing commands while executing motion commands
         bool isActiveACKERMANNGOTO = false;
         bool isActiveTURNSPOTGOTO = false;
+        bool isActiveTRAJECTORY = false;
 
         // Dead Man Switch
         // if false, the time since the last direct command will be compared to the dead man time.
@@ -158,7 +159,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
         /** Default deconstructor of Task
          */
-	~Task();
+    ~Task();
 
         /** This hook is called by Orocos when the state machine transitions
          * from PreOperational to Stopped. If it returns false, then the
@@ -267,8 +268,8 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
          */
         void sendMotionCommand();
 
-	/** Sends the file (image, distance, etc.) specified in the tm message.
-	 *  It clasifies the file depending its type and source
+    /** Sends the file (image, distance, etc.) specified in the tm message.
+     *  It clasifies the file depending its type and source
          */
         void sendProduct(messages::Telemetry tm_in);
 
