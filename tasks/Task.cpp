@@ -1242,7 +1242,7 @@ void Task::updateHook()
             }
         }
     }
-    else if (currentActivity == GNC_TURNSPOT_GOTO_ACTIVITY || isActiveTURNSPOTGOTO) {
+    if (currentActivity == GNC_TURNSPOT_GOTO_ACTIVITY || isActiveTURNSPOTGOTO) {
         //travelledAngle = getTravelledAngle();
         if ( angleReached() || abort_activity) {
             std::cout << "Finish Turnspot" << std::endl;
@@ -1275,7 +1275,7 @@ void Task::updateHook()
             }
         }
     }
-    else if (currentActivity == GNC_TRAJECTORY_ACTIVITY || isActiveTRAJECTORY) {
+    if (currentActivity == GNC_TRAJECTORY_ACTIVITY || isActiveTRAJECTORY) {
         if (target_reached || abort_activity) {
             abort_activity=false;
             target_reached=true;
@@ -1307,7 +1307,7 @@ void Task::updateHook()
             }
         }
     }
-    else if (currentActivity == GNC_UPDATE_ACTIVITY) {
+    if (currentActivity == GNC_UPDATE_ACTIVITY) {
         //Add logic to handle an Update command. Probably need to trigger a restart of the odometry related component.
     }
     else if (currentActivity == DEPLOYMENT_ALL_ACTIVITY) {
@@ -1866,7 +1866,7 @@ void Task::updateHook()
         }
         currentActivity=-1;
     }
-    else if ((currentActivity == PANCAM_PANORAMA_ACTIVITY) || inPanCamActivity) {
+    if ((currentActivity == PANCAM_PANORAMA_ACTIVITY) || inPanCamActivity) {
         _panorama_trigger.write(tilt);
         currentActivity=-1;
         inPanCamActivity=-1;
