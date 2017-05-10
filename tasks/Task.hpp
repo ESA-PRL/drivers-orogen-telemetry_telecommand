@@ -87,6 +87,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         // MAST_PTU_MoveTo parameters
         double pan;
         double tilt;
+        double panorama_tilt;
 
         // PanCam_WACGetImage parameters
         char cam[80], dummy_param[80];

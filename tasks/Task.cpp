@@ -834,7 +834,6 @@ void Task::updateHook()
                     _trajectory_speed.write(0.0);
                 }
             }
-
             currentActivity = -1;
         }
         else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TURNSPOT_GOTO")) {
@@ -1033,7 +1032,7 @@ void Task::updateHook()
             } else{
                 tc_out.productMode = productMode;
             }
-            std::cout <<  "PanCam WAC Get Image type " << productType << " and mode: " << productMode << std::endl;
+            std::cout <<  "PanCam Get Image type " << productType << " and mode: " << productMode << std::endl;
             if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
                 std::cout << "Error getting PanCamState" << std::endl;
             }
@@ -1186,8 +1185,10 @@ void Task::updateHook()
             currentActivity = PANCAM_PANORAMA_ACTIVITY;
             currentParams = cmd_info->activityParams;
             int ackid;
-            sscanf(currentParams.c_str(), "%d %lf", &ackid, &tilt);
-            std::cout <<  "PanCam WAC RRGB at tilt: " << tilt << std::endl;
+            sscanf(currentParams.c_str(), "%d %lf", &ackid, &panorama_tilt);
+            tc_out.productType = messages::ProductType::DEM;
+            tc_out.productMode = messages::Mode::CONTINUOUS;
+            std::cout <<  "PanCam Panorama at tilt: " << panorama_tilt << std::endl;
             if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
                 std::cout << "Error getting PanCamState" << std::endl;
             }
@@ -1866,10 +1867,11 @@ void Task::updateHook()
         }
         currentActivity=-1;
     }
-    if ((currentActivity == PANCAM_PANORAMA_ACTIVITY) || inPanCamActivity) {
-        _panorama_trigger.write(tilt);
+    if (currentActivity == PANCAM_PANORAMA_ACTIVITY) {
+        _panoramica_trigger.write(tc_out);
+        _panorama_tilt.write(panorama_tilt);
         currentActivity=-1;
-        inPanCamActivity=-1;
+/*        inPanCamActivity=0;
         switch (inPanCamActivity) {
             case 0:
                 currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
@@ -2038,7 +2040,7 @@ void Task::updateHook()
                 break;
             default:
                 break;
-        }
+        }*/
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
             std::cout << "Error getting PanCamState" << std::endl;
         }
@@ -2267,9 +2269,7 @@ void Task::sendProduct(messages::Telemetry tm)
                     //int seq=PAN_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
            		    std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
-                    std::cout<< " Date string: "<< date << std::endl;
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
-                    std::cout<< " Date string: "<< date << std::endl;
                     Eigen::Affine3d tf;
                     if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
                     {
