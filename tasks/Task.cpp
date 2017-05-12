@@ -919,10 +919,15 @@ void Task::updateHook()
             currentActivity = GNC_UPDATE_ACTIVITY;
             currentParams = cmd_info->activityParams;
             int ackid;
-            sscanf(currentParams.c_str(), "%d %lf %lf %lf", &ackid, &targetPositionX, &targetPositionY, &targetOrientationTheta);
-            initial_3Dpose.position[0]=targetPositionX;
-            initial_3Dpose.position[1]=targetPositionY;
-            initial_absolute_heading=targetOrientationTheta;
+            sscanf(currentParams.c_str(), "%d %lf %lf %lf %lf %lf %lf", &ackid, &update_pose_x, &update_pose_y, &update_pose_z, &update_pose_rx, &update_pose_ry, &update_pose_rz);
+            absolute_pose.position[0]=update_pose_x;
+            absolute_pose.position[1]=update_pose_y;
+            absolute_pose.position[2]=update_pose_z;
+            Eigen::Quaternion <double> orientation(Eigen::AngleAxisd(update_pose_rz*DEG2RAD, Eigen::Vector3d::UnitZ())*
+                                                    Eigen::AngleAxisd(update_pose_ry*DEG2RAD, Eigen::Vector3d::UnitY())*
+                                                    Eigen::AngleAxisd(update_pose_rx*DEG2RAD, Eigen::Vector3d::UnitX()));
+            absolute_pose.orientation = orientation;
+            _update_pose.write(absolute_pose);
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
             }
@@ -2270,13 +2275,14 @@ void Task::sendProduct(messages::Telemetry tm)
                     long time=tm.timestamp.toMilliseconds();
            		    std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgMastProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgMastProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent image with size " << size << std::endl;
                     }
                     break;
@@ -2293,13 +2299,14 @@ void Task::sendProduct(messages::Telemetry tm)
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distMastProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distMastProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                     }
                     break;
@@ -2350,11 +2357,15 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
                     }
                     std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                    mtl_filename.replace(mtl_filename.find(".gz"),3,"");
                     std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
                     char command[256];
                     std::string folder = _productsFolder.value();
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
+                    //char command2[256];
+                    //sprintf(command2, "sed -ie 's/jpg/png/g' %s", mtl_filename.c_str());
+                    //system(command2);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();
@@ -2383,13 +2394,14 @@ void Task::sendProduct(messages::Telemetry tm)
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_lidar2lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLidarProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLidarProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent image with size " << size << std::endl;
                     }
                     break;
@@ -2406,13 +2418,14 @@ void Task::sendProduct(messages::Telemetry tm)
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_lidar2lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distLidarProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distLidarProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                     }
                     break;
@@ -2463,11 +2476,15 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
                     }
                     std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                    mtl_filename.replace(mtl_filename.find(".gz"),3,"");
                     std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
                     char command[256];
                     std::string folder = _productsFolder.value();
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
+                    //char command2[256];
+                    //sprintf(command2, "sed -ie 's/jpg/png/g' %s", mtl_filename.c_str());
+                    //system(command2);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();
@@ -2495,13 +2512,14 @@ void Task::sendProduct(messages::Telemetry tm)
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgFrontProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgFrontProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent image with size " << size << std::endl;
                     }
                     break;
@@ -2518,13 +2536,14 @@ void Task::sendProduct(messages::Telemetry tm)
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_left_camera_bb32lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distFrontProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distFrontProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                     }
                     break;
@@ -2575,11 +2594,15 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
                     }
                     std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                    mtl_filename.replace(mtl_filename.find(".gz"),3,"");
                     std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
                     char command[256];
                     std::string folder = _productsFolder.value();
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
+                    //char command2[256];
+                    //sprintf(command2, "sed -ie 's/jpg/png/g' %s", mtl_filename.c_str());
+                    //system(command2);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();
@@ -2607,13 +2630,14 @@ void Task::sendProduct(messages::Telemetry tm)
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_tof2lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgTofProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgTofProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent image with size " << size << std::endl;
                     }
                     break;
@@ -2630,13 +2654,14 @@ void Task::sendProduct(messages::Telemetry tm)
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_tof2lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distTofProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distTofProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                     }
                     break;
@@ -2687,11 +2712,15 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
                     }
                     std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                    mtl_filename.replace(mtl_filename.find(".gz"),3,"");
                     std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
                     char command[256];
                     std::string folder = _productsFolder.value();
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
+                    //char command2[256];
+                    //sprintf(command2, "sed -ie 's/jpg/png/g' %s", mtl_filename.c_str());
+                    //system(command2);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();
@@ -2719,13 +2748,14 @@ void Task::sendProduct(messages::Telemetry tm)
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgHazcamProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgHazcamProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent image with size " << size << std::endl;
                     }
                     break;
@@ -2742,13 +2772,14 @@ void Task::sendProduct(messages::Telemetry tm)
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distHazcamProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distHazcamProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                     }
                     break;
@@ -2799,11 +2830,15 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
                     }
                     std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                    mtl_filename.replace(mtl_filename.find(".gz"),3,"");
                     std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
                     char command[256];
                     std::string folder = _productsFolder.value();
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
+                    //char command2[256];
+                    //sprintf(command2, "sed -ie 's/jpg/png/g' %s", mtl_filename.c_str());
+                    //system(command2);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();
@@ -2831,13 +2866,14 @@ void Task::sendProduct(messages::Telemetry tm)
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgRearProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgRearProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent image with size " << size << std::endl;
                     }
                     break;
@@ -2854,13 +2890,14 @@ void Task::sendProduct(messages::Telemetry tm)
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                    tm.productPath.replace(0, 21, "");
                     Eigen::Affine3d tf;
                     if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
                     {
                         getTransform(tf);
                     }
                     if (activemqTMSender->isConnected){
-                        tmComm->sendImageMessage(seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distRearProducerMonitoring, transformation);
+                        tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distRearProducerMonitoring, transformation);
                         std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                     }
                     break;
@@ -2911,11 +2948,15 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
                     }
                     std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                    mtl_filename.replace(mtl_filename.find(".gz"),3,"");
                     std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
                     char command[256];
                     std::string folder = _productsFolder.value();
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
+                    //char command2[256];
+                    //sprintf(command2, "sed -ie 's/jpg/png/g' %s", mtl_filename.c_str());
+                    //system(command2);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();

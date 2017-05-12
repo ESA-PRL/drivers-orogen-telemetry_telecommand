@@ -124,6 +124,13 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         base::samples::RigidBodyState absolute_pose;
         double initial_absolute_heading;
         int tj_status;
+        double update_pose_x;
+        double update_pose_y;
+        double update_pose_z;
+        double update_pose_rx;
+        double update_pose_ry;
+        double update_pose_rz;
+
         //bool first_estimate;
         //double first_imu_estimate_yaw;
 
