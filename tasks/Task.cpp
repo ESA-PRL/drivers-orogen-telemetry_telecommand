@@ -2114,7 +2114,7 @@ void Task::motionCommand()
             return;
         }
         double radius = (targetPositionX*targetPositionX + targetPositionY*targetPositionY)/(2*targetPositionY);
-        if (radius<MIN_ACK_RADIUS)
+        if (std::abs(radius)<MIN_ACK_RADIUS)
         {
             std::cout << "Telemetry_Telecommand: Aborting Ackerman activity. Radius of curvature too small. Try Point Turn first." << std::endl;
             targetTranslation=0.0;
