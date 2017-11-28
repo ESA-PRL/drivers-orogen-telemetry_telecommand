@@ -423,14 +423,15 @@ void Task::updateHook()
         LOCOMState[GNC_ROVER_STEER6_CURRENT_INDEX]=(double)((double)aux/100.0);
 
         // joint samples for rocker and bogies are already in degrees
-        aux = (int)(joint_samples[10].position*100);
-        LOCOMState[GNC_ROVER_LEFT_ROCKER_INDEX]=(double)((double)aux/100.0);
-        aux = (int)(joint_samples[11].position*100);
-        LOCOMState[GNC_ROVER_RIGHT_ROCKER_INDEX]=(double)((double)aux/100.0);
-        aux = (int)(joint_samples[12].position*100);
-        LOCOMState[GNC_ROVER_LEFT_BOGIE_INDEX]=(double)((double)aux/100.0);
-        aux = (int)(joint_samples[13].position*100);
-        LOCOMState[GNC_ROVER_RIGHT_BOGIE_INDEX]=(double)((double)aux/100.0);
+        // rounding values from float to closest integer. This is done by adding 0.5 to the floating value and then casting, i.e truncating, to INT
+        aux = (int)(joint_samples[10].position+0.5);
+        LOCOMState[GNC_ROVER_LEFT_ROCKER_INDEX]=(double)(aux);
+        aux = (int)(joint_samples[11].position+0.5);
+        LOCOMState[GNC_ROVER_RIGHT_ROCKER_INDEX]=(double)(aux);
+        aux = (int)(joint_samples[12].position+0.5);
+        LOCOMState[GNC_ROVER_LEFT_BOGIE_INDEX]=(double)(aux);
+        aux = (int)(joint_samples[13].position+0.5);
+        LOCOMState[GNC_ROVER_RIGHT_BOGIE_INDEX]=(double)(aux);
 
         if ( theRobotProcedure->GetParameters()->set( "LOCOMState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) LOCOMState ) == ERROR ){
             std::cout << "Error setting LOCOMState" << std::endl;
