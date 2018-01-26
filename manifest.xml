@@ -15,6 +15,7 @@
   <depend package="dummy-dependency-n" />
   -->
   <depend package="drivers/telemetry_telecommand" />
+  <depend package="drivers/orogen/temperature" />
   <depend package="drivers/orogen/transformer" />
 <!--  <depend package="image_processing/frame_helper" /> -->
 
