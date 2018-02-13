@@ -15,6 +15,7 @@
 #include "telemetry_telecommand/ActiveMQTMSender.h"
 #include "telemetry_telecommand/ActiveMQAdmin.h"
 #include "telemetry_telecommand/ActiveMQTCReceiver.h"
+#include "telemetry_telecommand/tasklib.h"
 
 #include "telemetry_telecommand/Messages.hpp"
 #include "temperature/temperatureTypes.hpp"
@@ -104,7 +105,6 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
 
         //ACTIVE MQ
         ActiveMQTMSender* activemqTMSender;
-        ActiveMQTCReceiver* activemqTCReceiver;
         ActiveMQAdmin* activemqAdmin;
 
         CommTmServer* tmComm;

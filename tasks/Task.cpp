@@ -29,7 +29,8 @@ const int DEPLOYMENT_REAR_ACTIVITY = 15;        //ExoTeR
 const int GNC_UPDATE_ACTIVITY = 16;
 const int GNC_ACKERMANN_DIRECT_ACTIVITY = 17;
 const int GNC_TURNSPOT_DIRECT_ACTIVITY = 18;
-const int ALL_ACQ_ACTIVITY = 18;
+const int ALL_ACQ_ACTIVITY = 19;
+const int GNCG_ACTIVITY = 20;
 
 const double DEG2RAD = 3.141592/180;
 const double RAD2DEG = 180/3.141592;
@@ -49,6 +50,7 @@ const double TARGET_WINDOW3 = 2.0;              //ExoTeR
 using namespace telemetry_telecommand;
 
 RobotProcedure*  theRobotProcedure;
+ActiveMQTCReceiver* activemqTCReceiver;
 
 RobotTask* GetRTFromName (char* rtname) {
     RobotTask* RT = ( RobotTask* ) theRobotProcedure->GetRTFromName((char*)rtname);
@@ -782,6 +784,11 @@ void Task::updateHook()
         //! Check if there is NO running activity
         //else if ((currentActivity == -1) && (inPanCamActivity == 0))
         //{
+        else if (!strcmp((cmd_info->activityName).c_str(), "GNCG")) {
+            TaskLib* taskLib = new TaskLib("");
+            taskLib->insertSol(std::string("/home/marta/rock/bundles/rover/config/orogen/ActivityPlan.txt"));
+            taskLib->ExecuteActivityPlan();
+        }
         else if (!strcmp((cmd_info->activityName).c_str(), "GNC_ACKERMANN_GOTO")) {
             isActiveACKERMANNGOTO = true;
             currentActivity = GNC_ACKERMANN_GOTO_ACTIVITY;
@@ -1408,6 +1415,7 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
                 std::cout << "Error setting MastState" << std::endl;
             }
+            theRobotProcedure->GetRTFromName("MAST_PTU_MoveTo")->post_cond=1;
         }else {
             if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
                 std::cout << "Error getting MastState" << std::endl;
