@@ -1,5 +1,3 @@
-/* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
-
 #include <cmath>
 #include <fstream>
 #include <sstream>
@@ -66,12 +64,8 @@ extern "C" {
             RT->SetTcRequestId(req_id);
             RT->Control();
 
-            //RT->waitEndActionExec ();
-
             char tc_reply[80];
             sprintf(tc_reply, "%d 2 RspAck\n", RT->GetTcRequestId());
-            // sprintf(tc_reply, "%d 2 RspError\n", RT->tcRequestId); // in case of error
-            //tcReplyServer->sendData(tc_reply);
         }
         else {
 
@@ -92,11 +86,6 @@ Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
 Task::~Task()
 {
 }
-
-
-/// The following lines are template definitions for the various state machine
-// hooks defined by Orocos::RTT. See Task.hpp for more detailed
-// documentation about them.
 
 void Task::deadManSwitch()
 {
@@ -138,7 +127,6 @@ bool Task::startHook()
 {
     if (! TaskBase::startHook())
         return false;
-    //    signal(SIGPIPE, SIG_IGN);
 
     activemq::library::ActiveMQCPP::initializeLibrary();
     bool useTopics = true;
@@ -228,7 +216,6 @@ bool Task::startHook()
     RobotTask* rt40 = new RobotTask("RV_Prepare4Night");          // Simulated
     RobotTask* rt41 = new RobotTask("RV_Prepare4Dozing");         // Simulated
 
-
     theRobotProcedure->insertRT(rt1);
     theRobotProcedure->insertRT(rt2);
     theRobotProcedure->insertRT(rt3);
@@ -289,7 +276,6 @@ bool Task::startHook()
     //! Send ptu and motion commands to activate the joint dispatcher. Otherwise stays waiting.
     pan = 0.0; tilt = 0.0; sendPtuCommand();
     targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
-
 
     /**
      * Routine to send the bema command to the rover stowed position (beggining of Egress in ExoTeR)
@@ -547,231 +533,6 @@ void Task::updateHook()
         sendProduct(tm_in);
     }
 
-/*    if (_image_mast_filename.read(image_filename) == RTT::NewData)
-    {
-        std::cout << "check1: sending image " << image_filename << std::endl;
-        std::ifstream input(image_filename.c_str(), std::ios::binary);
-        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        auto size = buffer.size();
-        char* data = &buffer[0];
-        int seq=1;
-        long time=PAN_STEREO_index-1;
-        std::cout << "check2: sending image with size " << size << std::endl;
-        if (activemqTMSender->isConnected){
-            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imagePanCamProducerMonitoring, transformation);
-            std::cout << "check3: sending image finished" << std::endl;
-        }
-    }
-
-    if (_image_front_left_filename.read(image_filename) == RTT::NewData)
-    {
-        std::cout << "check1: sending image " << image_filename << std::endl;
-	std::ifstream input(image_filename.c_str(), std::ios::binary);
-        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        auto size = buffer.size();
-        char* data = &buffer[0];
-        int seq=1;
-        long time=FLOC_STEREO_index-1;
-        std::cout << "check2: sending image with size " << size << std::endl;
-        if (activemqTMSender->isConnected){
-            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageFLocProducerMonitoring, transformation);
-            std::cout << "check3: sending image finished" << std::endl;
-        }
-    }
-
-    if (_image_front_right_filename.read(image_filename) == RTT::NewData)
-    {
-        std::cout << "check1: sending image file " << image_filename << std::endl;
-        std::ifstream input(image_filename.c_str(), std::ios::binary);
-        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        auto size = buffer.size();
-        char* data = &buffer[0];
-        std::cout << "check2: sending image file with size " << size << std::endl;
-        image_filename.replace(0, 28, "");
-        if (activemqTMSender->isConnected){
-            tmComm->sendFileMessage(image_filename.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-            std::cout << "check3: sending image file finished" << std::endl;
-        }
-    }
-
-    if (_image_back_left_filename.read(image_filename) == RTT::NewData)
-    {
-        std::cout << "check1: sending image " << image_filename << std::endl;
-        std::ifstream input(image_filename.c_str(), std::ios::binary);
-        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        auto size = buffer.size();
-        char* data = &buffer[0];
-        int seq=1;
-        long time=RLOC_STEREO_index-1;
-        std::cout << "check2: sending image with size " << size << std::endl;
-        if (activemqTMSender->isConnected){
-            tmComm->sendImageMessage(seq, time, size, (const unsigned char *)data, activemqTMSender->imageRLocProducerMonitoring, transformation);
-            std::cout << "check3: sending image finished" << std::endl;
-        }
-    }
-
-    if (_image_back_right_filename.read(image_filename) == RTT::NewData)
-    {
-        std::cout << "check1: sending image file " << image_filename << std::endl;
-        std::ifstream input(image_filename.c_str(), std::ios::binary);
-        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        auto size = buffer.size();
-        char* data = &buffer[0];
-        std::cout << "check2: sending image file with size " << size << std::endl;
-        image_filename.replace(0, 28, "");
-        if (activemqTMSender->isConnected){
-            tmComm->sendFileMessage(image_filename.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-            std::cout << "check3: sending image file finished" << std::endl;
-        }
-    }
-
-    if (_dem_mast_filename.read(dem_filename) == RTT::NewData)
-    {
-        std::cout << "check1: sending dem " << dem_filename << std::endl;
-        std::ifstream input(dem_filename.c_str(), std::ios::binary);
-        std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-        int seq=1;
-        long time=(long)PAN_STEREO_index-1;
-        std::cout << "check2: sending dem with size " << data.size() << std::endl;
-        std::string filename = dem_filename;
-        filename.replace(0, 28, "");
-        if (activemqTMSender->isConnected){
-            tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demPanCamProducerMonitoring, transformation);
-            std::cout << "check3: sending dem finished" << std::endl;
-        }
-
-        std::string mtl_filename = dem_filename.replace(dem_filename.find("obj"), 3, "mtl");
-        std::cout << "check1: sending file " << mtl_filename << std::endl;
-        char command[256];
-        sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
-        system(command);
-        std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
-        std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
-        auto size2 = buffer2.size();
-        char* data2 = &buffer2[0];
-        std::cout << "check2: sending file with size " << size2 << std::endl;
-        mtl_filename.replace(0, 28, "");
-        if (activemqTMSender->isConnected){
-            tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-            std::cout << "check3: sending file finished" << std::endl;
-        }
-    }
-
-    if (_dem_front_filename.read(dem_filename) == RTT::NewData)
-    {
-        std::cout << "check1: sending dem " << dem_filename << std::endl;
-        std::ifstream input(dem_filename.c_str(), std::ios::binary);
-        std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-        int seq=1;
-        long time=(long)FLOC_STEREO_index-1;
-        std::cout << "check2: sending dem with size " << data.size() << std::endl;
-        std::string filename = dem_filename;
-        filename.replace(0, 28, "");
-        if (activemqTMSender->isConnected){
-            tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demFLocProducerMonitoring, transformation);
-            std::cout << "check3: sending dem finished" << std::endl;
-        }
-
-        std::string mtl_filename = dem_filename.replace(dem_filename.find("obj"), 3, "mtl");
-        std::cout << "check1: sending file " << mtl_filename << std::endl;
-        char command[256];
-        sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
-        system(command);
-        std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
-        std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
-        auto size2 = buffer2.size();
-        char* data2 = &buffer2[0];
-        std::cout << "check2: sending file with size " << size2 << std::endl;
-        mtl_filename.replace(0, 28, "");
-        if (activemqTMSender->isConnected){
-            tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-            std::cout << "check3: sending file finished" << std::endl;
-        }
-    }
-
-    if (_dem_back_filename.read(dem_filename) == RTT::NewData)
-    {
-        std::cout << "check1: sending dem " << dem_filename << std::endl;
-        std::ifstream input(dem_filename.c_str(), std::ios::binary);
-        std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-        int seq=1;
-        long time=(long)RLOC_STEREO_index-1;
-        std::cout << "check2: sending dem with size " << data.size() << std::endl;
-        std::string filename = dem_filename;
-        filename.replace(0, 28, "");
-        if (activemqTMSender->isConnected){
-            tmComm->sendDEMMessage(filename.c_str(), seq, time, data.size(), data, activemqTMSender->demRLocProducerMonitoring, transformation);
-            std::cout << "check3: sending dem finished" << std::endl;
-        }
-
-        std::string mtl_filename = dem_filename.replace(dem_filename.find("obj"), 3, "mtl");
-        std::cout << "check1: sending file " << mtl_filename << std::endl;
-        char command[256];
-        sprintf(command,  "sed -ie 's/\\/media\\/ssd\\/Images\\///g' %s", mtl_filename.c_str());
-        system(command);
-        std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
-        std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
-        auto size2 = buffer2.size();
-        char* data2 = &buffer2[0];
-        std::cout << "check2: sending file with size " << size2 << std::endl;
-        mtl_filename.replace(0, 28, "");
-        if (activemqTMSender->isConnected){
-            tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-            std::cout << "check3: sending file finished" << std::endl;
-        }
-    }
-
-    if (_dist_mast_filename.read(dist_filename) == RTT::NewData)
-    {
-        std::cout << "check1: sending file " << dist_filename << std::endl;
-        std::ifstream input(dist_filename.c_str(), std::ios::binary);
-        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        auto size = buffer.size();
-        char* data = &buffer[0];
-        std::cout << "check2: sending file with size " << size << std::endl;
-        dist_filename.replace(0, 28, "");
-        if (activemqTMSender->isConnected){
-            tmComm->sendFileMessage(dist_filename.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-            std::cout << "check3: sending file finished" << std::endl;
-        }
-        files_sent=true;
-    }
-
-    if (_dist_front_filename.read(dist_filename) == RTT::NewData)
-    {
-        std::cout << "check1: sending file " << dist_filename << std::endl;
-        std::ifstream input(dist_filename.c_str(), std::ios::binary);
-        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        auto size = buffer.size();
-        char* data = &buffer[0];
-        std::cout << "check2: sending file with size " << size << std::endl;
-        dist_filename.replace(0, 28, "");
-        if (activemqTMSender->isConnected){
-            tmComm->sendFileMessage(dist_filename.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-            std::cout << "check3: sending file finished" << std::endl;
-        }
-        files_sent=true;
-    }
-
-    if (_dist_back_filename.read(dist_filename) == RTT::NewData)
-    {
-        std::cout << "check1: sending file " << dist_filename << std::endl;
-        std::ifstream input(dist_filename.c_str(), std::ios::binary);
-        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-        auto size = buffer.size();
-        char* data = &buffer[0];
-        std::cout << "check2: sending file with size " << size << std::endl;
-        dist_filename.replace(0, 28, "");
-        if (activemqTMSender->isConnected){
-            tmComm->sendFileMessage(dist_filename.c_str(), size, (const unsigned char *)data, activemqTMSender->fileProducerMonitoring);
-            std::cout << "check3: sending file finished" << std::endl;
-        }
-        files_sent=true;
-    }
-    */
     CommandInfo* cmd_info = activemqTCReceiver->extractCommandInfo();  // ActiveMQ messaging Protocol
     // CommandInfo* cmd_info = tcComm->extractCommandInfo();           // Server/Client TCP-IP sockets messaging Protocol
     if (cmd_info != NULL)
@@ -781,9 +542,6 @@ void Task::updateHook()
             abort_activity=true;
             std::cout << "Abort message received!" << std::endl;
         }
-        //! Check if there is NO running activity
-        //else if ((currentActivity == -1) && (inPanCamActivity == 0))
-        //{
         else if (!strcmp((cmd_info->activityName).c_str(), "GNCG")) {
             TaskLib* taskLib = new TaskLib("");
             taskLib->insertSol(std::string("/home/marta/rock/bundles/rover/config/orogen/ActivityPlan.txt"));
@@ -803,7 +561,6 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
             }
-            //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
             if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error setting GNCState" << std::endl;
             }
@@ -817,7 +574,6 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
             }
-            //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
             if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error setting GNCState" << std::endl;
             }
@@ -859,7 +615,6 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
             }
-            //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
             if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error setting GNCState" << std::endl;
             }
@@ -876,7 +631,6 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
             }
-            //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
             if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error setting GNCState" << std::endl;
             }
@@ -918,7 +672,6 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
             }
-            //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
             if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error setting GNCState" << std::endl;
             }
@@ -939,7 +692,6 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
             }
-            //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
             if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error setting GNCState" << std::endl;
             }
@@ -963,7 +715,6 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
             }
-            //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
             if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error setting GNCState" << std::endl;
             }
@@ -987,7 +738,6 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
             }
-            //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
             if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error setting GNCState" << std::endl;
             }
@@ -1011,7 +761,6 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
             }
-            //GNCState[0]=0.0; //! Need to check indexes and corresponding values for the GNC States
             if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error setting GNCState" << std::endl;
             }
@@ -1028,7 +777,6 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
                 std::cout << "Error getting MastState" << std::endl;
             }
-            //MastState[0]=0.0; //! Need to check indexes and corresponding values for the Mast States
             if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR ){
                 std::cout << "Error setting MastState" << std::endl;
             }
@@ -1051,7 +799,6 @@ void Task::updateHook()
             }
             PanCamState[PANCAM_ACTION_ID_INDEX]=50;
             PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            //PanCamState[]=;
             if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
                 std::cout << "Error setting PanCamState" << std::endl;
             }
@@ -1074,7 +821,6 @@ void Task::updateHook()
             }
             PanCamState[PANCAM_ACTION_ID_INDEX]=51;
             PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            //PanCamState[]=;
             if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
                 std::cout << "Error setting LocCamState" << std::endl;
             }
@@ -1097,7 +843,6 @@ void Task::updateHook()
             }
             PanCamState[PANCAM_ACTION_ID_INDEX]=52;
             PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            //PanCamState[]=;
             if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
                 std::cout << "Error setting LocCamState" << std::endl;
             }
@@ -1120,7 +865,6 @@ void Task::updateHook()
             }
             PanCamState[PANCAM_ACTION_ID_INDEX]=53;
             PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            //PanCamState[]=;
             if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
                 std::cout << "Error setting LocCamState" << std::endl;
             }
@@ -1143,7 +887,6 @@ void Task::updateHook()
             }
             PanCamState[PANCAM_ACTION_ID_INDEX]=53;
             PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            //PanCamState[]=;
             if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
                 std::cout << "Error setting LocCamState" << std::endl;
             }
@@ -1166,7 +909,6 @@ void Task::updateHook()
             }
             PanCamState[PANCAM_ACTION_ID_INDEX]=53;
             PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            //PanCamState[]=;
             if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
                 std::cout << "Error setting LocCamState" << std::endl;
             }
@@ -1189,7 +931,6 @@ void Task::updateHook()
             }
             PanCamState[PANCAM_ACTION_ID_INDEX]=53;
             PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            //PanCamState[]=;
             if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
                 std::cout << "Error setting LocCamState" << std::endl;
             }
@@ -1205,7 +946,6 @@ void Task::updateHook()
             if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
                 std::cout << "Error getting PanCamState" << std::endl;
             }
-            //PanCamState[0]=0.0; //! Need to check indexes and corresponding values for the PanCam States
             if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
                 std::cout << "Error setting PanCamState" << std::endl;
             }
@@ -1257,7 +997,6 @@ void Task::updateHook()
         }
     }
     if (currentActivity == GNC_TURNSPOT_GOTO_ACTIVITY || isActiveTURNSPOTGOTO) {
-        //travelledAngle = getTravelledAngle();
         if ( angleReached() || abort_activity) {
             std::cout << "Finish Turnspot" << std::endl;
             abort_activity=false;
@@ -1322,11 +1061,10 @@ void Task::updateHook()
         }
     }
     if (currentActivity == GNC_UPDATE_ACTIVITY) {
-        //Add logic to handle an Update command. Probably need to trigger a restart of the odometry related component.
+        //TODO Add logic to handle an Update command. Probably need to trigger a restart of the odometry related component.
     }
     else if (currentActivity == DEPLOYMENT_ALL_ACTIVITY) {
         if (bema1TargetReached() || abort_activity) {
-            //bema_command = 0.0;
             abort_activity=false;
             currentActivity = -1;
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
@@ -1353,7 +1091,6 @@ void Task::updateHook()
     else if (currentActivity == DEPLOYMENT_FRONT_ACTIVITY) {
         if (bema2TargetReached() || abort_activity) {
             abort_activity=false;
-            //bema_command = 0.0;
             currentActivity = -1;
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
@@ -1379,7 +1116,6 @@ void Task::updateHook()
     else if (currentActivity == DEPLOYMENT_REAR_ACTIVITY) {
         if (bema3TargetReached() || abort_activity) {
             abort_activity=false;
-            //bema_command = 0.0;
             currentActivity = -1;
             if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR ){
                 std::cout << "Error getting GNCState" << std::endl;
@@ -1441,123 +1177,6 @@ void Task::updateHook()
             std::cout << "Error setting PanCamState" << std::endl;
         }
         currentActivity=-1;
-/*
-      if (!strcmp(cam, "WAC_L")) {
-        char filename[240];
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 1", cam, WACL_index++);
-	_camera_mast_process_image_trigger.write(true);
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, WACL_index-1);
-        std::ofstream metadata;
-        metadata.open(filename);
-        metadata << "Camera ID:  " << cam << std::endl;
-        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
-        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
-	Eigen::Affine3d tf;
-	base::Time time = base::Time::now();
-	if (_left_camera_bb32lab.get(time, tf, false))
-	{
-		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        getTransform(tf);
-        
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error getting PanCamState" << std::endl;
-        }
-        PanCamState[PANCAM_WAC_L_INDEX]=WACL_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error setting PanCamState" << std::endl;
-        }
-      }
-      else if (!strcmp(cam, "WAC_R")) {
-	char filename[240];
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 2", cam, WACR_index++);
-    	_camera_mast_process_image_trigger.write(true);
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, WACR_index-1);
-        std::ofstream metadata;
-        metadata.open(filename);
-        metadata << "Camera ID:  " << cam << std::endl;
-        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
-        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
-	Eigen::Affine3d tf;
-	base::Time time = base::Time::now();
-	if (_left_camera_bb32lab.get(time, tf, false))
-	{
-		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        getTransform(tf);
-
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error getting PanCamState" << std::endl;
-        }
-        PanCamState[PANCAM_WAC_R_INDEX]=WACR_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error setting PanCamState" << std::endl;
-        }
-      }
-      else if (!strcmp(cam, "PANCAM_STEREO")) {
-	char filename[240];
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left.png 1", cam, PAN_STEREO_index++);
-    	_camera_mast_process_image_trigger.write(true);
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left_metadata.txt", cam, PAN_STEREO_index-1);
-        std::ofstream metadata;
-        metadata.open(filename);
-        metadata << "Camera ID:  " << "WAC_L" << std::endl;
-        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
-        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
- 	Eigen::Affine3d tf;
-	base::Time time = base::Time::now();
-	if (_left_camera_bb32lab.get(time, tf, false))
-	{
-		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        getTransform(tf);
-
-        char filename2[240];
-        //sprintf (filename2, "/home/exoter/Desktop/Images/%s_%d_right.png 2", cam, PAN_STEREO_index-1);
-    	//_camera_mast_store_image_filename.write(filename2);
-        sprintf (filename2, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, PAN_STEREO_index-1);
-        std::ofstream metadata2;
-        metadata2.open(filename2);
-        metadata2 << "Camera ID:  " << "WAC_R" << std::endl;
-        metadata2 << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
-        metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata2 << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
-        metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
-	if (_left_camera_bb32lab.get(time, tf, false))
-	{
-		metadata2 << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        getTransform(tf);
-
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error getting PanCamState" << std::endl;
-        }
-        PanCamState[PANCAM_PAN_STEREO_INDEX]=PAN_STEREO_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error setting PanCamState" << std::endl;
-        }
-      }
-      else {
-	std::cout << "Please select one of the existing cameras WAC_L or WAC_R" << std::endl;
-      }
-      currentActivity = -1;
-*/
     }
     else if (currentActivity == LOCCAMFRONT_GET_IMAGE_ACTIVITY) {
         _front_trigger.write(tc_out);
@@ -1572,120 +1191,6 @@ void Task::updateHook()
             std::cout << "Error setting LocCamState" << std::endl;
         }
         currentActivity=-1;
-/*
-      if (!strcmp(cam, "FLOC_L")) {
-        char filename[240];
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 1", cam, FLOCL_index++);
-	_camera_front_process_image_trigger.write(true);
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, FLOCL_index-1);
-        std::ofstream metadata;
-        metadata.open(filename);
-        metadata << "Camera ID:  " << cam << std::endl;
-        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
-        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
-	Eigen::Affine3d tf;
-	base::Time time = base::Time::now();
-	if (_left_camera_bb2_front2lab.get(time, tf, false))
-	{
-		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        getTransform(tf);
-
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error getting LocCamState" << std::endl;
-        }
-        PanCamState[LOCCAM_FLOC_L_INDEX]=FLOCL_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error setting LocCamState" << std::endl;
-        }
-      }
-      else if (!strcmp(cam, "FLOC_R")) {
-	char filename[240];
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 2", cam, FLOCR_index++);
-	_camera_front_process_image_trigger.write(true);
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, FLOCR_index-1);
-        std::ofstream metadata;
-        metadata.open(filename);
-        metadata << "Camera ID:  " << cam << std::endl;
-        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
-        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
-	Eigen::Affine3d tf;
-	base::Time time = base::Time::now();
-	if (_left_camera_bb2_front2lab.get(time, tf, false))
-	{
-		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        getTransform(tf);
-
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error getting LocCamState" << std::endl;
-        }
-        PanCamState[LOCCAM_FLOC_R_INDEX]=FLOCR_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error setting LocCamState" << std::endl;
-        }
-      }
-      else if (!strcmp(cam, "FLOC_STEREO")) {
-	char filename[240];
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d 3", cam, FLOC_STEREO_index++);
-	_camera_front_process_image_trigger.write(true);
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left_metadata.txt", cam, FLOC_STEREO_index-1);
-        std::ofstream metadata;
-        metadata.open(filename);
-        metadata << "Camera ID:  " << "FLOC_L" << std::endl;
-        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
-        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
- 	Eigen::Affine3d tf;
-	base::Time time = base::Time::now();
-	if (_left_camera_bb2_front2lab.get(time, tf, false))
-	{
-		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        getTransform(tf);
-       
-	sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, FLOC_STEREO_index-1);
-        std::ofstream metadata2;
-        metadata2.open(filename);
-        metadata2 << "Camera ID:  " << "FLOC_R" << std::endl;
-        metadata2 << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
-        metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata2 << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
-        metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
-	if (_left_camera_bb2_front2lab.get(time, tf, false))
-	{
-		metadata2 << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        getTransform(tf);
-
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error getting LocCamState" << std::endl;
-        }
-        PanCamState[LOCCAM_FLOC_STEREO_INDEX]=FLOC_STEREO_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error setting LocCamState" << std::endl;
-        }
-      }
-      else {
-	std::cout << "Please select one of the existing cameras LOC_L or LOC_R" << std::endl;
-      }
-      currentActivity = -1;
-*/
     }
     else if (currentActivity == LOCCAMREAR_GET_IMAGE_ACTIVITY) {
         _rear_trigger.write(tc_out);
@@ -1700,120 +1205,6 @@ void Task::updateHook()
             std::cout << "Error setting LocCamState" << std::endl;
         }
         currentActivity=-1;
-/*
-      if (!strcmp(cam, "RLOC_L")) {
-        char filename[240];
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 1", cam, RLOCL_index++);
-	_camera_back_process_image_trigger.write(true);
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, RLOCL_index-1);
-        std::ofstream metadata;
-        metadata.open(filename);
-        metadata << "Camera ID:  " << cam << std::endl;
-        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
-        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
-	Eigen::Affine3d tf;
-	base::Time time = base::Time::now();
-	if (_left_camera_bb2_back2lab.get(time, tf, false))
-	{
-		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        getTransform(tf);
-
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error getting LocCamState" << std::endl;
-        }
-        PanCamState[LOCCAM_RLOC_L_INDEX]=RLOCL_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error setting LocCamState" << std::endl;
-        }
-      }
-      else if (!strcmp(cam, "RLOC_R")) {
-	char filename[240];
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d.png 2", cam, RLOCR_index++);
-	_camera_back_process_image_trigger.write(true);
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_metadata.txt", cam, RLOCR_index-1);
-        std::ofstream metadata;
-        metadata.open(filename);
-        metadata << "Camera ID:  " << cam << std::endl;
-        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
-        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
-	Eigen::Affine3d tf;
-	base::Time time = base::Time::now();
-	if (_left_camera_bb2_back2lab.get(time, tf, false))
-	{
-		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        getTransform(tf);
-
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error getting LocCamState" << std::endl;
-        }
-        PanCamState[LOCCAM_RLOC_R_INDEX]=RLOCR_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error setting LocCamState" << std::endl;
-        }
-      }
-      else if (!strcmp(cam, "RLOC_STEREO")) {
-	char filename[240];
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d 3", cam, RLOC_STEREO_index++);
-	_camera_back_process_image_trigger.write(true);
-        sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_left_metadata.txt", cam, RLOC_STEREO_index-1);
-        std::ofstream metadata;
-        metadata.open(filename);
-        metadata << "Camera ID:  " << "RLOC_L" << std::endl;
-        metadata << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
-        metadata << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-        metadata << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
-        metadata << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
- 	Eigen::Affine3d tf;
-	base::Time time = base::Time::now();
-	if (_left_camera_bb2_back2lab.get(time, tf, false))
-	{
-		metadata << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        getTransform(tf);
-       
-	sprintf (filename, "/home/exoter/Desktop/Images/%s_%d_right_metadata.txt", cam, RLOC_STEREO_index-1);
-        std::ofstream metadata2;
-        metadata2.open(filename);
-        metadata2 << "Camera ID:  " << "RLOC_R" << std::endl;
-        metadata2 << "Pan:  " << ptu[0].position*RAD2DEG << std::endl;
-        metadata2 << "Tilt:  " << ptu[1].position*RAD2DEG << std::endl;
-	metadata2 << "Position X, Y, Z:  " << absolute_pose.position[0] << ", " << absolute_pose.position[1] << ", " << absolute_pose.position[2] << std::endl;
-        metadata2 << "Orientation Roll, Pitch, Yaw:  " << pose.getRoll()*RAD2DEG << ", " << pose.getPitch()*RAD2DEG << ", " << (pose.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG) << std::endl;
-	if (_left_camera_bb2_back2lab.get(time, tf, false))
-	{
-		metadata2 << "Left Camera Transformation x,y,z, qx, qy, qz, qw: " << tf.translation().x() << ", " << tf.translation().y() << ", " << tf.translation().z() 
-                    << ", " << Eigen::Quaterniond(tf.linear()).x()  << ", " << Eigen::Quaterniond(tf.linear()).y()  << ", " << Eigen::Quaterniond(tf.linear()).z() << ", " << Eigen::Quaterniond(tf.linear()).w() << std::endl;
-	}
-        getTransform(tf);
-
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error getting LocCamState" << std::endl;
-        }
-        PanCamState[LOCCAM_RLOC_STEREO_INDEX]=RLOC_STEREO_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
-           std::cout << "Error setting LocCamState" << std::endl;
-        }
-      }
-      else {
-	std::cout << "Please select one of the existing cameras LOC_L or LOC_R" << std::endl;
-      }
-      currentActivity = -1;
-*/
     }
     else if (currentActivity == HAZCAMFRONT_GET_IMAGE_ACTIVITY) {
         _haz_front_trigger.write(tc_out);
@@ -1885,180 +1276,9 @@ void Task::updateHook()
         _panoramica_trigger.write(tc_out);
         _panorama_tilt.write(panorama_tilt);
         currentActivity=-1;
-/*        inPanCamActivity=0;
-        switch (inPanCamActivity) {
-            case 0:
-                currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-                pan = 45.0*DEG2RAD;
-                tilt = tilt*DEG2RAD;
-                sendPtuCommand();
-                inPanCamActivity++;
-                break;
-            case 1:
-                if (currentActivity == -1) {
-                    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-                    strcpy(cam,"PANCAM_STEREO");
-                    inPanCamActivity++;
-                    files_sent=false;
-                }
-                break;
-            case 2:
-                if (currentActivity == -1) {
-                    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-                    pan = 10.0*DEG2RAD;
-                    //tilt = tilt*DEG2RAD;
-                    sendPtuCommand();
-                    inPanCamActivity++;
-                }
-                break;
-            case 3:
-                if ((currentActivity == -1) && files_sent) {
-                    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-                    strcpy(cam,"PANCAM_STEREO");
-                    inPanCamActivity++;
-                    files_sent=false;
-                }
-                break;
-            case 4:
-                if (currentActivity == -1) {
-                    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-                    pan = -25.0*DEG2RAD;
-                    //tilt = tilt*DEG2RAD;
-                    sendPtuCommand();
-                    inPanCamActivity++;
-                }
-                break;
-            case 5:
-                if ((currentActivity == -1) && files_sent) {
-                    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-                    strcpy(cam,"PANCAM_STEREO");
-                    inPanCamActivity++;
-                    files_sent=false;
-                }
-                break;
-            case 6:
-                if (currentActivity == -1) {
-                    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-                    pan = -60.0*DEG2RAD;
-                    //tilt = tilt*DEG2RAD;
-                    sendPtuCommand();
-                    inPanCamActivity++;
-                }
-                break;
-            case 7:
-                if ((currentActivity == -1) && files_sent) {
-                    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-                    strcpy(cam,"PANCAM_STEREO");
-                    inPanCamActivity++;
-                    files_sent=false;
-                }
-                break;
-            case 8:
-                if (currentActivity == -1) {
-                    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-                    pan = -95.0*DEG2RAD;
-                    //tilt = tilt*DEG2RAD;
-                    sendPtuCommand();
-                    inPanCamActivity++;
-                }
-                break;
-            case 9:
-                if ((currentActivity == -1) && files_sent) {
-                    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-                    strcpy(cam,"PANCAM_STEREO");
-                    inPanCamActivity++;
-                    files_sent=false;
-                }
-                break;
-            case 10:
-                if (currentActivity == -1) {
-                    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-                    pan = -130.0*DEG2RAD;
-                    //tilt = tilt*DEG2RAD;
-                    sendPtuCommand();
-                    inPanCamActivity++;
-                }
-                break;
-            case 11:
-                if ((currentActivity == -1) && files_sent) {
-                    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-                    strcpy(cam,"PANCAM_STEREO");
-                    inPanCamActivity++;
-                    files_sent=false;
-                }
-                break;
-            case 12:
-                if (currentActivity == -1) {
-                    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-                    pan = -165.0*DEG2RAD;
-                    //tilt = tilt*DEG2RAD;
-                    sendPtuCommand();
-                    inPanCamActivity++;
-                }
-                break;
-            case 13:
-                if ((currentActivity == -1) && files_sent) {
-                    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-                    strcpy(cam,"PANCAM_STEREO");
-                    inPanCamActivity++;
-                    files_sent=false;
-                }
-                break;
-            case 14:
-                if (currentActivity == -1) {
-                    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-                    pan = -200.0*DEG2RAD;
-                    //tilt = tilt*DEG2RAD;
-                    sendPtuCommand();
-                    inPanCamActivity++;
-                }
-                break;
-            case 15:
-                if ((currentActivity == -1) && files_sent) {
-                    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-                    strcpy(cam,"PANCAM_STEREO");
-                    inPanCamActivity++;
-                    files_sent=false;
-                }
-                break;
-            case 16:
-                if (currentActivity == -1) {
-                    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-                    pan = -235.0*DEG2RAD;
-                    //tilt = tilt*DEG2RAD;
-                    sendPtuCommand();
-                    inPanCamActivity++;
-                }
-                break;
-            case 17:
-                if ((currentActivity == -1) && files_sent) {
-                    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-                    strcpy(cam,"PANCAM_STEREO");
-                    inPanCamActivity++;
-                    files_sent=false;
-                }
-                break;
-            case 18:
-                if (currentActivity == -1) {
-                    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-                    pan = 0.0;
-                    tilt = 0.0;
-                    sendPtuCommand();
-                    inPanCamActivity++;
-                }
-                break;
-            case 19:
-                if (currentActivity == -1) {
-                    inPanCamActivity=0;
-                }
-                break;
-            default:
-                break;
-        }*/
         if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
             std::cout << "Error getting PanCamState" << std::endl;
         }
-        //PanCamState[0]=0.0; //! Need to check indexes and corresponding values for the PanCam States
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR ){
             std::cout << "Error setting PanCamState" << std::endl;
         }
@@ -2084,13 +1304,6 @@ double Task::getTravelledDistance()
                    +(pose.position[1]-initial_pose.position[1])*(pose.position[1]-initial_pose.position[1])
                    +(pose.position[2]-initial_pose.position[2])*(pose.position[2]-initial_pose.position[2]));
     return distance;
-}
-
-double Task::getTravelledAngle() //! Not used anymore as it does not work when the angles jumps from 180 to -180.
-{
-    double angle =0.0;
-    angle = std::abs(pose.getYaw()-initial_imu.getYaw());
-    return (angle*RAD2DEG);
 }
 
 bool Task::angleReached()
@@ -2250,12 +1463,6 @@ void Task::sendPtuCommand()
         tilt = TILTLIMIT_LOW;
     _mast_pan.write(pan);
     _mast_tilt.write(tilt*4);
-
-    //ptu_command[0].position=pan;
-    //ptu_command[0].speed=base::NaN<float>();
-    //ptu_command[1].position=tilt;
-    //ptu_command[1].speed=base::NaN<float>();
-    //_ptu_command.write(ptu_command);
 }
 void Task::sendMotionCommand()
 {
@@ -2263,7 +1470,6 @@ void Task::sendMotionCommand()
     motion_command.rotation = targetRotation;
     _locomotion_command.write(motion_command);
 }
-
 
 void Task::sendProduct(messages::Telemetry tm)
 {
@@ -2280,7 +1486,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //int seq=PAN_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
            		    std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2304,7 +1509,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //int seq=PAN_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2327,7 +1531,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //int seq=PAN_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2350,7 +1553,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //int seq=PAN_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2372,9 +1574,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::string folder = _productsFolder.value();
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
-                    //char command2[256];
-                    //sprintf(command2, "sed -ie 's/jpg/png/g' %s", mtl_filename.c_str());
-                    //system(command2);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();
@@ -2399,7 +1598,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //int seq=LIDAR_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2423,7 +1621,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //int seq=LIDAR_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2446,7 +1643,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //int seq=LIDAR_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2469,7 +1665,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //int seq=LIDAR_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2491,9 +1686,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::string folder = _productsFolder.value();
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
-                    //char command2[256];
-                    //sprintf(command2, "sed -ie 's/jpg/png/g' %s", mtl_filename.c_str());
-                    //system(command2);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();
@@ -2517,7 +1709,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //int seq=FLOC_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2541,7 +1732,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //int seq=FLOC_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2564,7 +1754,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //int seq=FLOC_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2587,7 +1776,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //int seq=FLOC_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2609,9 +1797,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::string folder = _productsFolder.value();
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
-                    //char command2[256];
-                    //sprintf(command2, "sed -ie 's/jpg/png/g' %s", mtl_filename.c_str());
-                    //system(command2);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();
@@ -2635,7 +1820,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //int seq=TOF_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2659,7 +1843,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //int seq=TOF_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2682,7 +1865,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //int seq=TOF_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2705,7 +1887,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //int seq=TOF_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2727,9 +1908,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::string folder = _productsFolder.value();
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
-                    //char command2[256];
-                    //sprintf(command2, "sed -ie 's/jpg/png/g' %s", mtl_filename.c_str());
-                    //system(command2);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();
@@ -2753,7 +1931,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //int seq=FHAZ_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2777,7 +1954,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //int seq=FHAZ_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2800,7 +1976,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //int seq=FHAZ_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2823,7 +1998,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //int seq=FHAZ_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2845,9 +2019,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::string folder = _productsFolder.value();
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
-                    //char command2[256];
-                    //sprintf(command2, "sed -ie 's/jpg/png/g' %s", mtl_filename.c_str());
-                    //system(command2);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();
@@ -2871,7 +2042,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //int seq=RLOC_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2895,7 +2065,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     auto size = buffer.size();
                     char* data = &buffer[0];
                     int seq=1;
-                    //int seq=RLOC_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();		
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2918,7 +2087,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //int seq=RLOC_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2941,7 +2109,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                     std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
                     int seq=1;
-                    //int seq=RLOC_STEREO_index-1;
                     long time=tm.timestamp.toMilliseconds();
                     std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
 	        	    date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -2963,9 +2130,6 @@ void Task::sendProduct(messages::Telemetry tm)
                     std::string folder = _productsFolder.value();
         		    sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
                     system(command);
-                    //char command2[256];
-                    //sprintf(command2, "sed -ie 's/jpg/png/g' %s", mtl_filename.c_str());
-                    //system(command2);
                     std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
                     std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
                     auto size2 = buffer2.size();

@@ -1,5 +1,3 @@
-/* Generated from orogen/lib/orogen/templates/tasks/Task.hpp */
-
 #ifndef TELEMETRY_TELECOMMAND_TASK_TASK_HPP
 #define TELEMETRY_TELECOMMAND_TASK_TASK_HPP
 
@@ -19,27 +17,9 @@
 
 #include "telemetry_telecommand/Messages.hpp"
 #include "temperature/temperatureTypes.hpp"
-//#include "frame_helper/FrameHelper.h"
 
 namespace telemetry_telecommand {
 
-    /*! \class Task 
-     * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
-     * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
-     * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
-     * Declare a new task context (i.e., a component)
-
-The corresponding C++ class can be edited in tasks/Task.hpp and
-tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
-     * \details
-     * The name of a TaskContext is primarily defined via:
-     \verbatim
-     deployment 'deployment_name'
-         task('custom_task_name','telemetry_telecommand::Task')
-     end
-     \endverbatim
-     *  It can be dynamically adapted when the deployment is called with a prefix argument. 
-     */
     class Task : public TaskBase
     {
     friend class TaskBase;
@@ -63,10 +43,9 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         double MastState[MAX_STATE_SIZE];
         double GNCState[MAX_STATE_SIZE];
 
-
         // TM message
         std::string tmmsg;
-      
+
         // GNC_LLO parameters
         double travelledDistance;
         double travelledAngle;
@@ -84,7 +63,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         int NofWaypoints;
         base::samples::RigidBodyState initial_pose;
         base::samples::RigidBodyState initial_imu;
-        
+
         // MAST_PTU_MoveTo parameters
         double pan;
         double tilt;
@@ -131,10 +110,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         double update_pose_ry;
         double update_pose_rz;
 
-        //bool first_estimate;
-        //double first_imu_estimate_yaw;
-
-        // Dirty fix to allow executing commands while executing motion commands
+        //FIXME Dirty fix to allow executing commands while executing motion commands
         bool isActiveACKERMANNGOTO = false;
         bool isActiveTURNSPOTGOTO = false;
         bool isActiveTRAJECTORY = false;
@@ -152,94 +128,29 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         void deadManSwitch();
 
     public:
-        /** TaskContext constructor for Task
-         * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
-         * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
-         */
         Task(std::string const& name = "telemetry_telecommand::Task");
-
-        /** TaskContext constructor for Task 
-         * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices. 
-         * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task. 
-         * 
-         */
         Task(std::string const& name, RTT::ExecutionEngine* engine);
+        ~Task();
 
-        /** Default deconstructor of Task
-         */
-    ~Task();
-
-        /** This hook is called by Orocos when the state machine transitions
-         * from PreOperational to Stopped. If it returns false, then the
-         * component will stay in PreOperational. Otherwise, it goes into
-         * Stopped.
-         *
-         * It is meaningful only if the #needs_configuration has been specified
-         * in the task context definition with (for example):
-         \verbatim
-         task_context "TaskName" do
-           needs_configuration
-           ...
-         end
-         \endverbatim
-         */
         bool configureHook();
-
-        /** This hook is called by Orocos when the state machine transitions
-         * from Stopped to Running. If it returns false, then the component will
-         * stay in Stopped. Otherwise, it goes into Running and updateHook()
-         * will be called.
-         */
         bool startHook();
-
-        /** This hook is called by Orocos when the component is in the Running
-         * state, at each activity step. Here, the activity gives the "ticks"
-         * when the hook should be called.
-         *
-         * The error(), exception() and fatal() calls, when called in this hook,
-         * allow to get into the associated RunTimeError, Exception and
-         * FatalError states. 
-         *
-         * In the first case, updateHook() is still called, and recover() allows
-         * you to go back into the Running state.  In the second case, the
-         * errorHook() will be called instead of updateHook(). In Exception, the
-         * component is stopped and recover() needs to be called before starting
-         * it again. Finally, FatalError cannot be recovered.
-         */
         void updateHook();
-
-        /** This hook is called by Orocos when the component is in the
-         * RunTimeError state, at each activity step. See the discussion in
-         * updateHook() about triggering options.
-         *
-         * Call recover() to go back in the Runtime state.
-         */
         void errorHook();
-
-        /** This hook is called by Orocos when the state machine transitions
-         * from Running to Stopped after stop() has been called.
-         */
         void stopHook();
-
-        /** This hook is called by Orocos when the state machine transitions
-         * from Stopped to PreOperational, requiring the call to configureHook()
-         * before calling start() again.
-         */
         void cleanupHook();
 
         /** this method computes the absolute travelled distance in 3d. initial position
          * from which the distance is calculated is reset every time a locomotion command
-         * is sent. the initial position is compared to the current position to calculate the 
+         * is sent. the initial position is compared to the current position to calculate the
          * travelled distance.
          */
         double getTravelledDistance();
 
         /** this method computes the absolute travelled angle (in radians). initial orientation
          * from which the motion is calculated is reset every time a locomotion command
-         * is sent. the initial orientation is compared to the current orientation to calculate the 
+         * is sent. the initial orientation is compared to the current orientation to calculate the
          * travelled angle.
          */
-        double getTravelledAngle();
         bool angleReached();
 
         void getTransform(Eigen::Affine3d& tf);
@@ -253,7 +164,7 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
         /** Checks if a bema move command has reached its target.
          */
         bool bema1TargetReached();
-        
+
         /** Checks if a walking (egress front) move command has reached its target.
          */
         bool bema2TargetReached();
@@ -266,23 +177,21 @@ tasks/Task.cpp, and will be put in the telemetry_telecommand namespace.
          */
         bool ptuTargetReached();
 
-        /** Sends the PTU command through the ptu_command port. The values of pan and tilt 
+        /** Sends the PTU command through the ptu_command port. The values of pan and tilt
          *  need to be previously set
          */
         void sendPtuCommand();
 
-        /** Sends the Motion command through the motion_command port. The values of translation and 
+        /** Sends the Motion command through the motion_command port. The values of translation and
          *  rotation speed need to be previously set
          */
         void sendMotionCommand();
 
-    /** Sends the file (image, distance, etc.) specified in the tm message.
-     *  It clasifies the file depending its type and source
+        /** Sends the file (image, distance, etc.) specified in the tm message.
+         *  It clasifies the file depending its type and source
          */
         void sendProduct(messages::Telemetry tm_in);
-
     };
 }
 
 #endif
-
