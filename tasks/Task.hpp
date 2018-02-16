@@ -217,6 +217,15 @@ namespace telemetry_telecommand
          *  It clasifies the file depending its type and source
          */
         void sendProduct(messages::Telemetry tm_in);
+
+
+        // main components of the update hook
+        void reactToInputPorts();
+
+        void getAndExecTelecommand();
+
+        void controlRunningActitivies();
+
         private:
 
         void exec_GNC_ACKERMANN_GOTO(CommandInfo*);
