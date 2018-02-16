@@ -18,8 +18,8 @@
 #include "telemetry_telecommand/Messages.hpp"
 #include "temperature/temperatureTypes.hpp"
 
-namespace telemetry_telecommand {
-
+namespace telemetry_telecommand
+{
     class Task : public TaskBase
     {
     friend class TaskBase;
