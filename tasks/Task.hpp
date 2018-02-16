@@ -20,10 +20,34 @@
 
 namespace telemetry_telecommand
 {
+    enum Telecommand
+    {
+        GNC_ACKERMANN_GOTO,
+        GNC_TURNSPOT_GOTO,
+        GNC_TRAJECTORY,
+        MAST_PTU_MOVE_TO,
+        PANCAM_WAC_ACQ,
+        PANCAM_PANORAMA,
+        LOCCAMFRONT_ACQ,
+        LOCCAMREAR_ACQ,  //ExoTeR
+        HAZCAMFRONT_ACQ, //HDPR
+        TOF_ACQ,         //HDPR
+        LIDAR_ACQ,       //HDPR
+        DEPLOYMENT_ALL,  //ExoTeR
+        DEPLOYMENT_FRONT,//ExoTeR
+        DEPLOYMENT_REAR, //ExoTeR
+        GNC_UPDATE,
+        GNC_ACKERMANN_DIRECT,
+        GNC_TURNSPOT_DIRECT,
+        ALL_ACQ,
+        ABORT,
+        GNCG
+    };
+
     class Task : public TaskBase
     {
-    friend class TaskBase;
-    protected:
+        friend class TaskBase;
+        protected:
 
         int currentActivity;
         bool abort_activity;
@@ -127,7 +151,9 @@ namespace telemetry_telecommand
         // this function is called after each direct command
         void deadManSwitch();
 
-    public:
+        void execTelecommand(std::string);
+
+        public:
         Task(std::string const& name = "telemetry_telecommand::Task");
         Task(std::string const& name, RTT::ExecutionEngine* engine);
         ~Task();
@@ -191,6 +217,30 @@ namespace telemetry_telecommand
          *  It clasifies the file depending its type and source
          */
         void sendProduct(messages::Telemetry tm_in);
+        private:
+
+        void exec_GNC_ACKERMANN_GOTO(CommandInfo*);
+        void exec_GNC_TURNSPOT_GOTO(CommandInfo*);
+        void exec_GNC_TRAJECTORY(CommandInfo*);
+        void exec_MAST_PTU_MOVE_TO(CommandInfo*);
+        void exec_PANCAM_PANORAMA(CommandInfo*);
+        void exec_TOF_ACQ(CommandInfo*);
+        void exec_LIDAR_ACQ(CommandInfo*);
+        void exec_DEPLOYMENT_ALL(CommandInfo*);
+        void exec_DEPLOYMENT_FRONT(CommandInfo*);
+        void exec_DEPLOYMENT_REAR(CommandInfo*);
+        void exec_GNC_UPDATE(CommandInfo*);
+        void exec_GNC_ACKERMANN_DIRECT(CommandInfo*);
+        void exec_GNC_TURNSPOT_DIRECT(CommandInfo*);
+        void exec_ALL_ACQ(CommandInfo*);
+        void exec_HAZCAM_ACQ(CommandInfo*);
+        void exec_GNCG(CommandInfo*);
+        void exec_ABORT(CommandInfo*);
+        void exec_MAST_ACQ(CommandInfo*);
+        void exec_FRONT_ACQ(CommandInfo*);
+        void exec_REAR_ACQ(CommandInfo*);
+
+        std::map<std::string, std::pair<Telecommand, std::function<void(CommandInfo*)> > > tc_map;
     };
 }
 

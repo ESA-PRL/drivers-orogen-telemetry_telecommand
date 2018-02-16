@@ -121,8 +121,30 @@ bool Task::configureHook()
     initial_3Dpose=_initial_pose;
     absolute_pose=initial_3Dpose;
     initial_absolute_heading=initial_3Dpose.getYaw();
+
+    // map telecommand strings to the corresponding enum and function
+    tc_map = {
+        { "GNC_ACKERMANN_GOTO",   { Telecommand::GNC_ACKERMANN_GOTO,   std::bind( &Task::exec_GNC_ACKERMANN_GOTO,   this, std::placeholders::_1 ) } },
+        { "GNC_TURNSPOT_GOTO",    { Telecommand::GNC_TURNSPOT_GOTO,    std::bind( &Task::exec_GNC_TURNSPOT_GOTO,    this, std::placeholders::_1 ) } },
+        { "GNC_TRAJECTORY",       { Telecommand::GNC_TRAJECTORY,       std::bind( &Task::exec_GNC_TRAJECTORY,       this, std::placeholders::_1 ) } },
+        { "MAST_PTU_MOVE_TO",     { Telecommand::MAST_PTU_MOVE_TO,     std::bind( &Task::exec_MAST_PTU_MOVE_TO,     this, std::placeholders::_1 ) } },
+        { "PANCAM_PANORAMA",      { Telecommand::PANCAM_PANORAMA,      std::bind( &Task::exec_PANCAM_PANORAMA,      this, std::placeholders::_1 ) } },
+        { "TOF_ACQ",              { Telecommand::TOF_ACQ,              std::bind( &Task::exec_TOF_ACQ,              this, std::placeholders::_1 ) } },
+        { "LIDAR_ACQ",            { Telecommand::LIDAR_ACQ,            std::bind( &Task::exec_LIDAR_ACQ,            this, std::placeholders::_1 ) } },
+        { "DEPLOYMENT_ALL",       { Telecommand::DEPLOYMENT_ALL,       std::bind( &Task::exec_DEPLOYMENT_ALL,       this, std::placeholders::_1 ) } },
+        { "DEPLOYMENT_FRONT",     { Telecommand::DEPLOYMENT_FRONT,     std::bind( &Task::exec_DEPLOYMENT_FRONT,     this, std::placeholders::_1 ) } },
+        { "DEPLOYMENT_REAR",      { Telecommand::DEPLOYMENT_REAR,      std::bind( &Task::exec_DEPLOYMENT_REAR,      this, std::placeholders::_1 ) } },
+        { "GNC_UPDATE",           { Telecommand::GNC_UPDATE,           std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1 ) } },
+        { "GNC_ACKERMANN_DIRECT", { Telecommand::GNC_ACKERMANN_DIRECT, std::bind( &Task::exec_GNC_ACKERMANN_DIRECT, this, std::placeholders::_1 ) } },
+        { "GNC_TURNSPOT_DIRECT",  { Telecommand::GNC_TURNSPOT_DIRECT,  std::bind( &Task::exec_GNC_TURNSPOT_DIRECT,  this, std::placeholders::_1 ) } },
+        { "ALL_ACQ",              { Telecommand::ALL_ACQ,              std::bind( &Task::exec_ALL_ACQ,              this, std::placeholders::_1 ) } },
+        { "GNCG",                 { Telecommand::GNCG,                 std::bind( &Task::exec_GNCG,                 this, std::placeholders::_1 ) } },
+        { "ABORT",                { Telecommand::ABORT,                std::bind( &Task::exec_ABORT,                this, std::placeholders::_1 ) } }
+    };
+
     return true;
 }
+
 bool Task::startHook()
 {
     if (! TaskBase::startHook())
@@ -554,503 +576,13 @@ void Task::updateHook()
     // CommandInfo* cmd_info = tcComm->extractCommandInfo();           // Server/Client TCP-IP sockets messaging Protocol
     if (cmd_info != NULL)
     {
-        if (!strcmp((cmd_info->activityName).c_str(), "ABORT"))
+        try
         {
-            abort_activity=true;
-            std::cout << "Abort message received!" << std::endl;
+            // use telecommand map to look up the correct function for the
+            // incoming telecommand (=cmd_info->activityName)
+            tc_map[cmd_info->activityName].second(cmd_info);
         }
-        else if (!strcmp((cmd_info->activityName).c_str(), "GNCG"))
-        {
-            TaskLib* taskLib = new TaskLib("");
-            taskLib->insertSol(std::string("/home/marta/rock/bundles/rover/config/orogen/ActivityPlan.txt"));
-            taskLib->ExecuteActivityPlan();
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_ACKERMANN_GOTO"))
-        {
-            isActiveACKERMANNGOTO = true;
-            currentActivity = GNC_ACKERMANN_GOTO_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %lf %lf %lf", &ackid, &targetPositionX, &targetPositionY, &targetSpeed);
-            motionCommand();
-            travelledDistance = 0.0;
-            initial_pose = pose;
-            std::cout <<  "GNC_ACKERMANN_GOTO X:" << targetPositionX << " Y:" << targetPositionY << " speed:" << targetSpeed << std::endl;
-            sendMotionCommand();
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_ACKERMANN_DIRECT"))
-        {
-            currentActivity = GNC_ACKERMANN_DIRECT_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetTranslation, &targetRotation);
-            std::cout <<  "GNC_ACKERMANN_DIRECT Translation:" << targetTranslation << " Rotation:" << targetRotation << std::endl;
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-                std::cout << "Error getting GNCState" << std::endl;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-                std::cout << "Error setting GNCState" << std::endl;
-            deadManSwitch();
-
-            // check if we are in direct or in path following mode
-            if (target_reached)
-            {
-                // if not in trajectory following, send complete (direct) command
-                sendMotionCommand();
-            }
-            else
-            {
-                // trajectory following cannot go into reverse
-                // TODO don't write speeds but change PID parameters
-                if (targetTranslation >= 0)
-                {
-                    _trajectory_speed.write(targetTranslation);
-                }
-                else
-                {
-                    _trajectory_speed.write(0.0);
-                }
-            }
-            currentActivity = -1;
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TURNSPOT_GOTO"))
-        {
-            currentActivity = GNC_TURNSPOT_GOTO_ACTIVITY;
-            isActiveTURNSPOTGOTO=true;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetOrientationTheta, &targetRotation);
-            targetRotation *= DEG2RAD;
-            initial_imu = pose;
-            motionCommand();
-            travelledAngle = 0.0;
-            std::cout <<  "GNC_TURNSPOT_GOTO angle:" << targetOrientationTheta << std::endl;
-            sendMotionCommand();
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TURNSPOT_DIRECT"))
-        {
-            currentActivity = GNC_TURNSPOT_DIRECT_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %lf", &ackid, &targetRotation);
-            // TODO does the targetRotation(Speed) need to be multiplied by DEG2RAD here as well?
-            targetTranslation=0.0;
-            std::cout <<  "GNC_TURNSPOT_DIRECT Rotation:" << targetRotation << std::endl;
-            sendMotionCommand();
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-            deadManSwitch();
-            currentActivity = -1;
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_TRAJECTORY"))
-        {
-            currentActivity = GNC_TRAJECTORY_ACTIVITY;
-            isActiveTRAJECTORY = true;
-            target_reached=false;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            char *token_str;
-            token_str = strtok((char *)(currentParams.c_str()), " ");
-            ackid = atoi(token_str);
-            token_str = strtok(NULL, " ");
-            NofWaypoints = atoi(token_str);
-            std::cout << "NofWaypoints:" << NofWaypoints << "<-" << std::endl;
-            for (int i=0;i<NofWaypoints;i++)
-            {
-                token_str = strtok(NULL, " ");
-                waypoint.position(0)=atof(token_str);
-                std::cout << "Point " << i+1 << " x:" << waypoint.position(0) << std::endl;
-                token_str = strtok(NULL, " ");
-                waypoint.position(1)=atof(token_str);
-                std::cout << "Point " << i+1 << " y:" << waypoint.position(1) << std::endl;
-                trajectory.push_back(waypoint);
-            }
-            token_str = strtok(NULL, " ");
-            targetOrientationTheta = atof(token_str);
-            std::cout << "targetOrientationTheta: " << targetOrientationTheta << std::endl;
-            trajectory.back().heading = targetOrientationTheta*DEG2RAD;
-            token_str = strtok(NULL, " ");
-            targetSpeed = atof(token_str);
-            _trajectory.write(trajectory);
-            if (targetSpeed>0)
-            {
-                _trajectory_speed.write(targetSpeed);
-            }
-            std::cout <<  "GNC_TRAJECTORY #ofWaypoints:" << NofWaypoints << std::endl;
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "GNC_Update"))
-        {
-            currentActivity = GNC_UPDATE_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %lf %lf %lf %lf %lf %lf", &ackid, &update_pose_x, &update_pose_y, &update_pose_z, &update_pose_rx, &update_pose_ry, &update_pose_rz);
-            absolute_pose.position[0]=update_pose_x;
-            absolute_pose.position[1]=update_pose_y;
-            absolute_pose.position[2]=update_pose_z;
-            Eigen::Quaternion <double> orientation(Eigen::AngleAxisd(update_pose_rz*DEG2RAD, Eigen::Vector3d::UnitZ())*
-                    Eigen::AngleAxisd(update_pose_ry*DEG2RAD, Eigen::Vector3d::UnitY())*
-                    Eigen::AngleAxisd(update_pose_rx*DEG2RAD, Eigen::Vector3d::UnitX()));
-            absolute_pose.orientation = orientation;
-            _update_pose.write(absolute_pose);
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "Deployment_All"))
-        {
-            currentActivity = DEPLOYMENT_ALL_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
-            if (bema_command>DEPLOYMENTLIMIT)
-                bema_command=DEPLOYMENTLIMIT;
-            else if (bema_command<-DEPLOYMENTLIMIT)
-                bema_command=-DEPLOYMENTLIMIT;
-            std::cout <<  "Deployment All: " << bema_command << std::endl;
-            bema_command = bema_command*DEG2RAD;
-            if (bema_command>bema[0].position)
-            {
-                _bema_command.write(OMEGA);
-            }
-            else
-            {
-                _bema_command.write(-OMEGA);
-            }
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "Deployment_Front"))
-        {
-            currentActivity = DEPLOYMENT_FRONT_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
-            if (bema_command>DEPLOYMENTLIMIT)
-                bema_command=DEPLOYMENTLIMIT;
-            else if (bema_command<-DEPLOYMENTLIMIT)
-                bema_command=-DEPLOYMENTLIMIT;
-            std::cout <<  "Deployment Front: " << bema_command << std::endl;
-            bema_command = bema_command*DEG2RAD;
-            if (bema_command>bema[0].position)
-            {
-                _walking_command_front.write(OMEGA);
-            }
-            else
-            {
-                _walking_command_front.write(-OMEGA);
-            }
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "Deployment_Rear"))
-        {
-            currentActivity = DEPLOYMENT_REAR_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
-            if (bema_command>DEPLOYMENTLIMIT)
-                bema_command=DEPLOYMENTLIMIT;
-            else if (bema_command<-DEPLOYMENTLIMIT)
-                bema_command=-DEPLOYMENTLIMIT;
-            std::cout <<  "Deployment Rear: " << bema_command << std::endl;
-            bema_command = bema_command*DEG2RAD;
-            if (bema_command>bema[4].position)
-            {
-                _walking_command_rear.write(OMEGA);
-            }
-            else
-            {
-                _walking_command_rear.write(-OMEGA);
-            }
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "MAST_PTU_MoveTo"))
-        {
-            currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &pan, &tilt);
-            std::cout <<  "MAST_PTU_MoveTo pan:" << pan << " tilt:" << tilt << std::endl;
-            pan = pan*DEG2RAD;
-            tilt = tilt*DEG2RAD;
-            sendPtuCommand();
-            if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
-            {
-                std::cout << "Error getting MastState" << std::endl;
-            }
-            if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
-            {
-                std::cout << "Error setting MastState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "MAST_ACQ"))
-        {
-            currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
-            tc_out.productType = productType;
-            if (productMode>0)
-            {
-                tc_out.productMode=messages::Mode::PERIODIC;
-                tc_out.usecPeriod=productMode*1000;
-            }
-            else
-            {
-                tc_out.productMode = productMode;
-            }
-            std::cout <<  "PanCam Get Image type " << productType << " and mode: " << productMode << std::endl;
-            if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error getting PanCamState" << std::endl;
-            }
-            PanCamState[PANCAM_ACTION_ID_INDEX]=50;
-            PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error setting PanCamState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "FRONT_ACQ"))
-        {
-            currentActivity = LOCCAMFRONT_GET_IMAGE_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
-            tc_out.productType = productType;
-            if (productMode>0)
-            {
-                tc_out.productMode=messages::Mode::PERIODIC;
-                tc_out.usecPeriod=productMode*1000;
-            }
-            else
-            {
-                tc_out.productMode = productMode;
-            }
-            std::cout <<  "LocCamFront Get Image type " << productType << " and mode: " << productMode << std::endl;
-            if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error getting LocCamState" << std::endl;
-            }
-            PanCamState[PANCAM_ACTION_ID_INDEX]=51;
-            PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error setting LocCamState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "REAR_ACQ"))
-        {
-            currentActivity = LOCCAMREAR_GET_IMAGE_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
-            tc_out.productType = productType;
-            if (productMode>0)
-            {
-                tc_out.productMode=messages::Mode::PERIODIC;
-                tc_out.usecPeriod=productMode*1000;
-            }
-            else
-            {
-                tc_out.productMode = productMode;
-            }
-            std::cout <<  "LocCamRear Get Image type " << productType << " and mode: " << productMode << std::endl;
-            if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error getting LocCamState" << std::endl;
-            }
-            PanCamState[PANCAM_ACTION_ID_INDEX]=52;
-            PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error setting LocCamState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "HAZCAM_ACQ"))
-        {
-            currentActivity = HAZCAMFRONT_GET_IMAGE_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
-            tc_out.productType = productType;
-            if (productMode>0)
-            {
-                tc_out.productMode=messages::Mode::PERIODIC;
-                tc_out.usecPeriod=productMode*1000;
-            }
-            else
-            {
-                tc_out.productMode = productMode;
-            }
-            std::cout <<  "HazCamFront Get Image type " << productType << " and mode: " << productMode << std::endl;
-            if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error getting LocCamState" << std::endl;
-            }
-            PanCamState[PANCAM_ACTION_ID_INDEX]=53;
-            PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error setting LocCamState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "TOF_ACQ"))
-        {
-            currentActivity = TOF_GET_IMAGE_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
-            tc_out.productType = productType;
-            if (productMode>0)
-            {
-                tc_out.productMode=messages::Mode::PERIODIC;
-                tc_out.usecPeriod=productMode*1000;
-            }
-            else
-            {
-                tc_out.productMode = productMode;
-            }
-            std::cout <<  "Tof Get Image type " << productType << " and mode: " << productMode << std::endl;
-            if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error getting LocCamState" << std::endl;
-            }
-            PanCamState[PANCAM_ACTION_ID_INDEX]=53;
-            PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error setting LocCamState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "LIDAR_ACQ"))
-        {
-            currentActivity = LIDAR_GET_IMAGE_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
-            tc_out.productType = productType;
-            if (productMode>0)
-            {
-                tc_out.productMode=messages::Mode::PERIODIC;
-                tc_out.usecPeriod=productMode*1000;
-            }
-            else
-            {
-                tc_out.productMode = productMode;
-            }
-            std::cout <<  "Lidar Get Image type " << productType << " and mode: " << productMode << std::endl;
-            if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error getting LocCamState" << std::endl;
-            }
-            PanCamState[PANCAM_ACTION_ID_INDEX]=53;
-            PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error setting LocCamState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "ALL_ACQ"))
-        {
-            currentActivity = ALL_ACQ_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
-            tc_out.productType = productType;
-            if (productMode>0)
-            {
-                tc_out.productMode=messages::Mode::PERIODIC;
-                tc_out.usecPeriod=productMode*1000;
-            }
-            else
-            {
-                tc_out.productMode = productMode;
-            }
-            std::cout <<  "All sensors Get Image type " << productType << " and mode: " << productMode << std::endl;
-            if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error getting LocCamState" << std::endl;
-            }
-            PanCamState[PANCAM_ACTION_ID_INDEX]=53;
-            PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error setting LocCamState" << std::endl;
-            }
-        }
-        else if (!strcmp((cmd_info->activityName).c_str(), "PANCAM_PANORAMA"))
-        {
-            currentActivity = PANCAM_PANORAMA_ACTIVITY;
-            currentParams = cmd_info->activityParams;
-            int ackid;
-            sscanf(currentParams.c_str(), "%d %lf", &ackid, &panorama_tilt);
-            tc_out.productType = messages::ProductType::DEM;
-            tc_out.productMode = messages::Mode::CONTINUOUS;
-            std::cout <<  "PanCam Panorama at tilt: " << panorama_tilt << std::endl;
-            if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error getting PanCamState" << std::endl;
-            }
-            if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-            {
-                std::cout << "Error setting PanCamState" << std::endl;
-            }
-        }
-        else
+        catch (std::exception& e)
         {
             RobotTask *rover_action = ( RobotTask* ) theRobotProcedure->GetRTFromName( (char*)(cmd_info->activityName).c_str());
             if (rover_action != NULL)
@@ -1063,6 +595,7 @@ void Task::updateHook()
             }
         }
     } // Close if statement for checking for TC in the queue
+
     if (currentActivity == GNC_ACKERMANN_GOTO_ACTIVITY || isActiveACKERMANNGOTO)
     {
         travelledDistance = getTravelledDistance();
@@ -2369,4 +1902,520 @@ void Task::sendProduct(messages::Telemetry tm)
             }
             break;
     }
+}
+
+void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
+{
+    isActiveACKERMANNGOTO = true;
+    currentActivity = GNC_ACKERMANN_GOTO_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %lf %lf %lf", &ackid, &targetPositionX, &targetPositionY, &targetSpeed);
+    motionCommand();
+    travelledDistance = 0.0;
+    initial_pose = pose;
+    std::cout <<  "GNC_ACKERMANN_GOTO X:" << targetPositionX << " Y:" << targetPositionY << " speed:" << targetSpeed << std::endl;
+    sendMotionCommand();
+    if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error getting GNCState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error setting GNCState" << std::endl;
+    }
+}
+
+void Task::exec_GNC_TURNSPOT_GOTO(CommandInfo* cmd_info)
+{
+    currentActivity = GNC_TURNSPOT_GOTO_ACTIVITY;
+    isActiveTURNSPOTGOTO=true;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetOrientationTheta, &targetRotation);
+    targetRotation *= DEG2RAD;
+    initial_imu = pose;
+    motionCommand();
+    travelledAngle = 0.0;
+    std::cout <<  "GNC_TURNSPOT_GOTO angle:" << targetOrientationTheta << std::endl;
+    sendMotionCommand();
+    if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error getting GNCState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error setting GNCState" << std::endl;
+    }
+}
+
+void Task::exec_GNC_TRAJECTORY(CommandInfo* cmd_info)
+{
+    currentActivity = GNC_TRAJECTORY_ACTIVITY;
+    isActiveTRAJECTORY = true;
+    target_reached=false;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    char *token_str;
+    token_str = strtok((char *)(currentParams.c_str()), " ");
+    ackid = atoi(token_str);
+    token_str = strtok(NULL, " ");
+    NofWaypoints = atoi(token_str);
+    std::cout << "NofWaypoints:" << NofWaypoints << "<-" << std::endl;
+    for (int i=0;i<NofWaypoints;i++)
+    {
+        token_str = strtok(NULL, " ");
+        waypoint.position(0)=atof(token_str);
+        std::cout << "Point " << i+1 << " x:" << waypoint.position(0) << std::endl;
+        token_str = strtok(NULL, " ");
+        waypoint.position(1)=atof(token_str);
+        std::cout << "Point " << i+1 << " y:" << waypoint.position(1) << std::endl;
+        trajectory.push_back(waypoint);
+    }
+    token_str = strtok(NULL, " ");
+    targetOrientationTheta = atof(token_str);
+    std::cout << "targetOrientationTheta: " << targetOrientationTheta << std::endl;
+    trajectory.back().heading = targetOrientationTheta*DEG2RAD;
+    token_str = strtok(NULL, " ");
+    targetSpeed = atof(token_str);
+    _trajectory.write(trajectory);
+    if (targetSpeed>0)
+    {
+        _trajectory_speed.write(targetSpeed);
+    }
+    std::cout <<  "GNC_TRAJECTORY #ofWaypoints:" << NofWaypoints << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error getting GNCState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error setting GNCState" << std::endl;
+    }
+}
+
+void Task::exec_MAST_PTU_MOVE_TO(CommandInfo* cmd_info)
+{
+    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &pan, &tilt);
+    std::cout <<  "MAST_PTU_MoveTo pan:" << pan << " tilt:" << tilt << std::endl;
+    pan = pan*DEG2RAD;
+    tilt = tilt*DEG2RAD;
+    sendPtuCommand();
+    if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
+    {
+        std::cout << "Error getting MastState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
+    {
+        std::cout << "Error setting MastState" << std::endl;
+    }
+}
+
+void Task::exec_DEPLOYMENT_ALL(CommandInfo* cmd_info)
+{
+    currentActivity = DEPLOYMENT_ALL_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
+    if (bema_command>DEPLOYMENTLIMIT)
+        bema_command=DEPLOYMENTLIMIT;
+    else if (bema_command<-DEPLOYMENTLIMIT)
+        bema_command=-DEPLOYMENTLIMIT;
+    std::cout <<  "Deployment All: " << bema_command << std::endl;
+    bema_command = bema_command*DEG2RAD;
+    if (bema_command>bema[0].position)
+    {
+        _bema_command.write(OMEGA);
+    }
+    else
+    {
+        _bema_command.write(-OMEGA);
+    }
+    if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error getting GNCState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error setting GNCState" << std::endl;
+    }
+}
+
+void Task::exec_DEPLOYMENT_FRONT(CommandInfo* cmd_info)
+{
+    currentActivity = DEPLOYMENT_FRONT_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
+    if (bema_command>DEPLOYMENTLIMIT)
+        bema_command=DEPLOYMENTLIMIT;
+    else if (bema_command<-DEPLOYMENTLIMIT)
+        bema_command=-DEPLOYMENTLIMIT;
+    std::cout <<  "Deployment Front: " << bema_command << std::endl;
+    bema_command = bema_command*DEG2RAD;
+    if (bema_command>bema[0].position)
+    {
+        _walking_command_front.write(OMEGA);
+    }
+    else
+    {
+        _walking_command_front.write(-OMEGA);
+    }
+    if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error getting GNCState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error setting GNCState" << std::endl;
+    }
+}
+
+void Task::exec_DEPLOYMENT_REAR(CommandInfo* cmd_info)
+{
+    currentActivity = DEPLOYMENT_REAR_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
+    if (bema_command>DEPLOYMENTLIMIT)
+        bema_command=DEPLOYMENTLIMIT;
+    else if (bema_command<-DEPLOYMENTLIMIT)
+        bema_command=-DEPLOYMENTLIMIT;
+    std::cout <<  "Deployment Rear: " << bema_command << std::endl;
+    bema_command = bema_command*DEG2RAD;
+    if (bema_command>bema[4].position)
+    {
+        _walking_command_rear.write(OMEGA);
+    }
+    else
+    {
+        _walking_command_rear.write(-OMEGA);
+    }
+    if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error getting GNCState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error setting GNCState" << std::endl;
+    }
+}
+
+void Task::exec_GNC_UPDATE(CommandInfo* cmd_info)
+{
+    currentActivity = GNC_UPDATE_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %lf %lf %lf %lf %lf %lf", &ackid, &update_pose_x, &update_pose_y, &update_pose_z, &update_pose_rx, &update_pose_ry, &update_pose_rz);
+    absolute_pose.position[0]=update_pose_x;
+    absolute_pose.position[1]=update_pose_y;
+    absolute_pose.position[2]=update_pose_z;
+    Eigen::Quaternion <double> orientation(Eigen::AngleAxisd(update_pose_rz*DEG2RAD, Eigen::Vector3d::UnitZ())*
+            Eigen::AngleAxisd(update_pose_ry*DEG2RAD, Eigen::Vector3d::UnitY())*
+            Eigen::AngleAxisd(update_pose_rx*DEG2RAD, Eigen::Vector3d::UnitX()));
+    absolute_pose.orientation = orientation;
+    _update_pose.write(absolute_pose);
+    if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error getting GNCState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error setting GNCState" << std::endl;
+    }
+}
+
+void Task::exec_GNC_ACKERMANN_DIRECT(CommandInfo* cmd_info)
+{
+    currentActivity = GNC_ACKERMANN_DIRECT_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetTranslation, &targetRotation);
+    std::cout <<  "GNC_ACKERMANN_DIRECT Translation:" << targetTranslation << " Rotation:" << targetRotation << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        std::cout << "Error getting GNCState" << std::endl;
+    if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        std::cout << "Error setting GNCState" << std::endl;
+    deadManSwitch();
+
+    // check if we are in direct or in path following mode
+    if (target_reached)
+    {
+        // if not in trajectory following, send complete (direct) command
+        sendMotionCommand();
+    }
+    else
+    {
+        // trajectory following cannot go into reverse
+        // TODO don't write speeds but change PID parameters
+        if (targetTranslation >= 0)
+        {
+            _trajectory_speed.write(targetTranslation);
+        }
+        else
+        {
+            _trajectory_speed.write(0.0);
+        }
+    }
+    currentActivity = -1;
+}
+
+void Task::exec_GNC_TURNSPOT_DIRECT(CommandInfo* cmd_info)
+{
+    currentActivity = GNC_TURNSPOT_DIRECT_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %lf", &ackid, &targetRotation);
+    // TODO does the targetRotation(Speed) need to be multiplied by DEG2RAD here as well?
+    targetTranslation=0.0;
+    std::cout <<  "GNC_TURNSPOT_DIRECT Rotation:" << targetRotation << std::endl;
+    sendMotionCommand();
+    if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error getting GNCState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error setting GNCState" << std::endl;
+    }
+    deadManSwitch();
+    currentActivity = -1;
+}
+
+void Task::exec_MAST_ACQ(CommandInfo* cmd_info)
+{
+    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    tc_out.productType = productType;
+    if (productMode>0)
+    {
+        tc_out.productMode=messages::Mode::PERIODIC;
+        tc_out.usecPeriod=productMode*1000;
+    }
+    else
+    {
+        tc_out.productMode = productMode;
+    }
+    std::cout <<  "PanCam Get Image type " << productType << " and mode: " << productMode << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting PanCamState" << std::endl;
+    }
+    PanCamState[PANCAM_ACTION_ID_INDEX]=50;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting PanCamState" << std::endl;
+    }
+}
+
+void Task::exec_GNCG(CommandInfo* cmd_info)
+{
+    TaskLib* taskLib = new TaskLib("");
+    taskLib->insertSol(std::string("/home/marta/rock/bundles/rover/config/orogen/ActivityPlan.txt"));
+    taskLib->ExecuteActivityPlan();
+}
+
+void Task::exec_FRONT_ACQ(CommandInfo* cmd_info)
+{
+    currentActivity = LOCCAMFRONT_GET_IMAGE_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    tc_out.productType = productType;
+    if (productMode>0)
+    {
+        tc_out.productMode=messages::Mode::PERIODIC;
+        tc_out.usecPeriod=productMode*1000;
+    }
+    else
+    {
+        tc_out.productMode = productMode;
+    }
+    std::cout <<  "LocCamFront Get Image type " << productType << " and mode: " << productMode << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[PANCAM_ACTION_ID_INDEX]=51;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+}
+
+void Task::exec_REAR_ACQ(CommandInfo* cmd_info)
+{
+    currentActivity = LOCCAMREAR_GET_IMAGE_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    tc_out.productType = productType;
+    if (productMode>0)
+    {
+        tc_out.productMode=messages::Mode::PERIODIC;
+        tc_out.usecPeriod=productMode*1000;
+    }
+    else
+    {
+        tc_out.productMode = productMode;
+    }
+    std::cout <<  "LocCamRear Get Image type " << productType << " and mode: " << productMode << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[PANCAM_ACTION_ID_INDEX]=52;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+}
+
+void Task::exec_HAZCAM_ACQ(CommandInfo* cmd_info)
+{
+    currentActivity = HAZCAMFRONT_GET_IMAGE_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    tc_out.productType = productType;
+    if (productMode>0)
+    {
+        tc_out.productMode=messages::Mode::PERIODIC;
+        tc_out.usecPeriod=productMode*1000;
+    }
+    else
+    {
+        tc_out.productMode = productMode;
+    }
+    std::cout <<  "HazCamFront Get Image type " << productType << " and mode: " << productMode << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[PANCAM_ACTION_ID_INDEX]=53;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+}
+
+void Task::exec_TOF_ACQ(CommandInfo* cmd_info)
+{
+    currentActivity = TOF_GET_IMAGE_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    tc_out.productType = productType;
+    if (productMode>0)
+    {
+        tc_out.productMode=messages::Mode::PERIODIC;
+        tc_out.usecPeriod=productMode*1000;
+    }
+    else
+    {
+        tc_out.productMode = productMode;
+    }
+    std::cout <<  "Tof Get Image type " << productType << " and mode: " << productMode << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[PANCAM_ACTION_ID_INDEX]=53;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+}
+
+void Task::exec_LIDAR_ACQ(CommandInfo* cmd_info)
+{
+    currentActivity = LIDAR_GET_IMAGE_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    tc_out.productType = productType;
+    if (productMode>0)
+    {
+        tc_out.productMode=messages::Mode::PERIODIC;
+        tc_out.usecPeriod=productMode*1000;
+    }
+    else
+    {
+        tc_out.productMode = productMode;
+    }
+    std::cout <<  "Lidar Get Image type " << productType << " and mode: " << productMode << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[PANCAM_ACTION_ID_INDEX]=53;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+}
+
+void Task::exec_ALL_ACQ(CommandInfo* cmd_info)
+{
+    currentActivity = ALL_ACQ_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    tc_out.productType = productType;
+    if (productMode>0)
+    {
+        tc_out.productMode=messages::Mode::PERIODIC;
+        tc_out.usecPeriod=productMode*1000;
+    }
+    else
+    {
+        tc_out.productMode = productMode;
+    }
+    std::cout <<  "All sensors Get Image type " << productType << " and mode: " << productMode << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[PANCAM_ACTION_ID_INDEX]=53;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+}
+
+void Task::exec_PANCAM_PANORAMA(CommandInfo* cmd_info)
+{
+    currentActivity = PANCAM_PANORAMA_ACTIVITY;
+    currentParams = cmd_info->activityParams;
+    int ackid;
+    sscanf(currentParams.c_str(), "%d %lf", &ackid, &panorama_tilt);
+    tc_out.productType = messages::ProductType::DEM;
+    tc_out.productMode = messages::Mode::CONTINUOUS;
+    std::cout <<  "PanCam Panorama at tilt: " << panorama_tilt << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting PanCamState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting PanCamState" << std::endl;
+    }
+}
+
+void Task::exec_ABORT(CommandInfo* cmd_info)
+{
+    abort_activity=true;
+    std::cout << "Abort message received!" << std::endl;
 }
