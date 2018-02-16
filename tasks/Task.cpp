@@ -176,122 +176,61 @@ bool Task::startHook()
     tmComm = new CommTmServer( TM_SERVER_PORT_NUMBER, theRobotProcedure, activemqTMSender);
     tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NUMBER );
 
-    RobotTask* rt1 = new RobotTask("ADE_LEFT_Initialise");        // Simulated
-    RobotTask* rt2 = new RobotTask("ADE_LEFT_conf");              // Simulated
-    RobotTask* rt3 = new RobotTask("ADE_LEFT_ReleaseHDRM");       // Simulated
-    RobotTask* rt4 = new RobotTask("ADE_LEFT_SwitchOff");         // Simulated
-    RobotTask* rt5 = new RobotTask("ADE_RIGHT_Initialise");       // Simulated
-    RobotTask* rt6 = new RobotTask("ADE_RIGHT_conf");             // Simulated
-    RobotTask* rt7 = new RobotTask("ADE_RIGHT_ReleaseHDRM");      // Simulated
-    RobotTask* rt8 = new RobotTask("ADE_RIGHT_SwitchOff");        // Simulated
-
-    RobotTask* rt9 = new RobotTask("SA_LEFT_Initialise");         // Simulated
-    RobotTask* rt10 = new RobotTask("SA_LEFT_PrimaryMoveTo");     // Simulated
-    RobotTask* rt11 = new RobotTask("SA_LEFT_SecondaryMoveTo");   // Simulated
-    RobotTask* rt12 = new RobotTask("SA_LEFT_SwitchOff");         // Simulated
-    RobotTask* rt13 = new RobotTask("SA_RIGHT_Initialise");       // Simulated
-    RobotTask* rt14 = new RobotTask("SA_RIGHT_PrimaryMoveTo");    // Simulated
-    RobotTask* rt15 = new RobotTask("SA_RIGHT_SecondaryMoveTo");  // Simulated
-    RobotTask* rt16 = new RobotTask("SA_RIGHT_SwitchOff");        // Simulated
-
-    RobotTask* rt17 = new RobotTask("PanCam_Initialise");         // Simulated
-    RobotTask* rt18 = new RobotTask("PanCam_InitWACs");           // Simulated
-    RobotTask* rt19 = new RobotTask("PanCam_SwitchOn");           // Simulated
-    RobotTask* rt20 = new RobotTask("PanCam_WACAcqImage");        // Simulated
-    RobotTask* rt21 = new RobotTask("MAST_ACQ");                  // Executed (params WAC_L, WAC_R)
-    RobotTask* rt211 = new RobotTask("HAZCAM_ACQ");               // Executed in HDPR (params TBD)
-    RobotTask* rt212 = new RobotTask("LIDAR_ACQ");                // Executed in HDPR (params TBD)
-    RobotTask* rt213 = new RobotTask("TOF_ACQ");                  // Executed in HDPR (params TBD)
-    RobotTask* rt22 = new RobotTask("PanCam_SwitchOff");          // Simulated
-    RobotTask* rt23 = new RobotTask("PanCam_PIUSwitchOff");       // Simulated
-    RobotTask* rt24 = new RobotTask("PANCAM_PANORAMA");           // Executed (params tilt angle in deg)
-    RobotTask* rt25 = new RobotTask("PanCam_FilterSel");          // Simulated
-    RobotTask* rt251 = new RobotTask("FRONT_ACQ");                // Executed
-    RobotTask* rt252 = new RobotTask("REAR_ACQ");                 // Executed
-    RobotTask* rt253 = new RobotTask("ALL_ACQ");                  // Executed
-
-    RobotTask* rt26 = new RobotTask("MAST_DEP_Initialise");       // Simulated
-    RobotTask* rt27 = new RobotTask("MAST_DEP_Deploy");           // Simulated
-    RobotTask* rt28 = new RobotTask("MAST_PTU_Initialise");       // Simulated
-    RobotTask* rt29 = new RobotTask("MAST_PTU_MoveTo");           // Executed (params: pan, tilt (deg, deg))
-    RobotTask* rt30 = new RobotTask("MAST_SwitchOff");            // Simulated
-
-    RobotTask* rt31 = new RobotTask("GNC_Initialise");            // Simulated
-    RobotTask* rt311 = new RobotTask("GNC_Update");               // Executed  (params: x,y,z in meters rx,ry,rz in degrees)
-    RobotTask* rt32 = new RobotTask("GNC_ACKERMANN_GOTO");        // Executed  (params: distance, speed (m, m/hour))
-    RobotTask* rt321 = new RobotTask("GNC_TURNSPOT_GOTO");        // Executed  (params: distance, speed (m, m/hour))
-    RobotTask* rt322 = new RobotTask("GNC_ACKERMANN_DIRECT");     // Executed  (params: distance, speed (m, m/hour))
-    RobotTask* rt323 = new RobotTask("GNC_TURNSPOT_DIRECT");      // Executed  (params: distance, speed (m, m/hour))
-    RobotTask* rt324 = new RobotTask("GNC_TRAJECTORY");           // Executed  (params: number of waypoints, vector of waypoints(x,y,h))
-    RobotTask* rt33 = new RobotTask("GNC_SwitchOff");             // Simulated
-    RobotTask* rt331 = new RobotTask("Deployment_All");           // Executed  (params: deploy angle in deg)
-    RobotTask* rt332 = new RobotTask("Deployment_Front");         // Executed  (params: deploy angle in deg)
-    RobotTask* rt333 = new RobotTask("Deployment_Rear");          // Executed  (params: deploy angle in deg)
-
-    RobotTask* rt34 = new RobotTask("RV_WakeUp");                 // Simulated
-    RobotTask* rt35 = new RobotTask("MMS_WaitAbsTime");           // Simulated
-    RobotTask* rt36 = new RobotTask("RV_Prepare4Comms");          // Simulated
-    RobotTask* rt37 = new RobotTask("RV_PostComms");              // Simulated
-    RobotTask* rt38 = new RobotTask("DHS_Go2Nominal");            // Simulated
-    RobotTask* rt39 = new RobotTask("RV_Prepare4Travel");         // Simulated
-    RobotTask* rt40 = new RobotTask("RV_Prepare4Night");          // Simulated
-    RobotTask* rt41 = new RobotTask("RV_Prepare4Dozing");         // Simulated
-
-    theRobotProcedure->insertRT(rt1);
-    theRobotProcedure->insertRT(rt2);
-    theRobotProcedure->insertRT(rt3);
-    theRobotProcedure->insertRT(rt4);
-    theRobotProcedure->insertRT(rt5);
-    theRobotProcedure->insertRT(rt6);
-    theRobotProcedure->insertRT(rt7);
-    theRobotProcedure->insertRT(rt8);
-    theRobotProcedure->insertRT(rt9);
-    theRobotProcedure->insertRT(rt10);
-    theRobotProcedure->insertRT(rt11);
-    theRobotProcedure->insertRT(rt12);
-    theRobotProcedure->insertRT(rt13);
-    theRobotProcedure->insertRT(rt14);
-    theRobotProcedure->insertRT(rt15);
-    theRobotProcedure->insertRT(rt16);
-    theRobotProcedure->insertRT(rt17);
-    theRobotProcedure->insertRT(rt18);
-    theRobotProcedure->insertRT(rt19);
-    theRobotProcedure->insertRT(rt20);
-    theRobotProcedure->insertRT(rt21);
-    theRobotProcedure->insertRT(rt211);
-    theRobotProcedure->insertRT(rt212);
-    theRobotProcedure->insertRT(rt213);
-    theRobotProcedure->insertRT(rt22);
-    theRobotProcedure->insertRT(rt23);
-    theRobotProcedure->insertRT(rt24);
-    theRobotProcedure->insertRT(rt25);
-    theRobotProcedure->insertRT(rt251);
-    theRobotProcedure->insertRT(rt252);
-    theRobotProcedure->insertRT(rt253);
-    theRobotProcedure->insertRT(rt26);
-    theRobotProcedure->insertRT(rt27);
-    theRobotProcedure->insertRT(rt28);
-    theRobotProcedure->insertRT(rt29);
-    theRobotProcedure->insertRT(rt30);
-    theRobotProcedure->insertRT(rt31);
-    theRobotProcedure->insertRT(rt311);
-    theRobotProcedure->insertRT(rt32);
-    theRobotProcedure->insertRT(rt321);
-    theRobotProcedure->insertRT(rt322);
-    theRobotProcedure->insertRT(rt323);
-    theRobotProcedure->insertRT(rt324);
-    theRobotProcedure->insertRT(rt33);
-    theRobotProcedure->insertRT(rt331);
-    theRobotProcedure->insertRT(rt332);
-    theRobotProcedure->insertRT(rt333);
-    theRobotProcedure->insertRT(rt34);
-    theRobotProcedure->insertRT(rt35);
-    theRobotProcedure->insertRT(rt36);
-    theRobotProcedure->insertRT(rt37);
-    theRobotProcedure->insertRT(rt38);
-    theRobotProcedure->insertRT(rt39);
-    theRobotProcedure->insertRT(rt40);
-    theRobotProcedure->insertRT(rt41);
+    theRobotProcedure->insertRT(new RobotTask("ADE_LEFT_Initialise"));      // Simulated
+    theRobotProcedure->insertRT(new RobotTask("ADE_LEFT_conf"));            // Simulated
+    theRobotProcedure->insertRT(new RobotTask("ADE_LEFT_ReleaseHDRM"));     // Simulated
+    theRobotProcedure->insertRT(new RobotTask("ADE_LEFT_SwitchOff"));       // Simulated
+    theRobotProcedure->insertRT(new RobotTask("ADE_RIGHT_Initialise"));     // Simulated
+    theRobotProcedure->insertRT(new RobotTask("ADE_RIGHT_conf"));           // Simulated
+    theRobotProcedure->insertRT(new RobotTask("ADE_RIGHT_ReleaseHDRM"));    // Simulated
+    theRobotProcedure->insertRT(new RobotTask("ADE_RIGHT_SwitchOff"));      // Simulated
+    theRobotProcedure->insertRT(new RobotTask("SA_LEFT_Initialise"));       // Simulated
+    theRobotProcedure->insertRT(new RobotTask("SA_LEFT_PrimaryMoveTo"));    // Simulated
+    theRobotProcedure->insertRT(new RobotTask("SA_LEFT_SecondaryMoveTo"));  // Simulated
+    theRobotProcedure->insertRT(new RobotTask("SA_LEFT_SwitchOff"));        // Simulated
+    theRobotProcedure->insertRT(new RobotTask("SA_RIGHT_Initialise"));      // Simulated
+    theRobotProcedure->insertRT(new RobotTask("SA_RIGHT_PrimaryMoveTo"));   // Simulated
+    theRobotProcedure->insertRT(new RobotTask("SA_RIGHT_SecondaryMoveTo")); // Simulated
+    theRobotProcedure->insertRT(new RobotTask("SA_RIGHT_SwitchOff"));       // Simulated
+    theRobotProcedure->insertRT(new RobotTask("PanCam_Initialise"));        // Simulated
+    theRobotProcedure->insertRT(new RobotTask("PanCam_InitWACs"));          // Simulated
+    theRobotProcedure->insertRT(new RobotTask("PanCam_SwitchOn"));          // Simulated
+    theRobotProcedure->insertRT(new RobotTask("PanCam_WACAcqImage"));       // Simulated
+    theRobotProcedure->insertRT(new RobotTask("MAST_ACQ"));                 // Executed (params WAC_L, WAC_R)
+    theRobotProcedure->insertRT(new RobotTask("HAZCAM_ACQ"));               // Executed in HDPR (params TBD)
+    theRobotProcedure->insertRT(new RobotTask("LIDAR_ACQ"));                // Executed in HDPR (params TBD)
+    theRobotProcedure->insertRT(new RobotTask("TOF_ACQ"));                  // Executed in HDPR (params TBD)
+    theRobotProcedure->insertRT(new RobotTask("PanCam_SwitchOff"));         // Simulated
+    theRobotProcedure->insertRT(new RobotTask("PanCam_PIUSwitchOff"));      // Simulated
+    theRobotProcedure->insertRT(new RobotTask("PANCAM_PANORAMA"));          // Executed (params tilt angle in deg)
+    theRobotProcedure->insertRT(new RobotTask("PanCam_FilterSel"));         // Simulated
+    theRobotProcedure->insertRT(new RobotTask("FRONT_ACQ"));                // Executed
+    theRobotProcedure->insertRT(new RobotTask("REAR_ACQ"));                 // Executed
+    theRobotProcedure->insertRT(new RobotTask("ALL_ACQ"));                  // Executed
+    theRobotProcedure->insertRT(new RobotTask("MAST_DEP_Initialise"));      // Simulated
+    theRobotProcedure->insertRT(new RobotTask("MAST_DEP_Deploy"));          // Simulated
+    theRobotProcedure->insertRT(new RobotTask("MAST_PTU_Initialise"));      // Simulated
+    theRobotProcedure->insertRT(new RobotTask("MAST_PTU_MoveTo"));          // Executed (params: pan, tilt (deg, deg))
+    theRobotProcedure->insertRT(new RobotTask("MAST_SwitchOff"));           // Simulated
+    theRobotProcedure->insertRT(new RobotTask("GNC_Initialise"));           // Simulated
+    theRobotProcedure->insertRT(new RobotTask("GNC_Update"));               // Executed  (params: x,y,z in meters rx,ry,rz in degrees)
+    theRobotProcedure->insertRT(new RobotTask("GNC_ACKERMANN_GOTO"));       // Executed  (params: distance, speed (m, m/hour))
+    theRobotProcedure->insertRT(new RobotTask("GNC_TURNSPOT_GOTO"));        // Executed  (params: distance, speed (m, m/hour))
+    theRobotProcedure->insertRT(new RobotTask("GNC_ACKERMANN_DIRECT"));     // Executed  (params: distance, speed (m, m/hour))
+    theRobotProcedure->insertRT(new RobotTask("GNC_TURNSPOT_DIRECT"));      // Executed  (params: distance, speed (m, m/hour))
+    theRobotProcedure->insertRT(new RobotTask("GNC_TRAJECTORY"));           // Executed  (params: number of waypoints, vector of waypoints(x,y,h))
+    theRobotProcedure->insertRT(new RobotTask("GNC_SwitchOff"));            // Simulated
+    theRobotProcedure->insertRT(new RobotTask("Deployment_All"));           // Executed  (params: deploy angle in deg)
+    theRobotProcedure->insertRT(new RobotTask("Deployment_Front"));         // Executed  (params: deploy angle in deg)
+    theRobotProcedure->insertRT(new RobotTask("Deployment_Rear"));          // Executed  (params: deploy angle in deg)
+    theRobotProcedure->insertRT(new RobotTask("RV_WakeUp"));                // Simulated
+    theRobotProcedure->insertRT(new RobotTask("MMS_WaitAbsTime"));          // Simulated
+    theRobotProcedure->insertRT(new RobotTask("RV_Prepare4Comms"));         // Simulated
+    theRobotProcedure->insertRT(new RobotTask("RV_PostComms"));             // Simulated
+    theRobotProcedure->insertRT(new RobotTask("DHS_Go2Nominal"));           // Simulated
+    theRobotProcedure->insertRT(new RobotTask("RV_Prepare4Travel"));        // Simulated
+    theRobotProcedure->insertRT(new RobotTask("RV_Prepare4Night"));         // Simulated
+    theRobotProcedure->insertRT(new RobotTask("RV_Prepare4Dozing"));        // Simulated
 
     //! ToDo: Check if this fix is still necessary. It might be fixed at ptu_control component configure/start hook.
     //! Send ptu and motion commands to activate the joint dispatcher. Otherwise stays waiting.
