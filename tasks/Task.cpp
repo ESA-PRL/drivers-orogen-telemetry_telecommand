@@ -162,18 +162,9 @@ bool Task::startHook()
     std::string brokerURI = _activeMQ_brokerURI.value();
     //std::string brokerURI = "failover:(tcp://192.168.200.241:9009)";
 
-    activemqTMSender = new ActiveMQTMSender(brokerURI,
-            numMessages,
-            useTopics,
-            false, "");
-
+    activemqTMSender = new ActiveMQTMSender(brokerURI, numMessages, useTopics, false, "");
     activemqAdmin = new ActiveMQAdmin(brokerURI, numMessages, useTopics);
-
-    activemqTCReceiver = new ActiveMQTCReceiver(brokerURI,
-            2000, // numMessages,
-            true, // useTopics,
-            false // sessionTransacted
-            );
+    activemqTCReceiver = new ActiveMQTCReceiver(brokerURI, numMessages, useTopics, sessionTransacted);
 
     theRobotProcedure = new RobotProcedure("exoter");
     tcComm = new CommTcServer( TC_SERVER_PORT_NUMBER);
