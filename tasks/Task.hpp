@@ -217,10 +217,19 @@ namespace telemetry_telecommand
          */
         void sendProduct(messages::Telemetry tm_in);
 
-        // main components of the update hook
+        /** Stop rover in case the direct command can be assumed to have crashed.
+         * This is mainly used when controlling the rover's velocity with a
+         * joystick while in trajectory following mode.
+         */
         void checkDeadManSwitch();
+
+        /** Reads input ports to update odometry, robot state, ... */
         void reactToInputPorts();
+
+        /** Reads incoming telecommands (if any) and executes (or simulates) them */
         void getAndExecTelecommand();
+
+        /** Checks which activities are running and continues executing them */
         void controlRunningActitivies();
 
         private:
