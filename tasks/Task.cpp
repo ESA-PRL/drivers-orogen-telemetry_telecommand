@@ -1220,12 +1220,9 @@ void Task::exec_GNC_TRAJECTORY(CommandInfo* cmd_info)
     isActiveTRAJECTORY = true;
     target_reached=false;
     currentParams = cmd_info->activityParams;
-    int ackid;
-    char *token_str;
-    token_str = strtok((char *)(currentParams.c_str()), " ");
-    ackid = atoi(token_str);
+    char *token_str = strtok((char *)(currentParams.c_str()), " ");
     token_str = strtok(NULL, " ");
-    NofWaypoints = atoi(token_str);
+    int NofWaypoints = atoi(token_str);
     std::cout << "NofWaypoints:" << NofWaypoints << "<-" << std::endl;
     for (int i=0;i<NofWaypoints;i++)
     {
@@ -1374,6 +1371,12 @@ void Task::exec_GNC_UPDATE(CommandInfo* cmd_info)
     currentActivity = GNC_UPDATE_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
+    double update_pose_x;
+    double update_pose_y;
+    double update_pose_z;
+    double update_pose_rx;
+    double update_pose_ry;
+    double update_pose_rz;
     sscanf(currentParams.c_str(), "%d %lf %lf %lf %lf %lf %lf", &ackid, &update_pose_x, &update_pose_y, &update_pose_z, &update_pose_rx, &update_pose_ry, &update_pose_rz);
     absolute_pose.position[0]=update_pose_x;
     absolute_pose.position[1]=update_pose_y;

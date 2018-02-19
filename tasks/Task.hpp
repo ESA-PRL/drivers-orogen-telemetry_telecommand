@@ -88,7 +88,6 @@ namespace telemetry_telecommand
         std::vector<base::Waypoint> trajectory;
         base::Waypoint waypoint;
         bool target_reached;
-        int NofWaypoints;
         base::samples::RigidBodyState initial_pose;
         base::samples::RigidBodyState initial_imu;
 
@@ -131,12 +130,6 @@ namespace telemetry_telecommand
         base::samples::RigidBodyState absolute_pose;
         double initial_absolute_heading;
         int tj_status;
-        double update_pose_x;
-        double update_pose_y;
-        double update_pose_z;
-        double update_pose_rx;
-        double update_pose_ry;
-        double update_pose_rz;
 
         //FIXME Dirty fix to allow executing commands while executing motion commands
         bool isActiveACKERMANNGOTO = false;
