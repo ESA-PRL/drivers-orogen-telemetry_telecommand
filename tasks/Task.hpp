@@ -186,7 +186,6 @@ namespace telemetry_telecommand
          */
         void motionCommand();
 
-
         /** Checks if a bema move command has reached its target.
          */
         bool bema1TargetReached();
@@ -218,12 +217,10 @@ namespace telemetry_telecommand
          */
         void sendProduct(messages::Telemetry tm_in);
 
-
         // main components of the update hook
+        void checkDeadManSwitch();
         void reactToInputPorts();
-
         void getAndExecTelecommand();
-
         void controlRunningActitivies();
 
         private:

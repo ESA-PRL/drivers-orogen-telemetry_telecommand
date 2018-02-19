@@ -265,22 +265,9 @@ void Task::updateHook()
 {
     TaskBase::updateHook();
 
-    // Dead man: stop rover in case the direct command can be assumed to have crashed
-    if (!deadMan && deadManSwitchRelevant)// only send stop command once. when emergency stop command is sent, deadMan is true
-    {
-        base::Time elapsedTime = base::Time::now() - lastDirectCommandTime;
-        if (elapsedTime.toMicroseconds() > deadManTime)
-        {
-            targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
-            deadMan = true;
-            std::cout << "Dead man switch stopped motion" << std::endl;
-        }
-    }
-
+    checkDeadManSwitch();
     reactToInputPorts();
-
     getAndExecTelecommand();
-
     controlRunningActitivies();
 }
 
@@ -2371,6 +2358,20 @@ void Task::controlRunningActitivies()
         if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
         {
             std::cout << "Error setting PanCamState" << std::endl;
+        }
+    }
+}
+
+void Task::checkDeadManSwitch()
+{
+    if (!deadMan && deadManSwitchRelevant)// only send stop command once. when emergency stop command is sent, deadMan is true
+    {
+        base::Time elapsedTime = base::Time::now() - lastDirectCommandTime;
+        if (elapsedTime.toMicroseconds() > deadManTime)
+        {
+            targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
+            deadMan = true;
+            std::cout << "Dead man switch stopped motion" << std::endl;
         }
     }
 }
