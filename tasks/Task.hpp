@@ -33,6 +33,10 @@ namespace telemetry_telecommand
         HAZCAMFRONT_ACQ, //HDPR
         TOF_ACQ,         //HDPR
         LIDAR_ACQ,       //HDPR
+        FRONT_ACQ,
+        MAST_ACQ,
+        REAR_ACQ,
+        HAZCAM_ACQ,
         DEPLOYMENT_ALL,  //ExoTeR
         DEPLOYMENT_FRONT,//ExoTeR
         DEPLOYMENT_REAR, //ExoTeR
