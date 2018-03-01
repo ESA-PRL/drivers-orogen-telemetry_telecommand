@@ -127,7 +127,7 @@ bool Task::configureHook()
         { "GNC_ACKERMANN_GOTO",   { Telecommand::GNC_ACKERMANN_GOTO,   std::bind( &Task::exec_GNC_ACKERMANN_GOTO,   this, std::placeholders::_1 ) } },
         { "GNC_TURNSPOT_GOTO",    { Telecommand::GNC_TURNSPOT_GOTO,    std::bind( &Task::exec_GNC_TURNSPOT_GOTO,    this, std::placeholders::_1 ) } },
         { "GNC_TRAJECTORY",       { Telecommand::GNC_TRAJECTORY,       std::bind( &Task::exec_GNC_TRAJECTORY,       this, std::placeholders::_1 ) } },
-        { "MAST_PTU_MOVE_TO",     { Telecommand::MAST_PTU_MOVE_TO,     std::bind( &Task::exec_MAST_PTU_MOVE_TO,     this, std::placeholders::_1 ) } },
+        { "MAST_PTU_MoveTo",      { Telecommand::MAST_PTU_MOVE_TO,     std::bind( &Task::exec_MAST_PTU_MOVE_TO,     this, std::placeholders::_1 ) } },
         { "PANCAM_PANORAMA",      { Telecommand::PANCAM_PANORAMA,      std::bind( &Task::exec_PANCAM_PANORAMA,      this, std::placeholders::_1 ) } },
         { "TOF_ACQ",              { Telecommand::TOF_ACQ,              std::bind( &Task::exec_TOF_ACQ,              this, std::placeholders::_1 ) } },
         { "LIDAR_ACQ",            { Telecommand::LIDAR_ACQ,            std::bind( &Task::exec_LIDAR_ACQ,            this, std::placeholders::_1 ) } },
@@ -135,10 +135,10 @@ bool Task::configureHook()
         { "MAST_ACQ",             { Telecommand::MAST_ACQ,             std::bind( &Task::exec_MAST_ACQ,             this, std::placeholders::_1 ) } },
         { "REAR_ACQ",             { Telecommand::REAR_ACQ,             std::bind( &Task::exec_REAR_ACQ,             this, std::placeholders::_1 ) } },
         { "HAZCAM_ACQ",           { Telecommand::HAZCAM_ACQ,           std::bind( &Task::exec_HAZCAM_ACQ,           this, std::placeholders::_1 ) } },
-        { "DEPLOYMENT_ALL",       { Telecommand::DEPLOYMENT_ALL,       std::bind( &Task::exec_DEPLOYMENT_ALL,       this, std::placeholders::_1 ) } },
-        { "DEPLOYMENT_FRONT",     { Telecommand::DEPLOYMENT_FRONT,     std::bind( &Task::exec_DEPLOYMENT_FRONT,     this, std::placeholders::_1 ) } },
-        { "DEPLOYMENT_REAR",      { Telecommand::DEPLOYMENT_REAR,      std::bind( &Task::exec_DEPLOYMENT_REAR,      this, std::placeholders::_1 ) } },
-        { "GNC_UPDATE",           { Telecommand::GNC_UPDATE,           std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1 ) } },
+        { "Deployment_All",       { Telecommand::DEPLOYMENT_ALL,       std::bind( &Task::exec_DEPLOYMENT_ALL,       this, std::placeholders::_1 ) } },
+        { "Deployment_Front",     { Telecommand::DEPLOYMENT_FRONT,     std::bind( &Task::exec_DEPLOYMENT_FRONT,     this, std::placeholders::_1 ) } },
+        { "Deployment_Rear",      { Telecommand::DEPLOYMENT_REAR,      std::bind( &Task::exec_DEPLOYMENT_REAR,      this, std::placeholders::_1 ) } },
+        { "GNC_Update",           { Telecommand::GNC_UPDATE,           std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1 ) } },
         { "GNC_ACKERMANN_DIRECT", { Telecommand::GNC_ACKERMANN_DIRECT, std::bind( &Task::exec_GNC_ACKERMANN_DIRECT, this, std::placeholders::_1 ) } },
         { "GNC_TURNSPOT_DIRECT",  { Telecommand::GNC_TURNSPOT_DIRECT,  std::bind( &Task::exec_GNC_TURNSPOT_DIRECT,  this, std::placeholders::_1 ) } },
         { "ALL_ACQ",              { Telecommand::ALL_ACQ,              std::bind( &Task::exec_ALL_ACQ,              this, std::placeholders::_1 ) } },
@@ -263,7 +263,7 @@ void Task::updateHook()
     checkDeadManSwitch();
     reactToInputPorts();
     getAndExecTelecommand();
-    controlRunningActitivies();
+    controlRunningActivities();
 }
 
 void Task::errorHook()
@@ -1953,7 +1953,7 @@ void Task::getAndExecTelecommand()
     }
 }
 
-void Task::controlRunningActitivies()
+void Task::controlRunningActivities()
 {
     if (currentActivity == GNC_ACKERMANN_GOTO_ACTIVITY || isActiveACKERMANNGOTO)
     {

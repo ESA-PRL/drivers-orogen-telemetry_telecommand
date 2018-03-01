@@ -227,7 +227,7 @@ namespace telemetry_telecommand
         void getAndExecTelecommand();
 
         /** Checks which activities are running and continues executing them */
-        void controlRunningActitivies();
+        void controlRunningActivities();
 
         private:
 
