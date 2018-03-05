@@ -252,7 +252,28 @@ namespace telemetry_telecommand
         void exec_FRONT_ACQ(CommandInfo*);
         void exec_REAR_ACQ(CommandInfo*);
 
-        std::map<std::string, std::pair<Telecommand, std::function<void(CommandInfo*)> > > tc_map;
+        void ctrl_GNC_ACKERMANN_GOTO();
+        void ctrl_GNC_TURNSPOT_GOTO();
+        void ctrl_GNC_TRAJECTORY();
+        void ctrl_MAST_PTU_MOVE_TO();
+        void ctrl_PANCAM_PANORAMA();
+        void ctrl_TOF_ACQ();
+        void ctrl_LIDAR_ACQ();
+        void ctrl_DEPLOYMENT_ALL();
+        void ctrl_DEPLOYMENT_FRONT();
+        void ctrl_DEPLOYMENT_REAR();
+        void ctrl_GNC_UPDATE();
+        void ctrl_GNC_ACKERMANN_DIRECT();
+        void ctrl_GNC_TURNSPOT_DIRECT();
+        void ctrl_ALL_ACQ();
+        void ctrl_HAZCAM_ACQ();
+        void ctrl_GNCG();
+        void ctrl_ABORT();
+        void ctrl_MAST_ACQ();
+        void ctrl_FRONT_ACQ();
+        void ctrl_REAR_ACQ();
+
+        std::map<std::string, std::tuple<int, std::function<void(CommandInfo*)>, std::function<void(void)> > > tc_map;
     };
 }
 

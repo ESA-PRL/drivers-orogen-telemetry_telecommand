@@ -124,26 +124,26 @@ bool Task::configureHook()
 
     // map telecommand strings to the corresponding enum and function
     tc_map = {
-        { "GNC_ACKERMANN_GOTO",   { Telecommand::GNC_ACKERMANN_GOTO,   std::bind( &Task::exec_GNC_ACKERMANN_GOTO,   this, std::placeholders::_1 ) } },
-        { "GNC_TURNSPOT_GOTO",    { Telecommand::GNC_TURNSPOT_GOTO,    std::bind( &Task::exec_GNC_TURNSPOT_GOTO,    this, std::placeholders::_1 ) } },
-        { "GNC_TRAJECTORY",       { Telecommand::GNC_TRAJECTORY,       std::bind( &Task::exec_GNC_TRAJECTORY,       this, std::placeholders::_1 ) } },
-        { "MAST_PTU_MoveTo",      { Telecommand::MAST_PTU_MOVE_TO,     std::bind( &Task::exec_MAST_PTU_MOVE_TO,     this, std::placeholders::_1 ) } },
-        { "PANCAM_PANORAMA",      { Telecommand::PANCAM_PANORAMA,      std::bind( &Task::exec_PANCAM_PANORAMA,      this, std::placeholders::_1 ) } },
-        { "TOF_ACQ",              { Telecommand::TOF_ACQ,              std::bind( &Task::exec_TOF_ACQ,              this, std::placeholders::_1 ) } },
-        { "LIDAR_ACQ",            { Telecommand::LIDAR_ACQ,            std::bind( &Task::exec_LIDAR_ACQ,            this, std::placeholders::_1 ) } },
-        { "FRONT_ACQ",            { Telecommand::FRONT_ACQ,            std::bind( &Task::exec_FRONT_ACQ,            this, std::placeholders::_1 ) } },
-        { "MAST_ACQ",             { Telecommand::MAST_ACQ,             std::bind( &Task::exec_MAST_ACQ,             this, std::placeholders::_1 ) } },
-        { "REAR_ACQ",             { Telecommand::REAR_ACQ,             std::bind( &Task::exec_REAR_ACQ,             this, std::placeholders::_1 ) } },
-        { "HAZCAM_ACQ",           { Telecommand::HAZCAM_ACQ,           std::bind( &Task::exec_HAZCAM_ACQ,           this, std::placeholders::_1 ) } },
-        { "Deployment_All",       { Telecommand::DEPLOYMENT_ALL,       std::bind( &Task::exec_DEPLOYMENT_ALL,       this, std::placeholders::_1 ) } },
-        { "Deployment_Front",     { Telecommand::DEPLOYMENT_FRONT,     std::bind( &Task::exec_DEPLOYMENT_FRONT,     this, std::placeholders::_1 ) } },
-        { "Deployment_Rear",      { Telecommand::DEPLOYMENT_REAR,      std::bind( &Task::exec_DEPLOYMENT_REAR,      this, std::placeholders::_1 ) } },
-        { "GNC_Update",           { Telecommand::GNC_UPDATE,           std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1 ) } },
-        { "GNC_ACKERMANN_DIRECT", { Telecommand::GNC_ACKERMANN_DIRECT, std::bind( &Task::exec_GNC_ACKERMANN_DIRECT, this, std::placeholders::_1 ) } },
-        { "GNC_TURNSPOT_DIRECT",  { Telecommand::GNC_TURNSPOT_DIRECT,  std::bind( &Task::exec_GNC_TURNSPOT_DIRECT,  this, std::placeholders::_1 ) } },
-        { "ALL_ACQ",              { Telecommand::ALL_ACQ,              std::bind( &Task::exec_ALL_ACQ,              this, std::placeholders::_1 ) } },
-        { "GNCG",                 { Telecommand::GNCG,                 std::bind( &Task::exec_GNCG,                 this, std::placeholders::_1 ) } },
-        { "ABORT",                { Telecommand::ABORT,                std::bind( &Task::exec_ABORT,                this, std::placeholders::_1 ) } }
+        { "GNC_ACKERMANN_GOTO",   std::make_tuple( -1, std::bind( &Task::exec_GNC_ACKERMANN_GOTO,   this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_ACKERMANN_GOTO,   this ) ) },
+        { "GNC_TURNSPOT_GOTO",    std::make_tuple( -1, std::bind( &Task::exec_GNC_TURNSPOT_GOTO,    this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TURNSPOT_GOTO,    this ) ) },
+        { "GNC_TRAJECTORY",       std::make_tuple( -1, std::bind( &Task::exec_GNC_TRAJECTORY,       this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TRAJECTORY,       this ) ) },
+        { "MAST_PTU_MoveTo",      std::make_tuple( -1, std::bind( &Task::exec_MAST_PTU_MOVE_TO,     this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_PTU_MOVE_TO,     this ) ) },
+        { "PANCAM_PANORAMA",      std::make_tuple( -1, std::bind( &Task::exec_PANCAM_PANORAMA,      this, std::placeholders::_1), std::bind( &Task::ctrl_PANCAM_PANORAMA,      this ) ) },
+        { "TOF_ACQ",              std::make_tuple( -1, std::bind( &Task::exec_TOF_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_TOF_ACQ,              this ) ) },
+        { "LIDAR_ACQ",            std::make_tuple( -1, std::bind( &Task::exec_LIDAR_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_LIDAR_ACQ,            this ) ) },
+        { "FRONT_ACQ",            std::make_tuple( -1, std::bind( &Task::exec_FRONT_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_FRONT_ACQ,            this ) ) },
+        { "MAST_ACQ",             std::make_tuple( -1, std::bind( &Task::exec_MAST_ACQ,             this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_ACQ,             this ) ) },
+        { "REAR_ACQ",             std::make_tuple( -1, std::bind( &Task::exec_REAR_ACQ,             this, std::placeholders::_1), std::bind( &Task::ctrl_REAR_ACQ,             this ) ) },
+        { "HAZCAM_ACQ",           std::make_tuple( -1, std::bind( &Task::exec_HAZCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_HAZCAM_ACQ,           this ) ) },
+        { "Deployment_All",       std::make_tuple( -1, std::bind( &Task::exec_DEPLOYMENT_ALL,       this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_ALL,       this ) ) },
+        { "Deployment_Front",     std::make_tuple( -1, std::bind( &Task::exec_DEPLOYMENT_FRONT,     this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_FRONT,     this ) ) },
+        { "Deployment_Rear",      std::make_tuple( -1, std::bind( &Task::exec_DEPLOYMENT_REAR,      this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_REAR,      this ) ) },
+        { "GNC_Update",           std::make_tuple( -1, std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_UPDATE,           this ) ) },
+        { "GNC_ACKERMANN_DIRECT", std::make_tuple( -1, std::bind( &Task::exec_GNC_ACKERMANN_DIRECT, this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_ACKERMANN_DIRECT, this ) ) },
+        { "GNC_TURNSPOT_DIRECT",  std::make_tuple( -1, std::bind( &Task::exec_GNC_TURNSPOT_DIRECT,  this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TURNSPOT_DIRECT,  this ) ) },
+        { "ALL_ACQ",              std::make_tuple( -1, std::bind( &Task::exec_ALL_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_ALL_ACQ,              this ) ) },
+        { "GNCG",                 std::make_tuple( -1, std::bind( &Task::exec_GNCG,                 this, std::placeholders::_1), std::bind( &Task::ctrl_GNCG,                 this ) ) },
+        { "ABORT",                std::make_tuple( -1, std::bind( &Task::exec_ABORT,                this, std::placeholders::_1), std::bind( &Task::ctrl_ABORT,                this ) ) }
     };
 
     return true;
@@ -1936,7 +1936,7 @@ void Task::getAndExecTelecommand()
         {
             // use telecommand map to look up the correct function for the
             // incoming telecommand (=cmd_info->activityName)
-            tc_map[cmd_info->activityName].second(cmd_info);
+            std::get<1>(tc_map[cmd_info->activityName])(cmd_info);
         }
         catch (std::exception& e)
         {
@@ -2373,3 +2373,24 @@ void Task::checkDeadManSwitch()
         }
     }
 }
+
+void Task::ctrl_GNC_ACKERMANN_GOTO(){}
+void Task::ctrl_GNC_TURNSPOT_GOTO(){}
+void Task::ctrl_GNC_TRAJECTORY(){}
+void Task::ctrl_MAST_PTU_MOVE_TO(){}
+void Task::ctrl_PANCAM_PANORAMA(){}
+void Task::ctrl_TOF_ACQ(){}
+void Task::ctrl_LIDAR_ACQ(){}
+void Task::ctrl_DEPLOYMENT_ALL(){}
+void Task::ctrl_DEPLOYMENT_FRONT(){}
+void Task::ctrl_DEPLOYMENT_REAR(){}
+void Task::ctrl_GNC_UPDATE(){}
+void Task::ctrl_GNC_ACKERMANN_DIRECT(){}
+void Task::ctrl_GNC_TURNSPOT_DIRECT(){}
+void Task::ctrl_ALL_ACQ(){}
+void Task::ctrl_HAZCAM_ACQ(){}
+void Task::ctrl_GNCG(){}
+void Task::ctrl_ABORT(){}
+void Task::ctrl_MAST_ACQ(){}
+void Task::ctrl_FRONT_ACQ(){}
+void Task::ctrl_REAR_ACQ(){}
