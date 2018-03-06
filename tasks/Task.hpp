@@ -178,11 +178,6 @@ namespace telemetry_telecommand
 
         void getTransform(Eigen::Affine3d& tf);
 
-        /** Calculates the parameters to be sent as motion commands (2D). Translation (m/s) and Rotation (rad/s)
-         * are calculated.
-         */
-        void motionCommand();
-
         /** Checks if a bema move command has reached its target.
          */
         bool bema1TargetReached();
@@ -252,28 +247,33 @@ namespace telemetry_telecommand
         void exec_FRONT_ACQ(CommandInfo*);
         void exec_REAR_ACQ(CommandInfo*);
 
-        void ctrl_GNC_ACKERMANN_GOTO();
-        void ctrl_GNC_TURNSPOT_GOTO();
-        void ctrl_GNC_TRAJECTORY();
-        void ctrl_MAST_PTU_MOVE_TO();
-        void ctrl_PANCAM_PANORAMA();
-        void ctrl_TOF_ACQ();
-        void ctrl_LIDAR_ACQ();
-        void ctrl_DEPLOYMENT_ALL();
-        void ctrl_DEPLOYMENT_FRONT();
-        void ctrl_DEPLOYMENT_REAR();
-        void ctrl_GNC_UPDATE();
-        void ctrl_GNC_ACKERMANN_DIRECT();
-        void ctrl_GNC_TURNSPOT_DIRECT();
-        void ctrl_ALL_ACQ();
-        void ctrl_HAZCAM_ACQ();
-        void ctrl_GNCG();
-        void ctrl_ABORT();
-        void ctrl_MAST_ACQ();
-        void ctrl_FRONT_ACQ();
-        void ctrl_REAR_ACQ();
+        bool ctrl_GNC_ACKERMANN_GOTO();
+        bool ctrl_GNC_TURNSPOT_GOTO();
+        bool ctrl_GNC_TRAJECTORY();
+        bool ctrl_MAST_PTU_MOVE_TO();
+        bool ctrl_PANCAM_PANORAMA();
+        bool ctrl_TOF_ACQ();
+        bool ctrl_LIDAR_ACQ();
+        bool ctrl_DEPLOYMENT_ALL();
+        bool ctrl_DEPLOYMENT_FRONT();
+        bool ctrl_DEPLOYMENT_REAR();
+        bool ctrl_GNC_UPDATE();
+        bool ctrl_GNC_ACKERMANN_DIRECT();
+        bool ctrl_GNC_TURNSPOT_DIRECT();
+        bool ctrl_ALL_ACQ();
+        bool ctrl_HAZCAM_ACQ();
+        bool ctrl_GNCG();
+        bool ctrl_ABORT();
+        bool ctrl_MAST_ACQ();
+        bool ctrl_FRONT_ACQ();
+        bool ctrl_REAR_ACQ();
 
-        std::map<std::string, std::tuple<int, std::function<void(CommandInfo*)>, std::function<void(void)> > > tc_map;
+        std::map<const std::string, std::tuple<int, int, std::function<void(CommandInfo*)>, std::function<bool(void)> > > tc_map;
+        int getTimeout(const string cmd_str);
+        void setTimeout(const string cmd_str, const int val);
+        void initializeTimeout(const string cmd_str);
+        std::function< void(CommandInfo*) > getExecFunction(const string cmd_str);
+        std::function< bool(void) > getControlFunction(const string cmd_str);
     };
 }
 

@@ -10,26 +10,6 @@
 #define TM_SERVER_PORT_NUMBER 7032
 #define TC_REPLY_SERVER_PORT_NUMBER 7033
 
-const int GNC_ACKERMANN_GOTO_ACTIVITY = 1;
-const int GNC_TURNSPOT_GOTO_ACTIVITY = 2;
-const int GNC_TRAJECTORY_ACTIVITY = 3;
-const int MAST_PTU_MOVE_TO_ACTIVITY = 4;
-const int PANCAM_WAC_GET_IMAGE_ACTIVITY = 5;
-const int PANCAM_PANORAMA_ACTIVITY = 6;
-const int LOCCAMFRONT_GET_IMAGE_ACTIVITY = 7;
-const int LOCCAMREAR_GET_IMAGE_ACTIVITY = 8;    //ExoTeR
-const int HAZCAMFRONT_GET_IMAGE_ACTIVITY = 9;   //HDPR
-const int TOF_GET_IMAGE_ACTIVITY = 10;          //HDPR
-const int LIDAR_GET_IMAGE_ACTIVITY = 12;        //HDPR
-const int DEPLOYMENT_ALL_ACTIVITY = 13;         //ExoTeR
-const int DEPLOYMENT_FRONT_ACTIVITY = 14;       //ExoTeR
-const int DEPLOYMENT_REAR_ACTIVITY = 15;        //ExoTeR
-const int GNC_UPDATE_ACTIVITY = 16;
-const int GNC_ACKERMANN_DIRECT_ACTIVITY = 17;
-const int GNC_TURNSPOT_DIRECT_ACTIVITY = 18;
-const int ALL_ACQ_ACTIVITY = 19;
-const int GNCG_ACTIVITY = 20;
-
 const double DEG2RAD = 3.141592/180;
 const double RAD2DEG = 180/3.141592;
 
@@ -124,26 +104,26 @@ bool Task::configureHook()
 
     // map telecommand strings to the corresponding enum and function
     tc_map = {
-        { "GNC_ACKERMANN_GOTO",   std::make_tuple( -1, std::bind( &Task::exec_GNC_ACKERMANN_GOTO,   this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_ACKERMANN_GOTO,   this ) ) },
-        { "GNC_TURNSPOT_GOTO",    std::make_tuple( -1, std::bind( &Task::exec_GNC_TURNSPOT_GOTO,    this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TURNSPOT_GOTO,    this ) ) },
-        { "GNC_TRAJECTORY",       std::make_tuple( -1, std::bind( &Task::exec_GNC_TRAJECTORY,       this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TRAJECTORY,       this ) ) },
-        { "MAST_PTU_MoveTo",      std::make_tuple( -1, std::bind( &Task::exec_MAST_PTU_MOVE_TO,     this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_PTU_MOVE_TO,     this ) ) },
-        { "PANCAM_PANORAMA",      std::make_tuple( -1, std::bind( &Task::exec_PANCAM_PANORAMA,      this, std::placeholders::_1), std::bind( &Task::ctrl_PANCAM_PANORAMA,      this ) ) },
-        { "TOF_ACQ",              std::make_tuple( -1, std::bind( &Task::exec_TOF_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_TOF_ACQ,              this ) ) },
-        { "LIDAR_ACQ",            std::make_tuple( -1, std::bind( &Task::exec_LIDAR_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_LIDAR_ACQ,            this ) ) },
-        { "FRONT_ACQ",            std::make_tuple( -1, std::bind( &Task::exec_FRONT_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_FRONT_ACQ,            this ) ) },
-        { "MAST_ACQ",             std::make_tuple( -1, std::bind( &Task::exec_MAST_ACQ,             this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_ACQ,             this ) ) },
-        { "REAR_ACQ",             std::make_tuple( -1, std::bind( &Task::exec_REAR_ACQ,             this, std::placeholders::_1), std::bind( &Task::ctrl_REAR_ACQ,             this ) ) },
-        { "HAZCAM_ACQ",           std::make_tuple( -1, std::bind( &Task::exec_HAZCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_HAZCAM_ACQ,           this ) ) },
-        { "Deployment_All",       std::make_tuple( -1, std::bind( &Task::exec_DEPLOYMENT_ALL,       this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_ALL,       this ) ) },
-        { "Deployment_Front",     std::make_tuple( -1, std::bind( &Task::exec_DEPLOYMENT_FRONT,     this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_FRONT,     this ) ) },
-        { "Deployment_Rear",      std::make_tuple( -1, std::bind( &Task::exec_DEPLOYMENT_REAR,      this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_REAR,      this ) ) },
-        { "GNC_Update",           std::make_tuple( -1, std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_UPDATE,           this ) ) },
-        { "GNC_ACKERMANN_DIRECT", std::make_tuple( -1, std::bind( &Task::exec_GNC_ACKERMANN_DIRECT, this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_ACKERMANN_DIRECT, this ) ) },
-        { "GNC_TURNSPOT_DIRECT",  std::make_tuple( -1, std::bind( &Task::exec_GNC_TURNSPOT_DIRECT,  this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TURNSPOT_DIRECT,  this ) ) },
-        { "ALL_ACQ",              std::make_tuple( -1, std::bind( &Task::exec_ALL_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_ALL_ACQ,              this ) ) },
-        { "GNCG",                 std::make_tuple( -1, std::bind( &Task::exec_GNCG,                 this, std::placeholders::_1), std::bind( &Task::ctrl_GNCG,                 this ) ) },
-        { "ABORT",                std::make_tuple( -1, std::bind( &Task::exec_ABORT,                this, std::placeholders::_1), std::bind( &Task::ctrl_ABORT,                this ) ) }
+        { "GNC_ACKERMANN_GOTO",   std::make_tuple( -1, 3, std::bind( &Task::exec_GNC_ACKERMANN_GOTO,   this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_ACKERMANN_GOTO,   this ) ) },
+        { "GNC_TURNSPOT_GOTO",    std::make_tuple( -1, 3, std::bind( &Task::exec_GNC_TURNSPOT_GOTO,    this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TURNSPOT_GOTO,    this ) ) },
+        { "GNC_TRAJECTORY",       std::make_tuple( -1, 3, std::bind( &Task::exec_GNC_TRAJECTORY,       this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TRAJECTORY,       this ) ) },
+        { "MAST_PTU_MoveTo",      std::make_tuple( -1, 3, std::bind( &Task::exec_MAST_PTU_MOVE_TO,     this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_PTU_MOVE_TO,     this ) ) },
+        { "PANCAM_PANORAMA",      std::make_tuple( -1, 3, std::bind( &Task::exec_PANCAM_PANORAMA,      this, std::placeholders::_1), std::bind( &Task::ctrl_PANCAM_PANORAMA,      this ) ) },
+        { "TOF_ACQ",              std::make_tuple( -1, 3, std::bind( &Task::exec_TOF_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_TOF_ACQ,              this ) ) },
+        { "LIDAR_ACQ",            std::make_tuple( -1, 3, std::bind( &Task::exec_LIDAR_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_LIDAR_ACQ,            this ) ) },
+        { "FRONT_ACQ",            std::make_tuple( -1, 3, std::bind( &Task::exec_FRONT_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_FRONT_ACQ,            this ) ) },
+        { "MAST_ACQ",             std::make_tuple( -1, 3, std::bind( &Task::exec_MAST_ACQ,             this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_ACQ,             this ) ) },
+        { "REAR_ACQ",             std::make_tuple( -1, 3, std::bind( &Task::exec_REAR_ACQ,             this, std::placeholders::_1), std::bind( &Task::ctrl_REAR_ACQ,             this ) ) },
+        { "HAZCAM_ACQ",           std::make_tuple( -1, 3, std::bind( &Task::exec_HAZCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_HAZCAM_ACQ,           this ) ) },
+        { "Deployment_All",       std::make_tuple( -1, 3, std::bind( &Task::exec_DEPLOYMENT_ALL,       this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_ALL,       this ) ) },
+        { "Deployment_Front",     std::make_tuple( -1, 3, std::bind( &Task::exec_DEPLOYMENT_FRONT,     this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_FRONT,     this ) ) },
+        { "Deployment_Rear",      std::make_tuple( -1, 3, std::bind( &Task::exec_DEPLOYMENT_REAR,      this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_REAR,      this ) ) },
+        { "GNC_Update",           std::make_tuple( -1, 3, std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_UPDATE,           this ) ) },
+        { "GNC_ACKERMANN_DIRECT", std::make_tuple( -1, 3, std::bind( &Task::exec_GNC_ACKERMANN_DIRECT, this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_ACKERMANN_DIRECT, this ) ) },
+        { "GNC_TURNSPOT_DIRECT",  std::make_tuple( -1, 3, std::bind( &Task::exec_GNC_TURNSPOT_DIRECT,  this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TURNSPOT_DIRECT,  this ) ) },
+        { "ALL_ACQ",              std::make_tuple( -1, 3, std::bind( &Task::exec_ALL_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_ALL_ACQ,              this ) ) },
+        { "GNCG",                 std::make_tuple( -1, 3, std::bind( &Task::exec_GNCG,                 this, std::placeholders::_1), std::bind( &Task::ctrl_GNCG,                 this ) ) },
+        { "ABORT",                std::make_tuple( -1, 3, std::bind( &Task::exec_ABORT,                this, std::placeholders::_1), std::bind( &Task::ctrl_ABORT,                this ) ) }
     };
 
     return true;
@@ -250,7 +230,6 @@ bool Task::startHook()
     // without having reached the target
     target_reached = true;
 
-    currentActivity = -1;
     abort_activity=false;
     files_sent=false;
     return true;
@@ -306,57 +285,6 @@ void Task::getTransform(Eigen::Affine3d& tf)
     transformation[4] = Eigen::Quaterniond(tf.linear()).y();
     transformation[5] = Eigen::Quaterniond(tf.linear()).z();
     transformation[6] = Eigen::Quaterniond(tf.linear()).w();
-}
-
-void Task::motionCommand()
-{
-    if (currentActivity == GNC_ACKERMANN_GOTO_ACTIVITY || isActiveACKERMANNGOTO)
-    {
-        if (targetPositionY == 0) // Straight line command
-        {
-            targetDistance = std::abs(targetPositionX);
-            double sign = (targetPositionX < 0 ? -1 : 1);
-            targetTranslation = targetSpeed*sign;
-            targetRotation = 0;
-            return;
-        }
-        double radius = (targetPositionX*targetPositionX + targetPositionY*targetPositionY)/(2*targetPositionY);
-        if (std::abs(radius)<MIN_ACK_RADIUS)
-        {
-            std::cout << "Telemetry_Telecommand: Aborting Ackerman activity. Radius of curvature too small. Try Point Turn first." << std::endl;
-            targetTranslation=0.0;
-            targetRotation=0.0;
-            isActiveACKERMANNGOTO=false;
-            currentActivity=-1;
-            return;
-        }
-        double theta = atan(targetPositionX/std::abs(radius-targetPositionY));
-        double sign = (targetPositionX < 0 ? -1 : 1);
-        targetTranslation = targetSpeed*sign;
-        targetRotation = targetTranslation/radius;
-        targetDistance = std::abs(theta*radius);
-    }
-    else if (currentActivity == GNC_TURNSPOT_GOTO_ACTIVITY || isActiveTURNSPOTGOTO)
-    {
-        targetTranslation=0.0;
-        if (targetOrientationTheta>=0)
-        {
-            targetOrientationTheta+=(initial_imu.getYaw()*RAD2DEG);
-            if (targetOrientationTheta>180.0)
-            {
-                targetOrientationTheta-=360.0;
-            }
-        }
-        else
-        {
-            targetRotation=-targetRotation;
-            targetOrientationTheta+=(initial_imu.getYaw()*RAD2DEG);
-            if (targetOrientationTheta<-180.0)
-            {
-                targetOrientationTheta+=360.0;
-            }
-        }
-    }
 }
 
 bool Task::ptuTargetReached()
@@ -1171,12 +1099,34 @@ void Task::sendProduct(messages::Telemetry tm)
 
 void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
 {
-    isActiveACKERMANNGOTO = true;
-    currentActivity = GNC_ACKERMANN_GOTO_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %lf %lf %lf", &ackid, &targetPositionX, &targetPositionY, &targetSpeed);
-    motionCommand();
+
+    // Calculate the parameters to be sent as motion commands (2D): Translation (m/s) and Rotation (rad/s)
+    if (targetPositionY == 0) // Straight line command
+    {
+        targetDistance = std::abs(targetPositionX);
+        double sign = (targetPositionX < 0 ? -1 : 1);
+        targetTranslation = targetSpeed*sign;
+        targetRotation = 0;
+        return;
+    }
+    double radius = (targetPositionX*targetPositionX + targetPositionY*targetPositionY)/(2*targetPositionY);
+    if (std::abs(radius)<MIN_ACK_RADIUS)
+    {
+        std::cout << "Telemetry_Telecommand: Aborting Ackerman activity. Radius of curvature too small. Try Point Turn first." << std::endl;
+        targetTranslation=0.0;
+        targetRotation=0.0;
+        setTimeout(cmd_info->activityName, -1);
+        return;
+    }
+    double theta = atan(targetPositionX/std::abs(radius-targetPositionY));
+    double sign = (targetPositionX < 0 ? -1 : 1);
+    targetTranslation = targetSpeed*sign;
+    targetRotation = targetTranslation/radius;
+    targetDistance = std::abs(theta*radius);
+
     travelledDistance = 0.0;
     initial_pose = pose;
     std::cout <<  "GNC_ACKERMANN_GOTO X:" << targetPositionX << " Y:" << targetPositionY << " speed:" << targetSpeed << std::endl;
@@ -1193,14 +1143,32 @@ void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
 
 void Task::exec_GNC_TURNSPOT_GOTO(CommandInfo* cmd_info)
 {
-    currentActivity = GNC_TURNSPOT_GOTO_ACTIVITY;
-    isActiveTURNSPOTGOTO=true;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetOrientationTheta, &targetRotation);
     targetRotation *= DEG2RAD;
     initial_imu = pose;
-    motionCommand();
+
+    // Calculate the parameters to be sent as motion commands (2D): Translation (m/s) and Rotation (rad/s)
+    targetTranslation=0.0;
+    if (targetOrientationTheta>=0)
+    {
+        targetOrientationTheta+=(initial_imu.getYaw()*RAD2DEG);
+        if (targetOrientationTheta>180.0)
+        {
+            targetOrientationTheta-=360.0;
+        }
+    }
+    else
+    {
+        targetRotation=-targetRotation;
+        targetOrientationTheta+=(initial_imu.getYaw()*RAD2DEG);
+        if (targetOrientationTheta<-180.0)
+        {
+            targetOrientationTheta+=360.0;
+        }
+    }
+
     travelledAngle = 0.0;
     std::cout <<  "GNC_TURNSPOT_GOTO angle:" << targetOrientationTheta << std::endl;
     sendMotionCommand();
@@ -1216,8 +1184,6 @@ void Task::exec_GNC_TURNSPOT_GOTO(CommandInfo* cmd_info)
 
 void Task::exec_GNC_TRAJECTORY(CommandInfo* cmd_info)
 {
-    currentActivity = GNC_TRAJECTORY_ACTIVITY;
-    isActiveTRAJECTORY = true;
     target_reached=false;
     currentParams = cmd_info->activityParams;
     char *token_str = strtok((char *)(currentParams.c_str()), " ");
@@ -1258,7 +1224,6 @@ void Task::exec_GNC_TRAJECTORY(CommandInfo* cmd_info)
 
 void Task::exec_MAST_PTU_MOVE_TO(CommandInfo* cmd_info)
 {
-    currentActivity = MAST_PTU_MOVE_TO_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &pan, &tilt);
@@ -1278,7 +1243,6 @@ void Task::exec_MAST_PTU_MOVE_TO(CommandInfo* cmd_info)
 
 void Task::exec_DEPLOYMENT_ALL(CommandInfo* cmd_info)
 {
-    currentActivity = DEPLOYMENT_ALL_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
@@ -1308,7 +1272,6 @@ void Task::exec_DEPLOYMENT_ALL(CommandInfo* cmd_info)
 
 void Task::exec_DEPLOYMENT_FRONT(CommandInfo* cmd_info)
 {
-    currentActivity = DEPLOYMENT_FRONT_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
@@ -1338,7 +1301,6 @@ void Task::exec_DEPLOYMENT_FRONT(CommandInfo* cmd_info)
 
 void Task::exec_DEPLOYMENT_REAR(CommandInfo* cmd_info)
 {
-    currentActivity = DEPLOYMENT_REAR_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
@@ -1368,7 +1330,6 @@ void Task::exec_DEPLOYMENT_REAR(CommandInfo* cmd_info)
 
 void Task::exec_GNC_UPDATE(CommandInfo* cmd_info)
 {
-    currentActivity = GNC_UPDATE_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     double update_pose_x;
@@ -1398,7 +1359,6 @@ void Task::exec_GNC_UPDATE(CommandInfo* cmd_info)
 
 void Task::exec_GNC_ACKERMANN_DIRECT(CommandInfo* cmd_info)
 {
-    currentActivity = GNC_ACKERMANN_DIRECT_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetTranslation, &targetRotation);
@@ -1428,12 +1388,10 @@ void Task::exec_GNC_ACKERMANN_DIRECT(CommandInfo* cmd_info)
             _trajectory_speed.write(0.0);
         }
     }
-    currentActivity = -1;
 }
 
 void Task::exec_GNC_TURNSPOT_DIRECT(CommandInfo* cmd_info)
 {
-    currentActivity = GNC_TURNSPOT_DIRECT_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %lf", &ackid, &targetRotation);
@@ -1450,12 +1408,10 @@ void Task::exec_GNC_TURNSPOT_DIRECT(CommandInfo* cmd_info)
         std::cout << "Error setting GNCState" << std::endl;
     }
     deadManSwitch();
-    currentActivity = -1;
 }
 
 void Task::exec_MAST_ACQ(CommandInfo* cmd_info)
 {
-    currentActivity = PANCAM_WAC_GET_IMAGE_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
@@ -1491,7 +1447,6 @@ void Task::exec_GNCG(CommandInfo* cmd_info)
 
 void Task::exec_FRONT_ACQ(CommandInfo* cmd_info)
 {
-    currentActivity = LOCCAMFRONT_GET_IMAGE_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
@@ -1520,7 +1475,6 @@ void Task::exec_FRONT_ACQ(CommandInfo* cmd_info)
 
 void Task::exec_REAR_ACQ(CommandInfo* cmd_info)
 {
-    currentActivity = LOCCAMREAR_GET_IMAGE_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
@@ -1549,7 +1503,6 @@ void Task::exec_REAR_ACQ(CommandInfo* cmd_info)
 
 void Task::exec_HAZCAM_ACQ(CommandInfo* cmd_info)
 {
-    currentActivity = HAZCAMFRONT_GET_IMAGE_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
@@ -1578,7 +1531,6 @@ void Task::exec_HAZCAM_ACQ(CommandInfo* cmd_info)
 
 void Task::exec_TOF_ACQ(CommandInfo* cmd_info)
 {
-    currentActivity = TOF_GET_IMAGE_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
@@ -1607,7 +1559,6 @@ void Task::exec_TOF_ACQ(CommandInfo* cmd_info)
 
 void Task::exec_LIDAR_ACQ(CommandInfo* cmd_info)
 {
-    currentActivity = LIDAR_GET_IMAGE_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
@@ -1636,7 +1587,6 @@ void Task::exec_LIDAR_ACQ(CommandInfo* cmd_info)
 
 void Task::exec_ALL_ACQ(CommandInfo* cmd_info)
 {
-    currentActivity = ALL_ACQ_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
@@ -1665,7 +1615,6 @@ void Task::exec_ALL_ACQ(CommandInfo* cmd_info)
 
 void Task::exec_PANCAM_PANORAMA(CommandInfo* cmd_info)
 {
-    currentActivity = PANCAM_PANORAMA_ACTIVITY;
     currentParams = cmd_info->activityParams;
     int ackid;
     sscanf(currentParams.c_str(), "%d %lf", &ackid, &panorama_tilt);
@@ -1932,15 +1881,16 @@ void Task::getAndExecTelecommand()
     // CommandInfo* cmd_info = tcComm->extractCommandInfo();           // Server/Client TCP-IP sockets messaging Protocol
     if (cmd_info != NULL)
     {
+        auto cmd_str = cmd_info->activityName;
+
         try
         {
-            // use telecommand map to look up the correct function for the
-            // incoming telecommand (=cmd_info->activityName)
-            std::get<1>(tc_map[cmd_info->activityName])(cmd_info);
+            initializeTimeout(cmd_str);
+            getExecFunction(cmd_str)(cmd_info);
         }
         catch (std::exception& e)
         {
-            RobotTask *rover_action = ( RobotTask* ) theRobotProcedure->GetRTFromName( (char*)(cmd_info->activityName).c_str());
+            RobotTask *rover_action = ( RobotTask* ) theRobotProcedure->GetRTFromName( (char*)(cmd_str).c_str());
             if (rover_action != NULL)
             {
                 orcExecAct((char*)cmd_info->activityName.c_str(),(char*)cmd_info->activityParams.c_str(), 1);
@@ -1953,14 +1903,60 @@ void Task::getAndExecTelecommand()
     }
 }
 
+int Task::getTimeout(const string cmd_str)
+{
+    return std::get<0>(tc_map[cmd_str]);
+}
+
+void Task::setTimeout(const string cmd_str, const int val)
+{
+    std::get<0>(tc_map[cmd_str]) = val;
+}
+
+void Task::initializeTimeout(const string cmd_str)
+{
+    std::get<0>(tc_map[cmd_str]) = std::get<1>(tc_map[cmd_str]);
+}
+
+std::function< void(CommandInfo*) > Task::getExecFunction(const string cmd_str)
+{
+    return std::get<2>(tc_map[cmd_str]);
+}
+
+std::function< bool(void) > Task::getControlFunction(const string cmd_str)
+{
+    return std::get<3>(tc_map[cmd_str]);
+}
+
 void Task::controlRunningActivities()
 {
-
+    for (auto &map_entry : tc_map)
+    {
+        auto cmd_str = map_entry.first;
+        auto timeout = getTimeout(cmd_str);
+        if (timeout > 0)
+        {
+            bool activity_finished = getControlFunction(cmd_str)();
+            if (activity_finished)
+            {
+                setTimeout(cmd_str, -1);
+            }
+            else
+            {
+                setTimeout(cmd_str, timeout-1);
+            }
+        }
+        else if (timeout == 0)
+        {
+            //TODO signal timeout happened
+        }
+    }
 }
 
 void Task::checkDeadManSwitch()
 {
-    if (!deadMan && deadManSwitchRelevant)// only send stop command once. when emergency stop command is sent, deadMan is true
+    // only send stop command once. when emergency stop command is sent, deadMan is true
+    if (!deadMan && deadManSwitchRelevant)
     {
         base::Time elapsedTime = base::Time::now() - lastDirectCommandTime;
         if (elapsedTime.toMicroseconds() > deadManTime)
@@ -1972,7 +1968,7 @@ void Task::checkDeadManSwitch()
     }
 }
 
-void Task::ctrl_REAR_ACQ()
+bool Task::ctrl_REAR_ACQ()
 {
     _rear_trigger.write(tc_out);
     RLOC_STEREO_index++;
@@ -1987,14 +1983,13 @@ void Task::ctrl_REAR_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    currentActivity=-1;
+    return true;
 }
 
-void Task::ctrl_PANCAM_PANORAMA()
+bool Task::ctrl_PANCAM_PANORAMA()
 {
     _panoramica_trigger.write(tc_out);
     _panorama_tilt.write(panorama_tilt);
-    currentActivity=-1;
     if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
         std::cout << "Error getting PanCamState" << std::endl;
@@ -2003,9 +1998,10 @@ void Task::ctrl_PANCAM_PANORAMA()
     {
         std::cout << "Error setting PanCamState" << std::endl;
     }
+    return true;
 }
 
-void Task::ctrl_TOF_ACQ()
+bool Task::ctrl_TOF_ACQ()
 {
     _tof_trigger.write(tc_out);
     TOF_index++;
@@ -2020,10 +2016,10 @@ void Task::ctrl_TOF_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    currentActivity=-1;
+    return true;
 }
 
-void Task::ctrl_LIDAR_ACQ()
+bool Task::ctrl_LIDAR_ACQ()
 {
     _lidar_trigger.write(tc_out);
     LIDAR_index++;
@@ -2038,10 +2034,10 @@ void Task::ctrl_LIDAR_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    currentActivity=-1;
+    return true;
 }
 
-void Task::ctrl_ALL_ACQ()
+bool Task::ctrl_ALL_ACQ()
 {
     _lidar_trigger.write(tc_out);
     LIDAR_index++;
@@ -2066,10 +2062,10 @@ void Task::ctrl_ALL_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    currentActivity=-1;
+    return true;
 }
 
-void Task::ctrl_HAZCAM_ACQ()
+bool Task::ctrl_HAZCAM_ACQ()
 {
     _haz_front_trigger.write(tc_out);
     FHAZ_STEREO_index++;
@@ -2084,15 +2080,14 @@ void Task::ctrl_HAZCAM_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    currentActivity=-1;
+    return true;
 }
 
-void Task::ctrl_MAST_PTU_MOVE_TO()
+bool Task::ctrl_MAST_PTU_MOVE_TO()
 {
     if (ptuTargetReached() || abort_activity)
     {
         abort_activity=false;
-        currentActivity = -1;
         if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
             std::cout << "Error getting MastState" << std::endl;
@@ -2105,6 +2100,7 @@ void Task::ctrl_MAST_PTU_MOVE_TO()
             std::cout << "Error setting MastState" << std::endl;
         }
         theRobotProcedure->GetRTFromName("MAST_PTU_MoveTo")->post_cond=1;
+        return true;
     }
     else
     {
@@ -2119,15 +2115,15 @@ void Task::ctrl_MAST_PTU_MOVE_TO()
         {
             std::cout << "Error setting MastState" << std::endl;
         }
+        return false;
     }
 }
 
-void Task::ctrl_DEPLOYMENT_REAR()
+bool Task::ctrl_DEPLOYMENT_REAR()
 {
     if (bema3TargetReached() || abort_activity)
     {
         abort_activity=false;
-        currentActivity = -1;
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
             std::cout << "Error getting GNCState" << std::endl;
@@ -2139,6 +2135,7 @@ void Task::ctrl_DEPLOYMENT_REAR()
         {
             std::cout << "Error setting GNCState" << std::endl;
         }
+        return true;
     }
     else
     {
@@ -2153,15 +2150,15 @@ void Task::ctrl_DEPLOYMENT_REAR()
         {
             std::cout << "Error setting GNCState" << std::endl;
         }
+        return false;
     }
 }
 
-void Task::ctrl_DEPLOYMENT_FRONT()
+bool Task::ctrl_DEPLOYMENT_FRONT()
 {
     if (bema2TargetReached() || abort_activity)
     {
         abort_activity=false;
-        currentActivity = -1;
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
             std::cout << "Error getting GNCState" << std::endl;
@@ -2173,6 +2170,7 @@ void Task::ctrl_DEPLOYMENT_FRONT()
         {
             std::cout << "Error setting GNCState" << std::endl;
         }
+        return true;
     }
     else
     {
@@ -2187,20 +2185,21 @@ void Task::ctrl_DEPLOYMENT_FRONT()
         {
             std::cout << "Error setting GNCState" << std::endl;
         }
+        return false;
     }
 }
 
-void Task::ctrl_GNC_UPDATE()
+bool Task::ctrl_GNC_UPDATE()
 {
     //TODO Add logic to handle an Update command. Probably need to trigger a restart of the odometry related component.
+    return false;
 }
 
-void Task::ctrl_DEPLOYMENT_ALL()
+bool Task::ctrl_DEPLOYMENT_ALL()
 {
     if (bema1TargetReached() || abort_activity)
     {
         abort_activity=false;
-        currentActivity = -1;
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
             std::cout << "Error getting GNCState" << std::endl;
@@ -2212,6 +2211,7 @@ void Task::ctrl_DEPLOYMENT_ALL()
         {
             std::cout << "Error setting GNCState" << std::endl;
         }
+        return true;
     }
     else
     {
@@ -2226,10 +2226,11 @@ void Task::ctrl_DEPLOYMENT_ALL()
         {
             std::cout << "Error setting GNCState" << std::endl;
         }
+        return false;
     }
 }
 
-void Task::ctrl_GNC_TRAJECTORY()
+bool Task::ctrl_GNC_TRAJECTORY()
 {
     if (target_reached || abort_activity)
     {
@@ -2240,8 +2241,6 @@ void Task::ctrl_GNC_TRAJECTORY()
         targetOrientationTheta=0.0;
         trajectory.clear();
         _trajectory.write(trajectory);
-        isActiveTRAJECTORY=false;
-        currentActivity = -1;
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
             std::cout << "Error getting GNCState" << std::endl;
@@ -2253,6 +2252,7 @@ void Task::ctrl_GNC_TRAJECTORY()
         {
             std::cout << "Error setting GNCState" << std::endl;
         }
+        return true;
     }
     else
     {
@@ -2267,10 +2267,11 @@ void Task::ctrl_GNC_TRAJECTORY()
         {
             std::cout << "Error setting GNCState" << std::endl;
         }
+        return false;
     }
 }
 
-void Task::ctrl_GNC_TURNSPOT_GOTO()
+bool Task::ctrl_GNC_TURNSPOT_GOTO()
 {
     if ( angleReached() || abort_activity)
     {
@@ -2281,8 +2282,6 @@ void Task::ctrl_GNC_TURNSPOT_GOTO()
         targetTranslation = 0.0;
         targetRotation = 0.0;
         sendMotionCommand();
-        isActiveTURNSPOTGOTO=false;
-        currentActivity = -1;
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
             std::cout << "Error getting GNCState" << std::endl;
@@ -2294,6 +2293,7 @@ void Task::ctrl_GNC_TURNSPOT_GOTO()
         {
             std::cout << "Error setting GNCState" << std::endl;
         }
+        return true;
     }
     else
     {
@@ -2308,10 +2308,11 @@ void Task::ctrl_GNC_TURNSPOT_GOTO()
         {
             std::cout << "Error setting GNCState" << std::endl;
         }
+        return false;
     }
 }
 
-void Task::ctrl_GNC_ACKERMANN_GOTO()
+bool Task::ctrl_GNC_ACKERMANN_GOTO()
 {
     travelledDistance = getTravelledDistance();
     if ((travelledDistance >= targetDistance) || abort_activity)
@@ -2325,8 +2326,6 @@ void Task::ctrl_GNC_ACKERMANN_GOTO()
         targetPositionX=0.0;
         targetPositionY=0.0;
         targetSpeed=0.0;
-        isActiveACKERMANNGOTO=false;
-        currentActivity = -1;
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
             std::cout << "Error getting GNCState" << std::endl;
@@ -2338,6 +2337,7 @@ void Task::ctrl_GNC_ACKERMANN_GOTO()
         {
             std::cout << "Error setting GNCState" << std::endl;
         }
+        return true;
     }
     else
     {
@@ -2352,10 +2352,11 @@ void Task::ctrl_GNC_ACKERMANN_GOTO()
         {
             std::cout << "Error setting GNCState" << std::endl;
         }
+        return false;
     }
 }
 
-void Task::ctrl_MAST_ACQ()
+bool Task::ctrl_MAST_ACQ()
 {
     _mast_trigger.write(tc_out);
     PAN_STEREO_index++;
@@ -2370,10 +2371,10 @@ void Task::ctrl_MAST_ACQ()
     {
         std::cout << "Error setting PanCamState" << std::endl;
     }
-    currentActivity=-1;
+    return true;
 }
 
-void Task::ctrl_FRONT_ACQ()
+bool Task::ctrl_FRONT_ACQ()
 {
     _front_trigger.write(tc_out);
     FLOC_STEREO_index++;
@@ -2388,19 +2389,15 @@ void Task::ctrl_FRONT_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    currentActivity=-1;
+    return true;
 }
 
-void Task::ctrl_GNC_ACKERMANN_DIRECT(){} //TODO DELETE ME, direct command needs no controlling
+bool Task::ctrl_GNC_ACKERMANN_DIRECT(){return true;} //TODO DELETE ME, direct command needs no controlling
+bool Task::ctrl_GNC_TURNSPOT_DIRECT(){return true;}  //TODO DELETE ME, direct command needs no controlling
+bool Task::ctrl_GNCG() { return true; } //TODO delete me
 
-void Task::ctrl_GNC_TURNSPOT_DIRECT(){}  //TODO DELETE ME, direct command needs no controlling
-
-void Task::ctrl_GNCG()
-{
-    //TODO delete me
-}
-
-void Task::ctrl_ABORT()
+bool Task::ctrl_ABORT()
 {
     //TODO adjust all timeouts
+    return true;
 }
