@@ -1955,409 +1955,7 @@ void Task::getAndExecTelecommand()
 
 void Task::controlRunningActivities()
 {
-    if (currentActivity == GNC_ACKERMANN_GOTO_ACTIVITY || isActiveACKERMANNGOTO)
-    {
-        travelledDistance = getTravelledDistance();
-        if ((travelledDistance >= targetDistance) || abort_activity)
-        {
-            abort_activity=false;
-            travelledDistance = 0.0;
-            targetDistance = 0.0;
-            targetTranslation = 0.0;
-            targetRotation = 0.0;
-            sendMotionCommand();
-            targetPositionX=0.0;
-            targetPositionY=0.0;
-            targetSpeed=0.0;
-            isActiveACKERMANNGOTO=false;
-            currentActivity = -1;
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
-            GNCState[GNC_ACTION_ID_INDEX]=0;
-            GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else
-        {
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            GNCState[GNC_ACTION_ID_INDEX]=32;
-            GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-    }
-    if (currentActivity == GNC_TURNSPOT_GOTO_ACTIVITY || isActiveTURNSPOTGOTO)
-    {
-        if ( angleReached() || abort_activity)
-        {
-            std::cout << "Finish Turnspot" << std::endl;
-            abort_activity=false;
-            travelledAngle = 0.0;
-            targetOrientationTheta = 0.0;
-            targetTranslation = 0.0;
-            targetRotation = 0.0;
-            sendMotionCommand();
-            isActiveTURNSPOTGOTO=false;
-            currentActivity = -1;
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
-            GNCState[GNC_ACTION_ID_INDEX]=0;
-            GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else
-        {
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            GNCState[GNC_ACTION_ID_INDEX]=33;
-            GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-    }
-    if (currentActivity == GNC_TRAJECTORY_ACTIVITY || isActiveTRAJECTORY)
-    {
-        if (target_reached || abort_activity)
-        {
-            abort_activity=false;
-            target_reached=true;
-            targetPositionX=0.0;
-            targetPositionY=0.0;
-            targetOrientationTheta=0.0;
-            trajectory.clear();
-            _trajectory.write(trajectory);
-            isActiveTRAJECTORY=false;
-            currentActivity = -1;
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
-            GNCState[GNC_ACTION_ID_INDEX]=0;
-            GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else
-        {
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            GNCState[GNC_ACTION_ID_INDEX]=34;
-            GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-    }
-    if (currentActivity == GNC_UPDATE_ACTIVITY)
-    {
-        //TODO Add logic to handle an Update command. Probably need to trigger a restart of the odometry related component.
-    }
-    else if (currentActivity == DEPLOYMENT_ALL_ACTIVITY)
-    {
-        if (bema1TargetReached() || abort_activity)
-        {
-            abort_activity=false;
-            currentActivity = -1;
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
-            GNCState[GNC_ACTION_ID_INDEX]=0;
-            GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else
-        {
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            GNCState[GNC_ACTION_ID_INDEX]=35;
-            GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-    }
-    else if (currentActivity == DEPLOYMENT_FRONT_ACTIVITY)
-    {
-        if (bema2TargetReached() || abort_activity)
-        {
-            abort_activity=false;
-            currentActivity = -1;
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
-            GNCState[GNC_ACTION_ID_INDEX]=0;
-            GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else
-        {
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            GNCState[GNC_ACTION_ID_INDEX]=36;
-            GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-    }
-    else if (currentActivity == DEPLOYMENT_REAR_ACTIVITY)
-    {
-        if (bema3TargetReached() || abort_activity)
-        {
-            abort_activity=false;
-            currentActivity = -1;
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
-            GNCState[GNC_ACTION_ID_INDEX]=0;
-            GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-        else
-        {
-            if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error getting GNCState" << std::endl;
-            }
-            GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            GNCState[GNC_ACTION_ID_INDEX]=37;
-            GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
-            if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-            {
-                std::cout << "Error setting GNCState" << std::endl;
-            }
-        }
-    }
-    else if (currentActivity == MAST_PTU_MOVE_TO_ACTIVITY)
-    {
-        if (ptuTargetReached() || abort_activity)
-        {
-            abort_activity=false;
-            currentActivity = -1;
-            if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
-            {
-                std::cout << "Error getting MastState" << std::endl;
-            }
-            MastState[MAST_ACTION_RET_INDEX]=ACTION_RET_OK;
-            MastState[MAST_ACTION_ID_INDEX]=0;
-            MastState[MAST_STATUS_INDEX]=MAST_OPER_MODE_PTU_STNDBY;
-            if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
-            {
-                std::cout << "Error setting MastState" << std::endl;
-            }
-            theRobotProcedure->GetRTFromName("MAST_PTU_MoveTo")->post_cond=1;
-        }
-        else
-        {
-            if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
-            {
-                std::cout << "Error getting MastState" << std::endl;
-            }
-            MastState[MAST_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-            MastState[MAST_STATUS_INDEX]=MAST_OPER_MODE_PTU_MOVING;
-            MastState[MAST_ACTION_ID_INDEX]=35;
-            if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
-            {
-                std::cout << "Error setting MastState" << std::endl;
-            }
-        }
-    }
-    else if (currentActivity == PANCAM_WAC_GET_IMAGE_ACTIVITY)
-    {
-        _mast_trigger.write(tc_out);
-        PAN_STEREO_index++;
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error getting PanCamState" << std::endl;
-        }
-        PanCamState[PANCAM_PAN_STEREO_INDEX]=PAN_STEREO_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error setting PanCamState" << std::endl;
-        }
-        currentActivity=-1;
-    }
-    else if (currentActivity == LOCCAMFRONT_GET_IMAGE_ACTIVITY)
-    {
-        _front_trigger.write(tc_out);
-        FLOC_STEREO_index++;
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error getting LocCamState" << std::endl;
-        }
-        PanCamState[LOCCAM_FLOC_STEREO_INDEX]=FLOC_STEREO_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error setting LocCamState" << std::endl;
-        }
-        currentActivity=-1;
-    }
-    else if (currentActivity == LOCCAMREAR_GET_IMAGE_ACTIVITY)
-    {
-        _rear_trigger.write(tc_out);
-        RLOC_STEREO_index++;
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error getting LocCamState" << std::endl;
-        }
-        PanCamState[LOCCAM_RLOC_STEREO_INDEX]=RLOC_STEREO_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error setting LocCamState" << std::endl;
-        }
-        currentActivity=-1;
-    }
-    else if (currentActivity == HAZCAMFRONT_GET_IMAGE_ACTIVITY)
-    {
-        _haz_front_trigger.write(tc_out);
-        FHAZ_STEREO_index++;
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error getting LocCamState" << std::endl;
-        }
-        PanCamState[HAZCAM_FHAZ_STEREO_INDEX]=FHAZ_STEREO_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error setting LocCamState" << std::endl;
-        }
-        currentActivity=-1;
-    }
-    else if (currentActivity == TOF_GET_IMAGE_ACTIVITY)
-    {
-        _tof_trigger.write(tc_out);
-        TOF_index++;
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error getting LocCamState" << std::endl;
-        }
-        PanCamState[TOF_INDEX]=TOF_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error setting LocCamState" << std::endl;
-        }
-        currentActivity=-1;
-    }
-    else if (currentActivity == LIDAR_GET_IMAGE_ACTIVITY)
-    {
-        _lidar_trigger.write(tc_out);
-        LIDAR_index++;
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error getting LocCamState" << std::endl;
-        }
-        PanCamState[LIDAR_INDEX]=LIDAR_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error setting LocCamState" << std::endl;
-        }
-        currentActivity=-1;
-    }
-    else if (currentActivity == ALL_ACQ_ACTIVITY)
-    {
-        _lidar_trigger.write(tc_out);
-        LIDAR_index++;
-        _tof_trigger.write(tc_out);
-        TOF_index++;
-        _haz_front_trigger.write(tc_out);
-        FHAZ_STEREO_index++;
-        _rear_trigger.write(tc_out);
-        RLOC_STEREO_index++;
-        _front_trigger.write(tc_out);
-        FLOC_STEREO_index++;
-        _mast_trigger.write(tc_out);
-        PAN_STEREO_index++;
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error getting LocCamState" << std::endl;
-        }
-        PanCamState[LIDAR_INDEX]=LIDAR_index-1;
-        PanCamState[PANCAM_ACTION_ID_INDEX]=0;
-        PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error setting LocCamState" << std::endl;
-        }
-        currentActivity=-1;
-    }
-    if (currentActivity == PANCAM_PANORAMA_ACTIVITY)
-    {
-        _panoramica_trigger.write(tc_out);
-        _panorama_tilt.write(panorama_tilt);
-        currentActivity=-1;
-        if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error getting PanCamState" << std::endl;
-        }
-        if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
-        {
-            std::cout << "Error setting PanCamState" << std::endl;
-        }
-    }
+
 }
 
 void Task::checkDeadManSwitch()
@@ -2374,23 +1972,435 @@ void Task::checkDeadManSwitch()
     }
 }
 
-void Task::ctrl_GNC_ACKERMANN_GOTO(){}
-void Task::ctrl_GNC_TURNSPOT_GOTO(){}
-void Task::ctrl_GNC_TRAJECTORY(){}
-void Task::ctrl_MAST_PTU_MOVE_TO(){}
-void Task::ctrl_PANCAM_PANORAMA(){}
-void Task::ctrl_TOF_ACQ(){}
-void Task::ctrl_LIDAR_ACQ(){}
-void Task::ctrl_DEPLOYMENT_ALL(){}
-void Task::ctrl_DEPLOYMENT_FRONT(){}
-void Task::ctrl_DEPLOYMENT_REAR(){}
-void Task::ctrl_GNC_UPDATE(){}
-void Task::ctrl_GNC_ACKERMANN_DIRECT(){}
-void Task::ctrl_GNC_TURNSPOT_DIRECT(){}
-void Task::ctrl_ALL_ACQ(){}
-void Task::ctrl_HAZCAM_ACQ(){}
-void Task::ctrl_GNCG(){}
-void Task::ctrl_ABORT(){}
-void Task::ctrl_MAST_ACQ(){}
-void Task::ctrl_FRONT_ACQ(){}
-void Task::ctrl_REAR_ACQ(){}
+void Task::ctrl_REAR_ACQ()
+{
+    _rear_trigger.write(tc_out);
+    RLOC_STEREO_index++;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[LOCCAM_RLOC_STEREO_INDEX]=RLOC_STEREO_index-1;
+    PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+    currentActivity=-1;
+}
+
+void Task::ctrl_PANCAM_PANORAMA()
+{
+    _panoramica_trigger.write(tc_out);
+    _panorama_tilt.write(panorama_tilt);
+    currentActivity=-1;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting PanCamState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting PanCamState" << std::endl;
+    }
+}
+
+void Task::ctrl_TOF_ACQ()
+{
+    _tof_trigger.write(tc_out);
+    TOF_index++;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[TOF_INDEX]=TOF_index-1;
+    PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+    currentActivity=-1;
+}
+
+void Task::ctrl_LIDAR_ACQ()
+{
+    _lidar_trigger.write(tc_out);
+    LIDAR_index++;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[LIDAR_INDEX]=LIDAR_index-1;
+    PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+    currentActivity=-1;
+}
+
+void Task::ctrl_ALL_ACQ()
+{
+    _lidar_trigger.write(tc_out);
+    LIDAR_index++;
+    _tof_trigger.write(tc_out);
+    TOF_index++;
+    _haz_front_trigger.write(tc_out);
+    FHAZ_STEREO_index++;
+    _rear_trigger.write(tc_out);
+    RLOC_STEREO_index++;
+    _front_trigger.write(tc_out);
+    FLOC_STEREO_index++;
+    _mast_trigger.write(tc_out);
+    PAN_STEREO_index++;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[LIDAR_INDEX]=LIDAR_index-1;
+    PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+    currentActivity=-1;
+}
+
+void Task::ctrl_HAZCAM_ACQ()
+{
+    _haz_front_trigger.write(tc_out);
+    FHAZ_STEREO_index++;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[HAZCAM_FHAZ_STEREO_INDEX]=FHAZ_STEREO_index-1;
+    PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+    currentActivity=-1;
+}
+
+void Task::ctrl_MAST_PTU_MOVE_TO()
+{
+    if (ptuTargetReached() || abort_activity)
+    {
+        abort_activity=false;
+        currentActivity = -1;
+        if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
+        {
+            std::cout << "Error getting MastState" << std::endl;
+        }
+        MastState[MAST_ACTION_RET_INDEX]=ACTION_RET_OK;
+        MastState[MAST_ACTION_ID_INDEX]=0;
+        MastState[MAST_STATUS_INDEX]=MAST_OPER_MODE_PTU_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
+        {
+            std::cout << "Error setting MastState" << std::endl;
+        }
+        theRobotProcedure->GetRTFromName("MAST_PTU_MoveTo")->post_cond=1;
+    }
+    else
+    {
+        if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
+        {
+            std::cout << "Error getting MastState" << std::endl;
+        }
+        MastState[MAST_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        MastState[MAST_STATUS_INDEX]=MAST_OPER_MODE_PTU_MOVING;
+        MastState[MAST_ACTION_ID_INDEX]=35;
+        if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
+        {
+            std::cout << "Error setting MastState" << std::endl;
+        }
+    }
+}
+
+void Task::ctrl_DEPLOYMENT_REAR()
+{
+    if (bema3TargetReached() || abort_activity)
+    {
+        abort_activity=false;
+        currentActivity = -1;
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+    else
+    {
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=37;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+}
+
+void Task::ctrl_DEPLOYMENT_FRONT()
+{
+    if (bema2TargetReached() || abort_activity)
+    {
+        abort_activity=false;
+        currentActivity = -1;
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+    else
+    {
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=36;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+}
+
+void Task::ctrl_GNC_UPDATE()
+{
+    //TODO Add logic to handle an Update command. Probably need to trigger a restart of the odometry related component.
+}
+
+void Task::ctrl_DEPLOYMENT_ALL()
+{
+    if (bema1TargetReached() || abort_activity)
+    {
+        abort_activity=false;
+        currentActivity = -1;
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+    else
+    {
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=35;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+}
+
+void Task::ctrl_GNC_TRAJECTORY()
+{
+    if (target_reached || abort_activity)
+    {
+        abort_activity=false;
+        target_reached=true;
+        targetPositionX=0.0;
+        targetPositionY=0.0;
+        targetOrientationTheta=0.0;
+        trajectory.clear();
+        _trajectory.write(trajectory);
+        isActiveTRAJECTORY=false;
+        currentActivity = -1;
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+    else
+    {
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=34;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+}
+
+void Task::ctrl_GNC_TURNSPOT_GOTO()
+{
+    if ( angleReached() || abort_activity)
+    {
+        std::cout << "Finish Turnspot" << std::endl;
+        abort_activity=false;
+        travelledAngle = 0.0;
+        targetOrientationTheta = 0.0;
+        targetTranslation = 0.0;
+        targetRotation = 0.0;
+        sendMotionCommand();
+        isActiveTURNSPOTGOTO=false;
+        currentActivity = -1;
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+    else
+    {
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=33;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+}
+
+void Task::ctrl_GNC_ACKERMANN_GOTO()
+{
+    travelledDistance = getTravelledDistance();
+    if ((travelledDistance >= targetDistance) || abort_activity)
+    {
+        abort_activity=false;
+        travelledDistance = 0.0;
+        targetDistance = 0.0;
+        targetTranslation = 0.0;
+        targetRotation = 0.0;
+        sendMotionCommand();
+        targetPositionX=0.0;
+        targetPositionY=0.0;
+        targetSpeed=0.0;
+        isActiveACKERMANNGOTO=false;
+        currentActivity = -1;
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+    else
+    {
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=32;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+}
+
+void Task::ctrl_MAST_ACQ()
+{
+    _mast_trigger.write(tc_out);
+    PAN_STEREO_index++;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting PanCamState" << std::endl;
+    }
+    PanCamState[PANCAM_PAN_STEREO_INDEX]=PAN_STEREO_index-1;
+    PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting PanCamState" << std::endl;
+    }
+    currentActivity=-1;
+}
+
+void Task::ctrl_FRONT_ACQ()
+{
+    _front_trigger.write(tc_out);
+    FLOC_STEREO_index++;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[LOCCAM_FLOC_STEREO_INDEX]=FLOC_STEREO_index-1;
+    PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+    currentActivity=-1;
+}
+
+void Task::ctrl_GNC_ACKERMANN_DIRECT(){} //TODO DELETE ME, direct command needs no controlling
+
+void Task::ctrl_GNC_TURNSPOT_DIRECT(){}  //TODO DELETE ME, direct command needs no controlling
+
+void Task::ctrl_GNCG()
+{
+    //TODO delete me
+}
+
+void Task::ctrl_ABORT()
+{
+    //TODO adjust all timeouts
+}
