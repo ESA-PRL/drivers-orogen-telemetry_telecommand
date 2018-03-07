@@ -262,18 +262,15 @@ void Task::cleanupHook()
 
 double Task::getTravelledDistance()
 {
-    double distance = 0.0;
-    distance = sqrt((pose.position[0]-initial_pose.position[0])*(pose.position[0]-initial_pose.position[0])
+    return sqrt((pose.position[0]-initial_pose.position[0])*(pose.position[0]-initial_pose.position[0])
             +(pose.position[1]-initial_pose.position[1])*(pose.position[1]-initial_pose.position[1])
             +(pose.position[2]-initial_pose.position[2])*(pose.position[2]-initial_pose.position[2]));
-    return distance;
 }
 
 bool Task::angleReached()
 {
-    double angle =0.0;
-    angle = std::abs(pose.getYaw()*RAD2DEG-targetOrientationTheta);
-    return angle<TARGET_WINDOW3;
+    double angle = std::abs(pose.getYaw()*RAD2DEG-targetOrientationTheta);
+    return angle < TARGET_WINDOW3;
 }
 
 void Task::getTransform(Eigen::Affine3d& tf)
