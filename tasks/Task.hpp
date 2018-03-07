@@ -56,7 +56,6 @@ namespace telemetry_telecommand
         int currentActivity;
         bool abort_activity;
         bool files_sent;
-        std::string currentParams;
         int WACL_index, WACR_index, PAN_STEREO_index;
         int FLOCL_index, FLOCR_index, FLOC_STEREO_index;
         int RLOCL_index, RLOCR_index, RLOC_STEREO_index;

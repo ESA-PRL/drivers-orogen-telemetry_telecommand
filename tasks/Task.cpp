@@ -1074,9 +1074,7 @@ void Task::sendProduct(messages::Telemetry tm)
 
 void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %lf %lf %lf", &ackid, &targetPositionX, &targetPositionY, &targetSpeed);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %lf", &targetPositionX, &targetPositionY, &targetSpeed);
 
     // Calculate the parameters to be sent as motion commands (2D): Translation (m/s) and Rotation (rad/s)
     if (targetPositionY == 0) // Straight line command
@@ -1118,9 +1116,7 @@ void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
 
 void Task::exec_GNC_TURNSPOT_GOTO(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetOrientationTheta, &targetRotation);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf", &targetOrientationTheta, &targetRotation);
     targetRotation *= DEG2RAD;
     initial_imu = pose;
 
@@ -1160,8 +1156,7 @@ void Task::exec_GNC_TURNSPOT_GOTO(CommandInfo* cmd_info)
 void Task::exec_GNC_TRAJECTORY(CommandInfo* cmd_info)
 {
     target_reached=false;
-    currentParams = cmd_info->activityParams;
-    char *token_str = strtok((char *)(currentParams.c_str()), " ");
+    char *token_str = strtok((char *)(cmd_info->activityParams.c_str()), " ");
     token_str = strtok(NULL, " ");
     int NofWaypoints = atoi(token_str);
     std::cout << "NofWaypoints:" << NofWaypoints << "<-" << std::endl;
@@ -1199,9 +1194,7 @@ void Task::exec_GNC_TRAJECTORY(CommandInfo* cmd_info)
 
 void Task::exec_MAST_PTU_MOVE_TO(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &pan, &tilt);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf", &pan, &tilt);
     std::cout <<  "MAST_PTU_MoveTo pan:" << pan << " tilt:" << tilt << std::endl;
     pan = pan*DEG2RAD;
     tilt = tilt*DEG2RAD;
@@ -1218,9 +1211,7 @@ void Task::exec_MAST_PTU_MOVE_TO(CommandInfo* cmd_info)
 
 void Task::exec_DEPLOYMENT_ALL(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf", &bema_command);
     if (bema_command>DEPLOYMENTLIMIT)
         bema_command=DEPLOYMENTLIMIT;
     else if (bema_command<-DEPLOYMENTLIMIT)
@@ -1247,9 +1238,7 @@ void Task::exec_DEPLOYMENT_ALL(CommandInfo* cmd_info)
 
 void Task::exec_DEPLOYMENT_FRONT(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf", &bema_command);
     if (bema_command>DEPLOYMENTLIMIT)
         bema_command=DEPLOYMENTLIMIT;
     else if (bema_command<-DEPLOYMENTLIMIT)
@@ -1276,9 +1265,7 @@ void Task::exec_DEPLOYMENT_FRONT(CommandInfo* cmd_info)
 
 void Task::exec_DEPLOYMENT_REAR(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %lf", &ackid, &bema_command);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf", &bema_command);
     if (bema_command>DEPLOYMENTLIMIT)
         bema_command=DEPLOYMENTLIMIT;
     else if (bema_command<-DEPLOYMENTLIMIT)
@@ -1305,15 +1292,13 @@ void Task::exec_DEPLOYMENT_REAR(CommandInfo* cmd_info)
 
 void Task::exec_GNC_UPDATE(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
-    int ackid;
     double update_pose_x;
     double update_pose_y;
     double update_pose_z;
     double update_pose_rx;
     double update_pose_ry;
     double update_pose_rz;
-    sscanf(currentParams.c_str(), "%d %lf %lf %lf %lf %lf %lf", &ackid, &update_pose_x, &update_pose_y, &update_pose_z, &update_pose_rx, &update_pose_ry, &update_pose_rz);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %lf %lf %lf %lf", &update_pose_x, &update_pose_y, &update_pose_z, &update_pose_rx, &update_pose_ry, &update_pose_rz);
     absolute_pose.position[0]=update_pose_x;
     absolute_pose.position[1]=update_pose_y;
     absolute_pose.position[2]=update_pose_z;
@@ -1334,9 +1319,7 @@ void Task::exec_GNC_UPDATE(CommandInfo* cmd_info)
 
 void Task::exec_GNC_ACKERMANN_DIRECT(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %lf %lf", &ackid, &targetTranslation, &targetRotation);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf", &targetTranslation, &targetRotation);
     std::cout <<  "GNC_ACKERMANN_DIRECT Translation:" << targetTranslation << " Rotation:" << targetRotation << std::endl;
     if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         std::cout << "Error getting GNCState" << std::endl;
@@ -1367,9 +1350,7 @@ void Task::exec_GNC_ACKERMANN_DIRECT(CommandInfo* cmd_info)
 
 void Task::exec_GNC_TURNSPOT_DIRECT(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %lf", &ackid, &targetRotation);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf", &targetRotation);
     // TODO does the targetRotation(Speed) need to be multiplied by DEG2RAD here as well?
     targetTranslation=0.0;
     std::cout <<  "GNC_TURNSPOT_DIRECT Rotation:" << targetRotation << std::endl;
@@ -1387,10 +1368,8 @@ void Task::exec_GNC_TURNSPOT_DIRECT(CommandInfo* cmd_info)
 
 void Task::exec_MAST_ACQ(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
     messages::Telecommand tc_out;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %d %d", &productType, &productMode);
     tc_out.productType = productType;
     if (productMode>0)
     {
@@ -1425,10 +1404,8 @@ void Task::exec_GNCG(CommandInfo* cmd_info)
 
 void Task::exec_FRONT_ACQ(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
     messages::Telecommand tc_out;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %d %d", &productType, &productMode);
     tc_out.productType = productType;
     if (productMode>0)
     {
@@ -1456,10 +1433,8 @@ void Task::exec_FRONT_ACQ(CommandInfo* cmd_info)
 
 void Task::exec_REAR_ACQ(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
     messages::Telecommand tc_out;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %d %d", &productType, &productMode);
     tc_out.productType = productType;
     if (productMode>0)
     {
@@ -1487,10 +1462,8 @@ void Task::exec_REAR_ACQ(CommandInfo* cmd_info)
 
 void Task::exec_HAZCAM_ACQ(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
     messages::Telecommand tc_out;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %d %d", &productType, &productMode);
     tc_out.productType = productType;
     if (productMode>0)
     {
@@ -1519,10 +1492,8 @@ void Task::exec_HAZCAM_ACQ(CommandInfo* cmd_info)
 
 void Task::exec_TOF_ACQ(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
     messages::Telecommand tc_out;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %d %d", &productType, &productMode);
     tc_out.productType = productType;
     if (productMode>0)
     {
@@ -1550,10 +1521,8 @@ void Task::exec_TOF_ACQ(CommandInfo* cmd_info)
 
 void Task::exec_LIDAR_ACQ(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
     messages::Telecommand tc_out;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %d %d", &productType, &productMode);
     tc_out.productType = productType;
     if (productMode>0)
     {
@@ -1581,10 +1550,8 @@ void Task::exec_LIDAR_ACQ(CommandInfo* cmd_info)
 
 void Task::exec_ALL_ACQ(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
     messages::Telecommand tc_out;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %d %d", &productType, &productMode);
     tc_out.productType = productType;
     if (productMode>0)
     {
@@ -1623,10 +1590,8 @@ void Task::exec_ALL_ACQ(CommandInfo* cmd_info)
 
 void Task::exec_PANCAM_PANORAMA(CommandInfo* cmd_info)
 {
-    currentParams = cmd_info->activityParams;
     messages::Telecommand tc_out;
-    int ackid;
-    sscanf(currentParams.c_str(), "%d %lf", &ackid, &panorama_tilt);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf", &panorama_tilt);
     tc_out.productType = messages::ProductType::DEM;
     tc_out.productMode = messages::Mode::CONTINUOUS;
     std::cout <<  "PanCam Panorama at tilt: " << panorama_tilt << std::endl;
