@@ -1391,6 +1391,7 @@ void Task::exec_GNC_TURNSPOT_DIRECT(CommandInfo* cmd_info)
 void Task::exec_MAST_ACQ(CommandInfo* cmd_info)
 {
     currentParams = cmd_info->activityParams;
+    messages::Telecommand tc_out;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
     tc_out.productType = productType;
@@ -1414,6 +1415,8 @@ void Task::exec_MAST_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting PanCamState" << std::endl;
     }
+    _mast_trigger.write(tc_out);
+    PAN_STEREO_index++;
 }
 
 void Task::exec_GNCG(CommandInfo* cmd_info)
@@ -1426,6 +1429,7 @@ void Task::exec_GNCG(CommandInfo* cmd_info)
 void Task::exec_FRONT_ACQ(CommandInfo* cmd_info)
 {
     currentParams = cmd_info->activityParams;
+    messages::Telecommand tc_out;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
     tc_out.productType = productType;
@@ -1449,11 +1453,14 @@ void Task::exec_FRONT_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
+    _front_trigger.write(tc_out);
+    FLOC_STEREO_index++;
 }
 
 void Task::exec_REAR_ACQ(CommandInfo* cmd_info)
 {
     currentParams = cmd_info->activityParams;
+    messages::Telecommand tc_out;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
     tc_out.productType = productType;
@@ -1477,11 +1484,14 @@ void Task::exec_REAR_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
+    _rear_trigger.write(tc_out);
+    RLOC_STEREO_index++;
 }
 
 void Task::exec_HAZCAM_ACQ(CommandInfo* cmd_info)
 {
     currentParams = cmd_info->activityParams;
+    messages::Telecommand tc_out;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
     tc_out.productType = productType;
@@ -1505,11 +1515,15 @@ void Task::exec_HAZCAM_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
+
+    _haz_front_trigger.write(tc_out);
+    FHAZ_STEREO_index++;
 }
 
 void Task::exec_TOF_ACQ(CommandInfo* cmd_info)
 {
     currentParams = cmd_info->activityParams;
+    messages::Telecommand tc_out;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
     tc_out.productType = productType;
@@ -1533,11 +1547,14 @@ void Task::exec_TOF_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
+    _tof_trigger.write(tc_out);
+    TOF_index++;
 }
 
 void Task::exec_LIDAR_ACQ(CommandInfo* cmd_info)
 {
     currentParams = cmd_info->activityParams;
+    messages::Telecommand tc_out;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
     tc_out.productType = productType;
@@ -1561,11 +1578,14 @@ void Task::exec_LIDAR_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
+    _lidar_trigger.write(tc_out);
+    LIDAR_index++;
 }
 
 void Task::exec_ALL_ACQ(CommandInfo* cmd_info)
 {
     currentParams = cmd_info->activityParams;
+    messages::Telecommand tc_out;
     int ackid;
     sscanf(currentParams.c_str(), "%d %d %d", &ackid, &productType, &productMode);
     tc_out.productType = productType;
@@ -1589,11 +1609,25 @@ void Task::exec_ALL_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
+
+    _lidar_trigger.write(tc_out);
+    LIDAR_index++;
+    _tof_trigger.write(tc_out);
+    TOF_index++;
+    _haz_front_trigger.write(tc_out);
+    FHAZ_STEREO_index++;
+    _rear_trigger.write(tc_out);
+    RLOC_STEREO_index++;
+    _front_trigger.write(tc_out);
+    FLOC_STEREO_index++;
+    _mast_trigger.write(tc_out);
+    PAN_STEREO_index++;
 }
 
 void Task::exec_PANCAM_PANORAMA(CommandInfo* cmd_info)
 {
     currentParams = cmd_info->activityParams;
+    messages::Telecommand tc_out;
     int ackid;
     sscanf(currentParams.c_str(), "%d %lf", &ackid, &panorama_tilt);
     tc_out.productType = messages::ProductType::DEM;
@@ -1607,6 +1641,8 @@ void Task::exec_PANCAM_PANORAMA(CommandInfo* cmd_info)
     {
         std::cout << "Error setting PanCamState" << std::endl;
     }
+    _panoramica_trigger.write(tc_out);
+    _panorama_tilt.write(panorama_tilt);
 }
 
 void Task::exec_ABORT(CommandInfo* cmd_info)
@@ -1948,8 +1984,6 @@ void Task::checkDeadManSwitch()
 
 bool Task::ctrl_REAR_ACQ()
 {
-    _rear_trigger.write(tc_out);
-    RLOC_STEREO_index++;
     if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
         std::cout << "Error getting LocCamState" << std::endl;
@@ -1966,8 +2000,6 @@ bool Task::ctrl_REAR_ACQ()
 
 bool Task::ctrl_PANCAM_PANORAMA()
 {
-    _panoramica_trigger.write(tc_out);
-    _panorama_tilt.write(panorama_tilt);
     if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
         std::cout << "Error getting PanCamState" << std::endl;
@@ -1981,8 +2013,6 @@ bool Task::ctrl_PANCAM_PANORAMA()
 
 bool Task::ctrl_TOF_ACQ()
 {
-    _tof_trigger.write(tc_out);
-    TOF_index++;
     if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
         std::cout << "Error getting LocCamState" << std::endl;
@@ -1999,8 +2029,6 @@ bool Task::ctrl_TOF_ACQ()
 
 bool Task::ctrl_LIDAR_ACQ()
 {
-    _lidar_trigger.write(tc_out);
-    LIDAR_index++;
     if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
         std::cout << "Error getting LocCamState" << std::endl;
@@ -2017,18 +2045,6 @@ bool Task::ctrl_LIDAR_ACQ()
 
 bool Task::ctrl_ALL_ACQ()
 {
-    _lidar_trigger.write(tc_out);
-    LIDAR_index++;
-    _tof_trigger.write(tc_out);
-    TOF_index++;
-    _haz_front_trigger.write(tc_out);
-    FHAZ_STEREO_index++;
-    _rear_trigger.write(tc_out);
-    RLOC_STEREO_index++;
-    _front_trigger.write(tc_out);
-    FLOC_STEREO_index++;
-    _mast_trigger.write(tc_out);
-    PAN_STEREO_index++;
     if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
         std::cout << "Error getting LocCamState" << std::endl;
@@ -2045,8 +2061,6 @@ bool Task::ctrl_ALL_ACQ()
 
 bool Task::ctrl_HAZCAM_ACQ()
 {
-    _haz_front_trigger.write(tc_out);
-    FHAZ_STEREO_index++;
     if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
         std::cout << "Error getting LocCamState" << std::endl;
@@ -2336,8 +2350,6 @@ bool Task::ctrl_GNC_ACKERMANN_GOTO()
 
 bool Task::ctrl_MAST_ACQ()
 {
-    _mast_trigger.write(tc_out);
-    PAN_STEREO_index++;
     if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
         std::cout << "Error getting PanCamState" << std::endl;
@@ -2354,8 +2366,6 @@ bool Task::ctrl_MAST_ACQ()
 
 bool Task::ctrl_FRONT_ACQ()
 {
-    _front_trigger.write(tc_out);
-    FLOC_STEREO_index++;
     if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
         std::cout << "Error getting LocCamState" << std::endl;
