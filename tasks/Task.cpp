@@ -391,6 +391,8 @@ void Task::sendMotionCommand()
 
 void Task::sendProduct(messages::Telemetry tm)
 {
+    const int seq = 1;  // sequence number is not necessary any more.
+                        // TODO adjust send..() signature
     switch (tm.productSource)
     {
         case messages::Producer::MAST:
@@ -403,7 +405,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -427,7 +428,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -450,7 +450,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -473,7 +472,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -520,7 +518,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -544,7 +541,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -567,7 +563,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -590,7 +585,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -637,7 +631,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -661,7 +654,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -684,7 +676,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -707,7 +698,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -754,7 +744,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -778,7 +767,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -801,7 +789,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -824,7 +811,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -870,7 +856,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -894,7 +879,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -917,7 +901,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -940,7 +923,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -987,7 +969,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -1011,7 +992,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -1034,7 +1014,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
@@ -1057,7 +1036,6 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
-                        int seq=1;
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
