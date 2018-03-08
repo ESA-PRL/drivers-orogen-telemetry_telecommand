@@ -80,7 +80,7 @@ task_context "Task" do
     output_port "mast_pan", "double"
     output_port "mast_tilt", "double"
     output_port "panorama_tilt", "double"
-    output_port "panoramica_trigger", "telemetry_telecommand/messages/Telecommand"
+    output_port "pancam_360_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "mast_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "front_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "rear_trigger", "telemetry_telecommand/messages/Telecommand"
