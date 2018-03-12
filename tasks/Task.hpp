@@ -53,6 +53,8 @@ namespace telemetry_telecommand
         friend class TaskBase;
         protected:
 
+        double taskPeriod;
+
         int currentActivity;
         bool abort_activity;
         bool files_sent;
@@ -74,6 +76,7 @@ namespace telemetry_telecommand
         std::string tmmsg;
 
         // GNC_LLO parameters
+        double totaltravelledDistance;
         double travelledDistance;
         double travelledAngle;
         double targetDistance;
@@ -89,6 +92,11 @@ namespace telemetry_telecommand
         bool target_reached;
         base::samples::RigidBodyState initial_pose;
         base::samples::RigidBodyState initial_imu;
+        int timeout_motions;
+        double WisdomDistance;
+        int WisdomAcqTime;
+        int WisdomTimer;
+        bool WisdomAcquiring;
 
         // MAST_PTU_MoveTo parameters
         double pan;
@@ -227,6 +235,7 @@ namespace telemetry_telecommand
         void exec_GNC_ACKERMANN_GOTO(CommandInfo*);
         void exec_GNC_TURNSPOT_GOTO(CommandInfo*);
         void exec_GNC_TRAJECTORY(CommandInfo*);
+        void exec_GNC_TRAJECTORY_WISDOM(CommandInfo*);
         void exec_MAST_PTU_MOVE_TO(CommandInfo*);
         void exec_PANCAM_PANORAMA(CommandInfo*);
         void exec_TOF_ACQ(CommandInfo*);
@@ -248,6 +257,7 @@ namespace telemetry_telecommand
         bool ctrl_GNC_ACKERMANN_GOTO();
         bool ctrl_GNC_TURNSPOT_GOTO();
         bool ctrl_GNC_TRAJECTORY();
+        bool ctrl_GNC_TRAJECTORY_WISDOM();
         bool ctrl_MAST_PTU_MOVE_TO();
         bool ctrl_PANCAM_PANORAMA();
         bool ctrl_TOF_ACQ();

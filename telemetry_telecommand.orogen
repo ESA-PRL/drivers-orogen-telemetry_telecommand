@@ -12,6 +12,7 @@ using_library "telemetry_telecommand"
 import_types_from "base"
 import_types_from "telemetry_telecommandTypes.hpp"
 import_types_from "telemetry_telecommand/Messages.hpp"
+import_types_from "telemetry_telecommand/ctrl_state.h"
 import_types_from "temperature/temperatureTypes.hpp"
 
 # If this project uses data types that are defined in other oroGen projects,
@@ -32,6 +33,7 @@ task_context "Task" do
     property "activeMQ_brokerURI", "/std/string"
     property "initial_pose", "/base/samples/RigidBodyState"
     property "productsFolder", "/std/string"  
+    property "rover", "RoverName"  
 
     # An input port, i.e. an object from which the component gets data from
     # other components' outputs

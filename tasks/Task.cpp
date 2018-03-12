@@ -135,6 +135,8 @@ bool Task::startHook()
     if (! TaskBase::startHook())
         return false;
 
+    taskPeriod = TaskContext::getPeriod();
+
     activemq::library::ActiveMQCPP::initializeLibrary();
     bool useTopics = true;
     bool sessionTransacted = false;
@@ -290,6 +292,7 @@ bool Task::ptuTargetReached()
 {
     if (abort_activity)
     {
+        abort_activity=false;
         pan = ptu[0].position;
         tilt = ptu[1].position;
         sendPtuCommand();
@@ -308,6 +311,7 @@ bool Task::bema1TargetReached()
 {
     if (abort_activity)
     {
+        abort_activity=false;
         targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
         return true;
     }
@@ -329,6 +333,7 @@ bool Task::bema2TargetReached()
 {
     if (abort_activity)
     {
+        abort_activity=false;
         targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
         return true;
     }
@@ -350,6 +355,7 @@ bool Task::bema3TargetReached()
 {
     if (abort_activity)
     {
+        abort_activity=false;
         targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
         return true;
     }
@@ -1076,7 +1082,7 @@ void Task::sendProduct(messages::Telemetry tm)
 
 void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
 {
-    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %lf", &targetPositionX, &targetPositionY, &targetSpeed); 
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %lf %d", &targetPositionX, &targetPositionY, &targetSpeed, &timeout_motions); 
     // Calculate the parameters to be sent as motion commands (2D): Translation (m/s) and Rotation (rad/s)
     if (targetPositionY == 0) // Straight line command
     {
@@ -1106,6 +1112,7 @@ void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
     initial_pose = pose;
     std::cout <<  "GNC_ACKERMANN_GOTO X:" << targetPositionX << " Y:" << targetPositionY << " speed:" << targetSpeed << std::endl;
     sendMotionCommand();
+    setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
         std::cout << "Error getting GNCState" << std::endl;
@@ -1118,7 +1125,7 @@ void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
 
 void Task::exec_GNC_TURNSPOT_GOTO(CommandInfo* cmd_info)
 {
-    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf", &targetOrientationTheta, &targetRotation);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %d", &targetOrientationTheta, &targetRotation, &timeout_motions);
     targetRotation *= DEG2RAD;
     initial_imu = pose;
 
@@ -1145,6 +1152,7 @@ void Task::exec_GNC_TURNSPOT_GOTO(CommandInfo* cmd_info)
     travelledAngle = 0.0;
     std::cout <<  "GNC_TURNSPOT_GOTO angle:" << targetOrientationTheta << std::endl;
     sendMotionCommand();
+    setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
         std::cout << "Error getting GNCState" << std::endl;
@@ -1178,11 +1186,62 @@ void Task::exec_GNC_TRAJECTORY(CommandInfo* cmd_info)
     trajectory.back().heading = targetOrientationTheta*DEG2RAD;
     token_str = strtok(NULL, " ");
     targetSpeed = atof(token_str);
+    token_str = strtok(NULL, " ");
+    timeout_motions = atof(token_str);
     _trajectory.write(trajectory);
     if (targetSpeed>0)
     {
         _trajectory_speed.write(targetSpeed);
     }
+    setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
+    std::cout <<  "GNC_TRAJECTORY #ofWaypoints:" << NofWaypoints << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error getting GNCState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error setting GNCState" << std::endl;
+    }
+}
+
+void Task::exec_GNC_TRAJECTORY_WISDOM(CommandInfo* cmd_info)
+{
+    target_reached=false;
+    char *token_str = strtok((char *)(cmd_info->activityParams.c_str()), " ");
+    token_str = strtok(NULL, " ");
+    int NofWaypoints = atoi(token_str);
+    std::cout << "NofWaypoints:" << NofWaypoints << "<-" << std::endl;
+    for (int i=0;i<NofWaypoints;i++)
+    {
+        token_str = strtok(NULL, " ");
+        waypoint.position(0)=atof(token_str);
+        std::cout << "Point " << i+1 << " x:" << waypoint.position(0) << std::endl;
+        token_str = strtok(NULL, " ");
+        waypoint.position(1)=atof(token_str);
+        std::cout << "Point " << i+1 << " y:" << waypoint.position(1) << std::endl;
+        trajectory.push_back(waypoint);
+    }
+    token_str = strtok(NULL, " ");
+    targetOrientationTheta = atof(token_str);
+    std::cout << "targetOrientationTheta: " << targetOrientationTheta << std::endl;
+    trajectory.back().heading = targetOrientationTheta*DEG2RAD;
+    token_str = strtok(NULL, " ");
+    targetSpeed = atof(token_str);
+    token_str = strtok(NULL, " ");
+    WisdomDistance = atof(token_str);
+    token_str = strtok(NULL, " ");
+    WisdomTimer = atof(token_str);
+    token_str = strtok(NULL, " ");
+    timeout_motions = atof(token_str);
+    travelledDistance = 0.0;
+    initial_pose = pose;
+    _trajectory.write(trajectory);
+    if (targetSpeed>0)
+    {
+        _trajectory_speed.write(targetSpeed);
+    }
+    setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     std::cout <<  "GNC_TRAJECTORY #ofWaypoints:" << NofWaypoints << std::endl;
     if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
@@ -1196,11 +1255,12 @@ void Task::exec_GNC_TRAJECTORY(CommandInfo* cmd_info)
 
 void Task::exec_MAST_PTU_MOVE_TO(CommandInfo* cmd_info)
 {
-    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf", &pan, &tilt);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %d", &pan, &tilt, &timeout_motions);
     std::cout <<  "MAST_PTU_MoveTo pan:" << pan << " tilt:" << tilt << std::endl;
     pan = pan*DEG2RAD;
     tilt = tilt*DEG2RAD;
     sendPtuCommand();
+    setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
     {
         std::cout << "Error getting MastState" << std::endl;
@@ -1213,7 +1273,7 @@ void Task::exec_MAST_PTU_MOVE_TO(CommandInfo* cmd_info)
 
 void Task::exec_DEPLOYMENT_ALL(CommandInfo* cmd_info)
 {
-    sscanf(cmd_info->activityParams.c_str(), "%*d %lf", &bema_command);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %d", &bema_command, &timeout_motions);
     if (bema_command>DEPLOYMENTLIMIT)
         bema_command=DEPLOYMENTLIMIT;
     else if (bema_command<-DEPLOYMENTLIMIT)
@@ -1228,6 +1288,7 @@ void Task::exec_DEPLOYMENT_ALL(CommandInfo* cmd_info)
     {
         _bema_command.write(-OMEGA);
     }
+    setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
         std::cout << "Error getting GNCState" << std::endl;
@@ -1240,7 +1301,7 @@ void Task::exec_DEPLOYMENT_ALL(CommandInfo* cmd_info)
 
 void Task::exec_DEPLOYMENT_FRONT(CommandInfo* cmd_info)
 {
-    sscanf(cmd_info->activityParams.c_str(), "%*d %lf", &bema_command);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %d", &bema_command, &timeout_motions);
     if (bema_command>DEPLOYMENTLIMIT)
         bema_command=DEPLOYMENTLIMIT;
     else if (bema_command<-DEPLOYMENTLIMIT)
@@ -1255,6 +1316,7 @@ void Task::exec_DEPLOYMENT_FRONT(CommandInfo* cmd_info)
     {
         _walking_command_front.write(-OMEGA);
     }
+    setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
         std::cout << "Error getting GNCState" << std::endl;
@@ -1267,7 +1329,7 @@ void Task::exec_DEPLOYMENT_FRONT(CommandInfo* cmd_info)
 
 void Task::exec_DEPLOYMENT_REAR(CommandInfo* cmd_info)
 {
-    sscanf(cmd_info->activityParams.c_str(), "%*d %lf", &bema_command);
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %d", &bema_command, &timeout_motions);
     if (bema_command>DEPLOYMENTLIMIT)
         bema_command=DEPLOYMENTLIMIT;
     else if (bema_command<-DEPLOYMENTLIMIT)
@@ -1282,6 +1344,7 @@ void Task::exec_DEPLOYMENT_REAR(CommandInfo* cmd_info)
     {
         _walking_command_rear.write(-OMEGA);
     }
+    setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
         std::cout << "Error getting GNCState" << std::endl;
@@ -1931,6 +1994,8 @@ void Task::controlRunningActivities()
         else if (timeout == 0)
         {
             std::cout << "Timeout in activity: " << cmd_str << std::endl;
+            abort_activity=true;
+            bool activity_finished = getControlFunction(cmd_str)();
             setTimeout(cmd_str, -1);
             theRobotProcedure->GetRTFromName((char*)(cmd_str).c_str())->post_cond=1; // ToDo when a Timeout is reached a different notification to post_cond=1 should be used.
         }
@@ -2047,9 +2112,8 @@ bool Task::ctrl_HAZCAM_ACQ()
 
 bool Task::ctrl_MAST_PTU_MOVE_TO()
 {
-    if (ptuTargetReached() || abort_activity)
+    if (ptuTargetReached())
     {
-        abort_activity=false;
         if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
             std::cout << "Error getting MastState" << std::endl;
@@ -2082,9 +2146,8 @@ bool Task::ctrl_MAST_PTU_MOVE_TO()
 
 bool Task::ctrl_DEPLOYMENT_REAR()
 {
-    if (bema3TargetReached() || abort_activity)
+    if (bema3TargetReached())
     {
-        abort_activity=false;
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
             std::cout << "Error getting GNCState" << std::endl;
@@ -2117,9 +2180,8 @@ bool Task::ctrl_DEPLOYMENT_REAR()
 
 bool Task::ctrl_DEPLOYMENT_FRONT()
 {
-    if (bema2TargetReached() || abort_activity)
+    if (bema2TargetReached())
     {
-        abort_activity=false;
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
             std::cout << "Error getting GNCState" << std::endl;
@@ -2158,9 +2220,8 @@ bool Task::ctrl_GNC_UPDATE()
 
 bool Task::ctrl_DEPLOYMENT_ALL()
 {
-    if (bema1TargetReached() || abort_activity)
+    if (bema1TargetReached())
     {
-        abort_activity=false;
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
             std::cout << "Error getting GNCState" << std::endl;
@@ -2232,9 +2293,71 @@ bool Task::ctrl_GNC_TRAJECTORY()
     }
 }
 
+bool Task::ctrl_GNC_TRAJECTORY_WISDOM()
+{
+    if (target_reached || abort_activity)
+    {
+        abort_activity=false;
+        target_reached=true;
+        targetPositionX=0.0;
+        targetPositionY=0.0;
+        targetOrientationTheta=0.0;
+        trajectory.clear();
+        _trajectory.write(trajectory);
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+        return true;
+    }
+    else
+    {
+        if (!WisdomAcquiring) // It is traversing
+        {
+            travelledDistance = getTravelledDistance();
+            if ((travelledDistance >= WisdomDistance))
+            {
+                WisdomAcquiring=true;
+                travelledDistance = 0.0;
+                initial_pose = pose;
+                //signal command_arbiter
+            }
+        }
+        else // It is stopped to Acquire
+        {
+            WisdomAcqTime++;
+            if (WisdomAcqTime >= (int)(WisdomTimer/taskPeriod))
+            {
+                WisdomAcquiring=false;
+                WisdomAcqTime=0;
+                //signal command_arbiter
+            }
+        }
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=34;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+        return false;
+    }
+}
+
 bool Task::ctrl_GNC_TURNSPOT_GOTO()
 {
-    if ( angleReached() || abort_activity)
+    if (angleReached() || abort_activity)
     {
         std::cout << "Finish Turnspot" << std::endl;
         abort_activity=false;
