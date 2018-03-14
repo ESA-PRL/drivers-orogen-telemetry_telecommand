@@ -160,14 +160,8 @@ bool Task::startHook()
     tmComm = new CommTmServer( TM_SERVER_PORT_NUMBER, theRobotProcedure, activemqTMSender);
     tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NUMBER );
 
-    theRobotProcedure->insertRT(new RobotTask("ADE_LEFT_Initialise"));      // Simulated
-    theRobotProcedure->insertRT(new RobotTask("ADE_LEFT_conf"));            // Simulated
-    theRobotProcedure->insertRT(new RobotTask("ADE_LEFT_ReleaseHDRM"));     // Simulated
-    theRobotProcedure->insertRT(new RobotTask("ADE_LEFT_SwitchOff"));       // Simulated
-    theRobotProcedure->insertRT(new RobotTask("ADE_RIGHT_Initialise"));     // Simulated
-    theRobotProcedure->insertRT(new RobotTask("ADE_RIGHT_conf"));           // Simulated
-    theRobotProcedure->insertRT(new RobotTask("ADE_RIGHT_ReleaseHDRM"));    // Simulated
-    theRobotProcedure->insertRT(new RobotTask("ADE_RIGHT_SwitchOff"));      // Simulated
+    theRobotProcedure->insertRT(new RobotTask("ADEs_Activate"));            // Simulated
+    theRobotProcedure->insertRT(new RobotTask("ADEs_DeActivate"));          // Simulated
     theRobotProcedure->insertRT(new RobotTask("SA_LEFT_Initialise"));       // Simulated
     theRobotProcedure->insertRT(new RobotTask("SA_LEFT_PrimaryMoveTo"));    // Simulated
     theRobotProcedure->insertRT(new RobotTask("SA_LEFT_SecondaryMoveTo"));  // Simulated
@@ -176,6 +170,8 @@ bool Task::startHook()
     theRobotProcedure->insertRT(new RobotTask("SA_RIGHT_PrimaryMoveTo"));   // Simulated
     theRobotProcedure->insertRT(new RobotTask("SA_RIGHT_SecondaryMoveTo")); // Simulated
     theRobotProcedure->insertRT(new RobotTask("SA_RIGHT_SwitchOff"));       // Simulated
+    theRobotProcedure->insertRT(new RobotTask("Deploy_LEFT_SA"));           // Simulated
+    theRobotProcedure->insertRT(new RobotTask("Deploy_RIGHT_SA"));          // Simulated
     theRobotProcedure->insertRT(new RobotTask("PanCam_Initialise"));        // Simulated
     theRobotProcedure->insertRT(new RobotTask("PanCam_InitWACs"));          // Simulated
     theRobotProcedure->insertRT(new RobotTask("PanCam_SwitchOn"));          // Simulated
@@ -191,11 +187,12 @@ bool Task::startHook()
     theRobotProcedure->insertRT(new RobotTask("FRONT_ACQ"));                // Executed
     theRobotProcedure->insertRT(new RobotTask("REAR_ACQ"));                 // Executed
     theRobotProcedure->insertRT(new RobotTask("ALL_ACQ"));                  // Executed
-    theRobotProcedure->insertRT(new RobotTask("MAST_DEP_Initialise"));      // Simulated
+    theRobotProcedure->insertRT(new RobotTask("MAST_TILT_Initialise"));     // Simulated
     theRobotProcedure->insertRT(new RobotTask("Deploy_Mast"));              // Simulated
-    theRobotProcedure->insertRT(new RobotTask("MAST_PTU_Initialise"));      // Simulated
+    theRobotProcedure->insertRT(new RobotTask("MAST_PAN_Initialise"));      // Simulated
     theRobotProcedure->insertRT(new RobotTask("MAST_PTU_MoveTo"));          // Executed (params: pan, tilt (deg, deg))
-    theRobotProcedure->insertRT(new RobotTask("MAST_SwitchOff"));           // Simulated
+    theRobotProcedure->insertRT(new RobotTask("MAST_TILT_SwitchOff"));      // Simulated
+    theRobotProcedure->insertRT(new RobotTask("MAST_PAN_SwitchOff"));       // Simulated
     theRobotProcedure->insertRT(new RobotTask("GNC_Initialise"));           // Simulated
     theRobotProcedure->insertRT(new RobotTask("GNC_Update"));               // Executed  (params: x,y,z in meters rx,ry,rz in degrees)
     theRobotProcedure->insertRT(new RobotTask("GNCG"));                     // Executed  (params: ActivityPlan file name)
@@ -205,17 +202,22 @@ bool Task::startHook()
     theRobotProcedure->insertRT(new RobotTask("GNC_TURNSPOT_DIRECT"));      // Executed  (params: distance, speed (m, m/hour))
     theRobotProcedure->insertRT(new RobotTask("GNC_TRAJECTORY"));           // Executed  (params: number of waypoints, vector of waypoints(x,y,h))
     theRobotProcedure->insertRT(new RobotTask("GNC_SwitchOff"));            // Simulated
+    theRobotProcedure->insertRT(new RobotTask("GNC_MonitoringOnly"));       // Simulated
     theRobotProcedure->insertRT(new RobotTask("Deployment_All"));           // Executed  (params: deploy angle in deg)
     theRobotProcedure->insertRT(new RobotTask("Deployment_Front"));         // Executed  (params: deploy angle in deg)
     theRobotProcedure->insertRT(new RobotTask("Deployment_Rear"));          // Executed  (params: deploy angle in deg)
     theRobotProcedure->insertRT(new RobotTask("RV_WakeUp"));                // Simulated
     theRobotProcedure->insertRT(new RobotTask("MMS_WaitAbsTime"));          // Simulated
+    theRobotProcedure->insertRT(new RobotTask("MMS_WaitRelTime"));          // Simulated
     theRobotProcedure->insertRT(new RobotTask("RV_Prepare4Comms"));         // Simulated
     theRobotProcedure->insertRT(new RobotTask("RV_PostComms"));             // Simulated
     theRobotProcedure->insertRT(new RobotTask("DHS_Go2Nominal"));           // Simulated
     theRobotProcedure->insertRT(new RobotTask("RV_Prepare4Travel"));        // Simulated
     theRobotProcedure->insertRT(new RobotTask("RV_Prepare4Night"));         // Simulated
     theRobotProcedure->insertRT(new RobotTask("RV_Prepare4Dozing"));        // Simulated
+    theRobotProcedure->insertRT(new RobotTask("GNC_LLO"));                  // Simulated
+    theRobotProcedure->insertRT(new RobotTask("RV_SwitchOffMobility"));     // Simulated
+    theRobotProcedure->insertRT(new RobotTask("Release_Umbilical"));        // Simulated
     theRobotProcedure->insertRT(new RobotTask("ABORT"));                    // Executed
 
     //! ToDo: Check if this fix is still necessary. It might be fixed at ptu_control component configure/start hook.
