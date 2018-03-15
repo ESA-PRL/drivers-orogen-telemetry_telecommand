@@ -54,6 +54,7 @@ namespace telemetry_telecommand
         protected:
 
         double taskPeriod;
+        RoverName rover;
 
         int currentActivity;
         bool abort_activity;
@@ -102,6 +103,7 @@ namespace telemetry_telecommand
         double pan;
         double tilt;
         double panorama_tilt;
+        bool MastDeployed;
 
         // PanCam_WACGetImage parameters
         char cam[80], dummy_param[80];
@@ -233,10 +235,12 @@ namespace telemetry_telecommand
         private:
 
         void exec_GNC_ACKERMANN_GOTO(CommandInfo*);
+        void exec_GNC_LLO(CommandInfo*);
         void exec_GNC_TURNSPOT_GOTO(CommandInfo*);
         void exec_GNC_TRAJECTORY(CommandInfo*);
         void exec_GNC_TRAJECTORY_WISDOM(CommandInfo*);
         void exec_MAST_PTU_MOVE_TO(CommandInfo*);
+        void exec_DEPLOY_MAST(CommandInfo*);
         void exec_PANCAM_PANORAMA(CommandInfo*);
         void exec_TOF_ACQ(CommandInfo*);
         void exec_LIDAR_ACQ(CommandInfo*);
@@ -255,10 +259,12 @@ namespace telemetry_telecommand
         void exec_REAR_ACQ(CommandInfo*);
 
         bool ctrl_GNC_ACKERMANN_GOTO();
+        bool ctrl_GNC_LLO();
         bool ctrl_GNC_TURNSPOT_GOTO();
         bool ctrl_GNC_TRAJECTORY();
         bool ctrl_GNC_TRAJECTORY_WISDOM();
         bool ctrl_MAST_PTU_MOVE_TO();
+        bool ctrl_DEPLOY_MAST();
         bool ctrl_PANCAM_PANORAMA();
         bool ctrl_TOF_ACQ();
         bool ctrl_LIDAR_ACQ();

@@ -34,6 +34,7 @@ task_context "Task" do
     property "initial_pose", "/base/samples/RigidBodyState"
     property "productsFolder", "/std/string"  
     property "rover", "RoverName"  
+    property "isMastDeployed", "bool"  
 
     # An input port, i.e. an object from which the component gets data from
     # other components' outputs
@@ -93,6 +94,13 @@ task_context "Task" do
 
     transformer do
         transform "left_camera_pancam", "lab"
+        transform "right_camera_pancam", "lab"
+        transform "left_camera_navcam", "lab"
+        transform "right_camera_navcam", "lab"
+        transform "left_camera_loccam", "lab"
+        transform "right_camera_loccam", "lab"
+        transform "left_camera_navcam_back", "lab"
+        transform "right_camera_navcam_back", "lab"
         transform "left_camera_bb3", "lab"
         transform "left_camera_bb2", "lab"
         transform "lidar", "lab"

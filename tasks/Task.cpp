@@ -35,7 +35,6 @@ using namespace telemetry_telecommand;
 
 RobotProcedure*  theRobotProcedure;
 ActiveMQTCReceiver* activemqTCReceiver;
-RoverName rover = ExoTeR;
 
 RobotTask* GetRTFromName (char* rtname)
 {
@@ -109,12 +108,18 @@ bool Task::configureHook()
     absolute_pose=initial_3Dpose;
     initial_absolute_heading=initial_3Dpose.getYaw();
 
+    MastDeployed = _isMastDeployed.get();
+    rover = _rover.get();
+
     // map telecommand strings to the corresponding enum and function
     tc_map = {
         { "GNC_ACKERMANN_GOTO",   std::make_tuple( -1, 200, std::bind( &Task::exec_GNC_ACKERMANN_GOTO,   this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_ACKERMANN_GOTO,   this ) ) },
+        { "GNC_LLO",              std::make_tuple( -1, 200, std::bind( &Task::exec_GNC_LLO,              this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_LLO,              this ) ) },
         { "GNC_TURNSPOT_GOTO",    std::make_tuple( -1, 200, std::bind( &Task::exec_GNC_TURNSPOT_GOTO,    this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TURNSPOT_GOTO,    this ) ) },
         { "GNC_TRAJECTORY",       std::make_tuple( -1, 600, std::bind( &Task::exec_GNC_TRAJECTORY,       this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TRAJECTORY,       this ) ) },
+        { "GNC_TRAJECTORY_WISDOM",std::make_tuple( -1, 600, std::bind( &Task::exec_GNC_TRAJECTORY_WISDOM,this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TRAJECTORY_WISDOM,this ) ) },
         { "MAST_PTU_MoveTo",      std::make_tuple( -1, 300, std::bind( &Task::exec_MAST_PTU_MOVE_TO,     this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_PTU_MOVE_TO,     this ) ) },
+        { "Deploy_Mast",          std::make_tuple( -1, 50, std::bind( &Task::exec_DEPLOY_MAST,          this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOY_MAST,          this ) ) },
         { "PANCAM_PANORAMA",      std::make_tuple( -1, 500, std::bind( &Task::exec_PANCAM_PANORAMA,      this, std::placeholders::_1), std::bind( &Task::ctrl_PANCAM_PANORAMA,      this ) ) },
         { "TOF_ACQ",              std::make_tuple( -1, 50, std::bind( &Task::exec_TOF_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_TOF_ACQ,              this ) ) },
         { "LIDAR_ACQ",            std::make_tuple( -1, 50, std::bind( &Task::exec_LIDAR_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_LIDAR_ACQ,            this ) ) },
@@ -157,7 +162,7 @@ bool Task::startHook()
 
     theRobotProcedure = new RobotProcedure("exoter");
     tcComm = new CommTcServer( TC_SERVER_PORT_NUMBER);
-    tmComm = new CommTmServer( TM_SERVER_PORT_NUMBER, theRobotProcedure, activemqTMSender);
+    tmComm = new CommTmServer( TM_SERVER_PORT_NUMBER, theRobotProcedure, activemqTMSender,rover);
     tcReplyServer =  new CommTcReplyServer( TC_REPLY_SERVER_PORT_NUMBER );
 
     theRobotProcedure->insertRT(new RobotTask("ADEs_Activate"));            // Simulated
@@ -197,10 +202,12 @@ bool Task::startHook()
     theRobotProcedure->insertRT(new RobotTask("GNC_Update"));               // Executed  (params: x,y,z in meters rx,ry,rz in degrees)
     theRobotProcedure->insertRT(new RobotTask("GNCG"));                     // Executed  (params: ActivityPlan file name)
     theRobotProcedure->insertRT(new RobotTask("GNC_ACKERMANN_GOTO"));       // Executed  (params: distance, speed (m, m/hour))
+    theRobotProcedure->insertRT(new RobotTask("GNC_LLO"));                  // Executed  (params: distance, speed (m, m/hour))
     theRobotProcedure->insertRT(new RobotTask("GNC_TURNSPOT_GOTO"));        // Executed  (params: distance, speed (m, m/hour))
     theRobotProcedure->insertRT(new RobotTask("GNC_ACKERMANN_DIRECT"));     // Executed  (params: distance, speed (m, m/hour))
     theRobotProcedure->insertRT(new RobotTask("GNC_TURNSPOT_DIRECT"));      // Executed  (params: distance, speed (m, m/hour))
     theRobotProcedure->insertRT(new RobotTask("GNC_TRAJECTORY"));           // Executed  (params: number of waypoints, vector of waypoints(x,y,h))
+    theRobotProcedure->insertRT(new RobotTask("GNC_TRAJECTORY_WISDOM"));    // Executed  (params: number of waypoints, vector of waypoints(x,y,h))
     theRobotProcedure->insertRT(new RobotTask("GNC_SwitchOff"));            // Simulated
     theRobotProcedure->insertRT(new RobotTask("GNC_MonitoringOnly"));       // Simulated
     theRobotProcedure->insertRT(new RobotTask("Deployment_All"));           // Executed  (params: deploy angle in deg)
@@ -215,7 +222,6 @@ bool Task::startHook()
     theRobotProcedure->insertRT(new RobotTask("RV_Prepare4Travel"));        // Simulated
     theRobotProcedure->insertRT(new RobotTask("RV_Prepare4Night"));         // Simulated
     theRobotProcedure->insertRT(new RobotTask("RV_Prepare4Dozing"));        // Simulated
-    theRobotProcedure->insertRT(new RobotTask("GNC_LLO"));                  // Simulated
     theRobotProcedure->insertRT(new RobotTask("RV_SwitchOffMobility"));     // Simulated
     theRobotProcedure->insertRT(new RobotTask("Release_Umbilical"));        // Simulated
     theRobotProcedure->insertRT(new RobotTask("ABORT"));                    // Executed
@@ -224,6 +230,11 @@ bool Task::startHook()
     //! Send ptu and motion commands to activate the joint dispatcher. Otherwise stays waiting.
     pan = 0.0; tilt = 0.0; sendPtuCommand();
     targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
+
+    WisdomDistance = 0.0;
+    WisdomAcqTime = 0;
+    WisdomTimer = 0;
+    WisdomAcquiring = false;
 
     /**
      * Routine to send the bema command to the rover stowed position (beggining of Egress in ExoTeR)
@@ -412,6 +423,165 @@ void Task::sendProduct(messages::Telemetry tm)
                         // TODO adjust send..() signature
     switch (tm.productSource)
     {
+        case messages::Producer::PANCAM:
+            switch (tm.type)
+            {
+                case messages::ProductType::IMAGE:
+                    {
+                        std::cout << "Telemetry: sending image from Pancam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::STEREO_LEFT:
+                    {
+                        std::cout << "Telemetry: sending stereo left image from Pancam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent stereo left image with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::STEREO_RIGHT:
+                    {
+                        std::cout << "Telemetry: sending stereo right image from Pancam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_right_camera_pancam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::DISTANCE:
+                    {
+                        std::cout << "Telemetry: sending distance from Pancam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distPancamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::POINT_CLOUD:
+                    {
+                        std::cout << "Telemetry: sending point cloud from Pancam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcPancamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::DEM:
+                    {
+                        std::cout << "Telemetry: sending dem from Pancam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        std::string filename = tm.productPath;
+                        filename.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_left_camera_pancam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demPancamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                        }
+                        std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                        mtl_filename.replace(mtl_filename.find(".gz"),3,"");
+                        std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                        char command[256];
+                        std::string folder = _productsFolder.value();
+                        sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
+                        system(command);
+                        std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+                        std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+                        auto size2 = buffer2.size();
+                        char* data2 = &buffer2[0];
+                        mtl_filename.replace(0, 21, "");
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+                            std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                        }
+                        break;
+                    }
+            }
+            break;
         case messages::Producer::MAST:
             switch (tm.type)
             {
@@ -638,6 +808,225 @@ void Task::sendProduct(messages::Telemetry tm)
                     }
             }
             break;
+        case messages::Producer::NAVCAM:
+            switch (tm.type)
+            {
+                case messages::ProductType::IMAGE:
+                    {
+                        std::cout << "Telemetry: sending image from Navcam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (MastDeployed)
+                        {
+                            if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
+                            {
+                                getTransform(tf);
+                            }
+                        }
+                        else
+                        {
+                            if (_left_camera_navcam_back2lab.get(tm.timestamp, tf, false))
+                            {
+                                getTransform(tf);
+                            }
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::STEREO_LEFT:
+                    {
+                        std::cout << "Telemetry: sending stereo left image from Navcam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (MastDeployed)
+                        {
+                            if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
+                            {
+                                getTransform(tf);
+                            }
+                        }
+                        else
+                        {
+                            if (_left_camera_navcam_back2lab.get(tm.timestamp, tf, false))
+                            {
+                                getTransform(tf);
+                            }
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::STEREO_RIGHT:
+                    {
+                        std::cout << "Telemetry: sending stereo right image from Navcam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (MastDeployed)
+                        {
+                            if (_right_camera_navcam2lab.get(tm.timestamp, tf, false))
+                            {
+                                getTransform(tf);
+                            }
+                        }
+                        else
+                        {
+                            if (_right_camera_navcam_back2lab.get(tm.timestamp, tf, false))
+                            {
+                                getTransform(tf);
+                            }
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::DISTANCE:
+                    {
+                        std::cout << "Telemetry: sending distance from Loccam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (MastDeployed)
+                        {
+                            if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
+                            {
+                                getTransform(tf);
+                            }
+                        }
+                        else
+                        {
+                            if (_left_camera_navcam_back2lab.get(tm.timestamp, tf, false))
+                            {
+                                getTransform(tf);
+                            }
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distNavcamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::POINT_CLOUD:
+                    {
+                        std::cout << "Telemetry: sending point cloud from Loccam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (MastDeployed)
+                        {
+                            if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
+                            {
+                                getTransform(tf);
+                            }
+                        }
+                        else
+                        {
+                            if (_left_camera_navcam_back2lab.get(tm.timestamp, tf, false))
+                            {
+                                getTransform(tf);
+                            }
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcNavcamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::DEM:
+                    {
+                        std::cout << "Telemetry: sending dem from Loccam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        std::string filename = tm.productPath;
+                        filename.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (MastDeployed)
+                        {
+                            if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
+                            {
+                                getTransform(tf);
+                            }
+                        }
+                        else
+                        {
+                            if (_left_camera_navcam_back2lab.get(tm.timestamp, tf, false))
+                            {
+                                getTransform(tf);
+                            }
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demNavcamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                        }
+                        std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                        mtl_filename.replace(mtl_filename.find(".gz"),3,"");
+                        std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                        char command[256];
+                        std::string folder = _productsFolder.value();
+                        sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
+                        system(command);
+                        std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+                        std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+                        auto size2 = buffer2.size();
+                        char* data2 = &buffer2[0];
+                        mtl_filename.replace(0, 21, "");
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+                            std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                        }
+                        break;
+                    }
+            }
+            break;
         case messages::Producer::FRONT:
             switch (tm.type)
             {
@@ -841,6 +1230,164 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demTofProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                        }
+                        std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
+                        mtl_filename.replace(mtl_filename.find(".gz"),3,"");
+                        std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                        char command[256];
+                        std::string folder = _productsFolder.value();
+                        sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
+                        system(command);
+                        std::ifstream input2(mtl_filename.c_str(), std::ios::binary);
+                        std::vector<char> buffer2((std::istreambuf_iterator<char>(input2)), (std::istreambuf_iterator<char>()));
+                        auto size2 = buffer2.size();
+                        char* data2 = &buffer2[0];
+                        mtl_filename.replace(0, 21, "");
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
+                            std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                        }
+                        break;
+                    }
+            }
+            break;
+        case messages::Producer::LOCCAM:
+            switch (tm.type) {
+                case messages::ProductType::IMAGE:
+                    {
+                        std::cout << "Telemetry: sending image from loccam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_left_camera_loccam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::STEREO_LEFT:
+                    {
+                        std::cout << "Telemetry: sending stereo left image from Loccam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_left_camera_loccam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::STEREO_RIGHT:
+                    {
+                        std::cout << "Telemetry: sending stereo right image from Loccam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_right_camera_loccam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::DISTANCE:
+                    {
+                        std::cout << "Telemetry: sending distance from Loccam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_left_camera_loccam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distLoccamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::POINT_CLOUD:
+                    {
+                        std::cout << "Telemetry: sending point cloud from Loccam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_left_camera_loccam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcLoccamProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::DEM:
+                    {
+                        std::cout << "Telemetry: sending dem from Loccam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        std::string filename = tm.productPath;
+                        filename.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_left_camera_loccam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demLoccamProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
                         }
                         std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
@@ -1135,6 +1682,29 @@ void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
     }
 }
 
+void Task::exec_GNC_LLO(CommandInfo* cmd_info)
+{
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %d", &targetPositionX, &targetSpeed, &timeout_motions); 
+    // Calculate the parameters to be sent as motion commands (2D): Translation (m/s) and Rotation (rad/s)
+    targetDistance = std::abs(targetPositionX);
+    double sign = (targetPositionX < 0 ? -1 : 1);
+    targetTranslation = targetSpeed*sign;
+    targetRotation = 0;
+    travelledDistance = 0.0;
+    initial_pose = pose;
+    std::cout <<  "GNC_LLO Distance:" << targetPositionX << " speed:" << targetSpeed << std::endl;
+    sendMotionCommand();
+    setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
+    if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error getting GNCState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error setting GNCState" << std::endl;
+    }
+}
+
 void Task::exec_GNC_TURNSPOT_GOTO(CommandInfo* cmd_info)
 {
     sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %d", &targetOrientationTheta, &targetRotation, &timeout_motions);
@@ -1240,10 +1810,13 @@ void Task::exec_GNC_TRAJECTORY_WISDOM(CommandInfo* cmd_info)
     trajectory.back().heading = targetOrientationTheta*DEG2RAD;
     token_str = strtok(NULL, " ");
     targetSpeed = atof(token_str);
+    std::cout << "targetSpeed: " << targetSpeed << std::endl;
     token_str = strtok(NULL, " ");
     WisdomDistance = atof(token_str);
+    std::cout << "WisdomDistance: " << WisdomDistance << std::endl;
     token_str = strtok(NULL, " ");
     WisdomTimer = atof(token_str);
+    std::cout << "WisdomTimer: " << WisdomTimer << std::endl;
     token_str = strtok(NULL, " ");
     timeout_motions = atof(token_str);
     travelledDistance = 0.0;
@@ -1273,6 +1846,20 @@ void Task::exec_MAST_PTU_MOVE_TO(CommandInfo* cmd_info)
     tilt = tilt*DEG2RAD;
     sendPtuCommand();
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
+    if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
+    {
+        std::cout << "Error getting MastState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
+    {
+        std::cout << "Error setting MastState" << std::endl;
+    }
+}
+
+void Task::exec_DEPLOY_MAST(CommandInfo* cmd_info)
+{
+    std::cout <<  "DEPLOY_MAST: Mast Deployed." << std::endl;
+    MastDeployed=true;
     if ( theRobotProcedure->GetParameters()->get( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
     {
         std::cout << "Error getting MastState" << std::endl;
@@ -1882,6 +2469,9 @@ void Task::reactToInputPorts()
             LOCOMState[GNC_ROVER_RIGHT_BOGIE_INDEX]=(double)(aux);
             aux = (int)(joint_samples[18].position+0.5);
             LOCOMState[GNC_ROVER_REAR_BOGIE_INDEX]=(double)(aux);
+
+            LOCOMState[GNC_ROVER_LEFT_ROCKER_INDEX]=0.0;
+            LOCOMState[GNC_ROVER_RIGHT_ROCKER_INDEX]=0.0;
         }
         if ( theRobotProcedure->GetParameters()->set( "LOCOMState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) LOCOMState ) == ERROR )
         {
@@ -2202,6 +2792,8 @@ bool Task::ctrl_HAZCAM_ACQ()
     return true;
 }
 
+bool Task::ctrl_DEPLOY_MAST(){return true;}
+
 bool Task::ctrl_MAST_PTU_MOVE_TO()
 {
     if (ptuTargetReached())
@@ -2414,12 +3006,14 @@ bool Task::ctrl_GNC_TRAJECTORY_WISDOM()
         if (!WisdomAcquiring) // It is traversing
         {
             travelledDistance = getTravelledDistance();
-            if ((travelledDistance >= WisdomDistance))
+            if (travelledDistance >= WisdomDistance)
             {
                 WisdomAcquiring=true;
                 travelledDistance = 0.0;
                 initial_pose = pose;
                 //signal command_arbiter
+                double speed = 0.00001; // speed needs to be positive. Speed zero is not accepted by waypoint navigation are correct config parameter
+                _trajectory_speed.write(speed);
             }
         }
         else // It is stopped to Acquire
@@ -2430,6 +3024,7 @@ bool Task::ctrl_GNC_TRAJECTORY_WISDOM()
                 WisdomAcquiring=false;
                 WisdomAcqTime=0;
                 //signal command_arbiter
+                _trajectory_speed.write(targetSpeed);
             }
         }
         if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
@@ -2489,6 +3084,50 @@ bool Task::ctrl_GNC_TURNSPOT_GOTO()
 }
 
 bool Task::ctrl_GNC_ACKERMANN_GOTO()
+{
+    travelledDistance = getTravelledDistance();
+    if ((travelledDistance >= targetDistance) || abort_activity)
+    {
+        abort_activity=false;
+        travelledDistance = 0.0;
+        targetDistance = 0.0;
+        targetTranslation = 0.0;
+        targetRotation = 0.0;
+        sendMotionCommand();
+        targetPositionX=0.0;
+        targetPositionY=0.0;
+        targetSpeed=0.0;
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+        return true;
+    }
+    else
+    {
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=32;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+        return false;
+    }
+}
+
+bool Task::ctrl_GNC_LLO()
 {
     travelledDistance = getTravelledDistance();
     if ((travelledDistance >= targetDistance) || abort_activity)
