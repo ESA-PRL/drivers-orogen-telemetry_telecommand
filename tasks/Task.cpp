@@ -2003,13 +2003,10 @@ void Task::exec_GNC_ACKERMANN_DIRECT(CommandInfo* cmd_info)
     {
         // trajectory following cannot go into reverse
         // TODO don't write speeds but change PID parameters
-        if (targetTranslation >= 0)
+        // Speed needs to be positive. Waypoint navigation does not accept non-positive speeds.
+        if (targetTranslation >= 0) 
         {
             _trajectory_speed.write(targetTranslation);
-        }
-        else
-        {
-            _trajectory_speed.write(0.0);
         }
     }
 }
