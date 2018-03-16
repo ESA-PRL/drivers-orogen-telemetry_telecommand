@@ -111,6 +111,8 @@ bool Task::configureHook()
     MastDeployed = _isMastDeployed.get();
     rover = _rover.get();
 
+    std::function<bool(void)> trueFn = [](){return true;};
+
     // map telecommand strings to the corresponding enum and function
     tc_map = {
         { "GNC_ACKERMANN_GOTO",   std::make_tuple( -1, 200, std::bind( &Task::exec_GNC_ACKERMANN_GOTO,   this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_ACKERMANN_GOTO,   this ) ) },
@@ -130,12 +132,12 @@ bool Task::configureHook()
         { "Deployment_All",       std::make_tuple( -1, 500, std::bind( &Task::exec_DEPLOYMENT_ALL,       this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_ALL,       this ) ) },
         { "Deployment_Front",     std::make_tuple( -1, 500, std::bind( &Task::exec_DEPLOYMENT_FRONT,     this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_FRONT,     this ) ) },
         { "Deployment_Rear",      std::make_tuple( -1, 500, std::bind( &Task::exec_DEPLOYMENT_REAR,      this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_REAR,      this ) ) },
-        { "GNC_Update",           std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_UPDATE,           this ) ) },
-        { "GNC_ACKERMANN_DIRECT", std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_ACKERMANN_DIRECT, this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_ACKERMANN_DIRECT, this ) ) },
-        { "GNC_TURNSPOT_DIRECT",  std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_TURNSPOT_DIRECT,  this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TURNSPOT_DIRECT,  this ) ) },
+        { "GNC_Update",           std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_UPDATE,            this ) ) },
+        { "GNC_ACKERMANN_DIRECT", std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_ACKERMANN_DIRECT, this, std::placeholders::_1), trueFn ) },
+        { "GNC_TURNSPOT_DIRECT",  std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_TURNSPOT_DIRECT,  this, std::placeholders::_1), trueFn ) },
         { "ALL_ACQ",              std::make_tuple( -1, 50, std::bind( &Task::exec_ALL_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_ALL_ACQ,              this ) ) },
-        { "GNCG",                 std::make_tuple( -1, 50, std::bind( &Task::exec_GNCG,                 this, std::placeholders::_1), std::bind( &Task::ctrl_GNCG,                 this ) ) },
-        { "ABORT",                std::make_tuple( -1, 50, std::bind( &Task::exec_ABORT,                this, std::placeholders::_1), std::bind( &Task::ctrl_ABORT,                this ) ) }
+        { "GNCG",                 std::make_tuple( -1, 50, std::bind( &Task::exec_GNCG,                 this, std::placeholders::_1), trueFn ) },
+        { "ABORT",                std::make_tuple( -1, 50, std::bind( &Task::exec_ABORT,                this, std::placeholders::_1), trueFn ) }
     };
 
     return true;
@@ -3200,15 +3202,5 @@ bool Task::ctrl_FRONT_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    return true;
-}
-
-bool Task::ctrl_GNC_ACKERMANN_DIRECT(){return true;} //TODO DELETE ME, direct command needs no controlling
-bool Task::ctrl_GNC_TURNSPOT_DIRECT(){return true;}  //TODO DELETE ME, direct command needs no controlling
-bool Task::ctrl_GNCG() { return true; }
-
-bool Task::ctrl_ABORT()
-{
-    //TODO adjust all timeouts
     return true;
 }
