@@ -98,6 +98,7 @@ namespace telemetry_telecommand
         int WisdomAcqTime;
         int WisdomTimer;
         bool WisdomAcquiring;
+        locomotion_switcher::LocomotionMode locomotion_mode;
 
         // MAST_PTU_MoveTo parameters
         double pan;
@@ -235,6 +236,7 @@ namespace telemetry_telecommand
         private:
 
         void exec_GNC_ACKERMANN_GOTO(CommandInfo*);
+        void exec_GNC_WHEELWALK_GOTO(CommandInfo*);
         void exec_GNC_LLO(CommandInfo*);
         void exec_GNC_TURNSPOT_GOTO(CommandInfo*);
         void exec_GNC_TRAJECTORY(CommandInfo*);
@@ -252,13 +254,17 @@ namespace telemetry_telecommand
         void exec_GNC_TURNSPOT_DIRECT(CommandInfo*);
         void exec_ALL_ACQ(CommandInfo*);
         void exec_HAZCAM_ACQ(CommandInfo*);
+        void exec_LOCCAM_ACQ(CommandInfo*);
         void exec_GNCG(CommandInfo*);
         void exec_ABORT(CommandInfo*);
         void exec_MAST_ACQ(CommandInfo*);
+        void exec_PANCAM_ACQ(CommandInfo*);
         void exec_FRONT_ACQ(CommandInfo*);
+        void exec_NAVCAM_ACQ(CommandInfo*);
         void exec_REAR_ACQ(CommandInfo*);
 
         bool ctrl_GNC_ACKERMANN_GOTO();
+        bool ctrl_GNC_WHEELWALK_GOTO();
         bool ctrl_GNC_LLO();
         bool ctrl_GNC_TURNSPOT_GOTO();
         bool ctrl_GNC_TRAJECTORY();
@@ -274,14 +280,18 @@ namespace telemetry_telecommand
         bool ctrl_GNC_UPDATE();
         bool ctrl_ALL_ACQ();
         bool ctrl_HAZCAM_ACQ();
+        bool ctrl_LOCCAM_ACQ();
         bool ctrl_MAST_ACQ();
+        bool ctrl_PANCAM_ACQ();
+        bool ctrl_NAVCAM_ACQ();
         bool ctrl_FRONT_ACQ();
         bool ctrl_REAR_ACQ();
 
         std::map<const std::string, std::tuple<int, int, std::function<void(CommandInfo*)>, std::function<bool(void)> > > tc_map;
-        int getTimeout(const string cmd_str);
+        int getTimer(const string cmd_str);
+        void setTimer(const string cmd_str, const int val);
         void setTimeout(const string cmd_str, const int val);
-        void initializeTimeout(const string cmd_str);
+        void initializeTimer(const string cmd_str);
         std::function< void(CommandInfo*) > getExecFunction(const string cmd_str);
         std::function< bool(void) > getControlFunction(const string cmd_str);
     };

@@ -14,6 +14,7 @@ import_types_from "telemetry_telecommandTypes.hpp"
 import_types_from "telemetry_telecommand/Messages.hpp"
 import_types_from "telemetry_telecommand/ctrl_state.h"
 import_types_from "temperature/temperatureTypes.hpp"
+import_types_from "locomotion_switcher/locomotion_switcherTypes.hpp"
 
 # If this project uses data types that are defined in other oroGen projects,
 # these projects should be imported there as well.
@@ -85,12 +86,17 @@ task_context "Task" do
     output_port "panorama_tilt", "double"
     output_port "pancam_360_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "mast_trigger", "telemetry_telecommand/messages/Telecommand"
+    output_port "pancam_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "front_trigger", "telemetry_telecommand/messages/Telecommand"
+    output_port "navcam_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "rear_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "haz_front_trigger", "telemetry_telecommand/messages/Telecommand"
+    output_port "loccam_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "tof_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "lidar_trigger", "telemetry_telecommand/messages/Telecommand"
     output_port "telecommand_product", "telemetry_telecommand/messages/Telecommand"
+    output_port("locomotion_mode", "locomotion_switcher/LocomotionMode").doc("Locomotion mode, to be forwarded to locomotion switcher to select the desired locomotion mode in non joystick command")
+
 
     transformer do
         transform "left_camera_pancam", "lab"

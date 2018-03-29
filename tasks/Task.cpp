@@ -14,7 +14,7 @@ const double DEG2RAD = 3.141592/180;
 const double RAD2DEG = 180/3.141592;
 
 const double MIN_ACK_RADIUS = 0.6;
-const double OMEGA = 0.02;                      //in Rad/s the commanded angular velocity to the walking actuators when deploying
+const double OMEGA = 0.04;                      //in Rad/s the commanded angular velocity to the walking actuators when deploying
 
 //const double PANLIMIT_LEFT = 155*DEG2RAD;       //HDPR
 //const double PANLIMIT_RIGHT = -155*DEG2RAD;     //HDPR
@@ -26,12 +26,14 @@ const double PANLIMIT_RIGHT = -235*DEG2RAD;     //ExoTeR
 const double TILTLIMIT_LOW = -90*DEG2RAD;       //ExoTeR
 const double TILTLIMIT_HIGH= 90*DEG2RAD;        //ExoTeR
 
-const double DEPLOYMENTLIMIT = 95;              //ExoTeR
+const double DEPLOYMENTLIMIT = 110;              //ExoTeR
 const double TARGET_WINDOW = 0.01;              //ExoTeR
 const double TARGET_WINDOW2 = 0.01;             //ExoTeR
 const double TARGET_WINDOW3 = 2.0;              //ExoTeR
 
 using namespace telemetry_telecommand;
+using namespace locomotion_switcher;
+
 
 RobotProcedure*  theRobotProcedure;
 ActiveMQTCReceiver* activemqTCReceiver;
@@ -116,23 +118,27 @@ bool Task::configureHook()
     // map telecommand strings to the corresponding enum and function
     tc_map = {
         { "GNC_ACKERMANN_GOTO",   std::make_tuple( -1, 200, std::bind( &Task::exec_GNC_ACKERMANN_GOTO,   this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_ACKERMANN_GOTO,   this ) ) },
+        { "GNC_WHEELWALK_GOTO",   std::make_tuple( -1, 200, std::bind( &Task::exec_GNC_WHEELWALK_GOTO,   this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_WHEELWALK_GOTO,   this ) ) },
         { "GNC_LLO",              std::make_tuple( -1, 200, std::bind( &Task::exec_GNC_LLO,              this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_LLO,              this ) ) },
         { "GNC_TURNSPOT_GOTO",    std::make_tuple( -1, 200, std::bind( &Task::exec_GNC_TURNSPOT_GOTO,    this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TURNSPOT_GOTO,    this ) ) },
         { "GNC_TRAJECTORY",       std::make_tuple( -1, 600, std::bind( &Task::exec_GNC_TRAJECTORY,       this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TRAJECTORY,       this ) ) },
         { "GNC_TRAJECTORY_WISDOM",std::make_tuple( -1, 600, std::bind( &Task::exec_GNC_TRAJECTORY_WISDOM,this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TRAJECTORY_WISDOM,this ) ) },
         { "MAST_PTU_MoveTo",      std::make_tuple( -1, 300, std::bind( &Task::exec_MAST_PTU_MOVE_TO,     this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_PTU_MOVE_TO,     this ) ) },
         { "Deploy_Mast",          std::make_tuple( -1, 50, std::bind( &Task::exec_DEPLOY_MAST,          this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOY_MAST,          this ) ) },
-        { "PANCAM_PANORAMA",      std::make_tuple( -1, 500, std::bind( &Task::exec_PANCAM_PANORAMA,      this, std::placeholders::_1), std::bind( &Task::ctrl_PANCAM_PANORAMA,      this ) ) },
+        { "PANCAM_PANORAMA",      std::make_tuple( -1, 500, std::bind( &Task::exec_PANCAM_PANORAMA,     this, std::placeholders::_1), std::bind( &Task::ctrl_PANCAM_PANORAMA,      this ) ) },
         { "TOF_ACQ",              std::make_tuple( -1, 50, std::bind( &Task::exec_TOF_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_TOF_ACQ,              this ) ) },
         { "LIDAR_ACQ",            std::make_tuple( -1, 50, std::bind( &Task::exec_LIDAR_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_LIDAR_ACQ,            this ) ) },
         { "FRONT_ACQ",            std::make_tuple( -1, 50, std::bind( &Task::exec_FRONT_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_FRONT_ACQ,            this ) ) },
+        { "NAVCAM_ACQ",           std::make_tuple( -1, 50, std::bind( &Task::exec_NAVCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_NAVCAM_ACQ,           this ) ) },
         { "MAST_ACQ",             std::make_tuple( -1, 50, std::bind( &Task::exec_MAST_ACQ,             this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_ACQ,             this ) ) },
+        { "PANCAM_ACQ",           std::make_tuple( -1, 50, std::bind( &Task::exec_PANCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_PANCAM_ACQ,           this ) ) },
         { "REAR_ACQ",             std::make_tuple( -1, 50, std::bind( &Task::exec_REAR_ACQ,             this, std::placeholders::_1), std::bind( &Task::ctrl_REAR_ACQ,             this ) ) },
         { "HAZCAM_ACQ",           std::make_tuple( -1, 50, std::bind( &Task::exec_HAZCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_HAZCAM_ACQ,           this ) ) },
-        { "Deployment_All",       std::make_tuple( -1, 500, std::bind( &Task::exec_DEPLOYMENT_ALL,       this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_ALL,       this ) ) },
-        { "Deployment_Front",     std::make_tuple( -1, 500, std::bind( &Task::exec_DEPLOYMENT_FRONT,     this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_FRONT,     this ) ) },
-        { "Deployment_Rear",      std::make_tuple( -1, 500, std::bind( &Task::exec_DEPLOYMENT_REAR,      this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_REAR,      this ) ) },
-        { "GNC_Update",           std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_UPDATE,            this ) ) },
+        { "LOCCAM_ACQ",           std::make_tuple( -1, 50, std::bind( &Task::exec_LOCCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_LOCCAM_ACQ,           this ) ) },
+        { "Deployment_All",       std::make_tuple( -1, 500, std::bind( &Task::exec_DEPLOYMENT_ALL,      this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_ALL,       this ) ) },
+        { "Deployment_Front",     std::make_tuple( -1, 500, std::bind( &Task::exec_DEPLOYMENT_FRONT,    this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_FRONT,     this ) ) },
+        { "Deployment_Rear",      std::make_tuple( -1, 500, std::bind( &Task::exec_DEPLOYMENT_REAR,     this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_REAR,      this ) ) },
+        { "GNC_Update",           std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_UPDATE,           this ) ) },
         { "GNC_ACKERMANN_DIRECT", std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_ACKERMANN_DIRECT, this, std::placeholders::_1), trueFn ) },
         { "GNC_TURNSPOT_DIRECT",  std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_TURNSPOT_DIRECT,  this, std::placeholders::_1), trueFn ) },
         { "ALL_ACQ",              std::make_tuple( -1, 50, std::bind( &Task::exec_ALL_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_ALL_ACQ,              this ) ) },
@@ -184,13 +190,16 @@ bool Task::startHook()
     theRobotProcedure->insertRT(new RobotTask("PanCam_SwitchOn"));          // Simulated
     theRobotProcedure->insertRT(new RobotTask("PanCam_WACAcqImage"));       // Simulated
     theRobotProcedure->insertRT(new RobotTask("MAST_ACQ"));                 // Executed (params WAC_L, WAC_R)
+    theRobotProcedure->insertRT(new RobotTask("PANCAM_ACQ"));               // Executed (params WAC_L, WAC_R)
     theRobotProcedure->insertRT(new RobotTask("HAZCAM_ACQ"));               // Executed in HDPR (params TBD)
+    theRobotProcedure->insertRT(new RobotTask("LOCCAM_ACQ"));               // Executed in HDPR (params TBD)
     theRobotProcedure->insertRT(new RobotTask("LIDAR_ACQ"));                // Executed in HDPR (params TBD)
     theRobotProcedure->insertRT(new RobotTask("TOF_ACQ"));                  // Executed in HDPR (params TBD)
     theRobotProcedure->insertRT(new RobotTask("PanCam_SwitchOff"));         // Simulated
     theRobotProcedure->insertRT(new RobotTask("PanCam_PIUSwitchOff"));      // Simulated
     theRobotProcedure->insertRT(new RobotTask("PANCAM_PANORAMA"));          // Executed (params tilt angle in deg)
     theRobotProcedure->insertRT(new RobotTask("PanCam_FilterSel"));         // Simulated
+    theRobotProcedure->insertRT(new RobotTask("NAVCAM_ACQ"));               // Executed
     theRobotProcedure->insertRT(new RobotTask("FRONT_ACQ"));                // Executed
     theRobotProcedure->insertRT(new RobotTask("REAR_ACQ"));                 // Executed
     theRobotProcedure->insertRT(new RobotTask("ALL_ACQ"));                  // Executed
@@ -204,6 +213,7 @@ bool Task::startHook()
     theRobotProcedure->insertRT(new RobotTask("GNC_Update"));               // Executed  (params: x,y,z in meters rx,ry,rz in degrees)
     theRobotProcedure->insertRT(new RobotTask("GNCG"));                     // Executed  (params: ActivityPlan file name)
     theRobotProcedure->insertRT(new RobotTask("GNC_ACKERMANN_GOTO"));       // Executed  (params: distance, speed (m, m/hour))
+    theRobotProcedure->insertRT(new RobotTask("GNC_WHEELWALK_GOTO"));       // Executed  (params: distance, speed (m, m/hour))
     theRobotProcedure->insertRT(new RobotTask("GNC_LLO"));                  // Executed  (params: distance, speed (m, m/hour))
     theRobotProcedure->insertRT(new RobotTask("GNC_TURNSPOT_GOTO"));        // Executed  (params: distance, speed (m, m/hour))
     theRobotProcedure->insertRT(new RobotTask("GNC_ACKERMANN_DIRECT"));     // Executed  (params: distance, speed (m, m/hour))
@@ -230,6 +240,7 @@ bool Task::startHook()
 
     //! ToDo: Check if this fix is still necessary. It might be fixed at ptu_control component configure/start hook.
     //! Send ptu and motion commands to activate the joint dispatcher. Otherwise stays waiting.
+    locomotion_mode = LocomotionMode::DRIVING;
     pan = 0.0; tilt = 0.0; sendPtuCommand();
     targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
 
@@ -242,16 +253,14 @@ bool Task::startHook()
      * Routine to send the bema command to the rover stowed position (beggining of Egress in ExoTeR)
      */
     /*
-       currentActivity = DEPLOYMENT_ALL_ACTIVITY;
-       bema_command=-90.0;
-       std::cout <<  "Deployment All: " << bema_command << std::endl;
-       bema_command = bema_command*DEG2RAD;
-       _bema_command.write(-2.0*OMEGA);
-
-       target_reached=false;
-       NofWaypoints=0;
-       */
-
+    bema_command=-90.0;
+    std::cout <<  "Deployment All: " << bema_command << std::endl;
+    bema_command = bema_command*DEG2RAD;
+    locomotion_mode = LocomotionMode::DEPLOYMENT;
+    _locomotion_mode.write(locomotion_mode);
+    _bema_command.write(-2.0*OMEGA);
+    setTimeout("Deployment_All", 600);
+    */
     // target reached is only false when we are in trajectory_following activity
     // without having reached the target
     target_reached = true;
@@ -414,6 +423,7 @@ void Task::sendPtuCommand()
 
 void Task::sendMotionCommand()
 {
+    _locomotion_mode.write(locomotion_mode);
     motion_command.translation = targetTranslation;
     motion_command.rotation = targetRotation;
     _locomotion_command.write(motion_command);
@@ -1672,6 +1682,30 @@ void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
     travelledDistance = 0.0;
     initial_pose = pose;
     std::cout <<  "GNC_ACKERMANN_GOTO X:" << targetPositionX << " Y:" << targetPositionY << " speed:" << targetSpeed << std::endl;
+    locomotion_mode = LocomotionMode::DRIVING;
+    sendMotionCommand();
+    setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
+    if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error getting GNCState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error setting GNCState" << std::endl;
+    }
+}
+
+void Task::exec_GNC_WHEELWALK_GOTO(CommandInfo* cmd_info)
+{
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %d", &targetPositionX, &timeout_motions); 
+    
+    targetDistance = std::abs(targetPositionX);
+    travelledDistance = 0.0;
+    initial_pose = pose;
+    std::cout <<  "GNC_WHEELWALK_GOTO PositionX:" << targetPositionX << std::endl;
+    locomotion_mode = LocomotionMode::WHEEL_WALKING;
+    targetTranslation = targetDistance; // just needs to be non zero
+    targetRotation = 0;                 // any value
     sendMotionCommand();
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
@@ -1695,6 +1729,7 @@ void Task::exec_GNC_LLO(CommandInfo* cmd_info)
     travelledDistance = 0.0;
     initial_pose = pose;
     std::cout <<  "GNC_LLO Distance:" << targetPositionX << " speed:" << targetSpeed << std::endl;
+    locomotion_mode = LocomotionMode::DRIVING;
     sendMotionCommand();
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
@@ -1735,6 +1770,7 @@ void Task::exec_GNC_TURNSPOT_GOTO(CommandInfo* cmd_info)
 
     travelledAngle = 0.0;
     std::cout <<  "GNC_TURNSPOT_GOTO angle:" << targetOrientationTheta << std::endl;
+    locomotion_mode = LocomotionMode::DRIVING;
     sendMotionCommand();
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
@@ -1772,6 +1808,8 @@ void Task::exec_GNC_TRAJECTORY(CommandInfo* cmd_info)
     targetSpeed = atof(token_str);
     token_str = strtok(NULL, " ");
     timeout_motions = atof(token_str);
+    locomotion_mode = LocomotionMode::DRIVING;
+    _locomotion_mode.write(locomotion_mode);
     _trajectory.write(trajectory);
     if (targetSpeed>0)
     {
@@ -1823,6 +1861,8 @@ void Task::exec_GNC_TRAJECTORY_WISDOM(CommandInfo* cmd_info)
     timeout_motions = atof(token_str);
     travelledDistance = 0.0;
     initial_pose = pose;
+    locomotion_mode = LocomotionMode::DRIVING;
+    _locomotion_mode.write(locomotion_mode);
     _trajectory.write(trajectory);
     if (targetSpeed>0)
     {
@@ -1881,13 +1921,22 @@ void Task::exec_DEPLOYMENT_ALL(CommandInfo* cmd_info)
         bema_command=-DEPLOYMENTLIMIT;
     std::cout <<  "Deployment All: " << bema_command << std::endl;
     bema_command = bema_command*DEG2RAD;
+    locomotion_mode = LocomotionMode::DEPLOYMENT;
+    _locomotion_mode.write(locomotion_mode);
     if (bema_command>bema[0].position)
     {
         _bema_command.write(OMEGA);
+        //targetTranslation = OMEGA;
+        //targetRotation = 0.0;
+        //sendMotionCommand();
     }
     else
     {
         _bema_command.write(-OMEGA);
+        //targetTranslation = -OMEGA;
+        //targetRotation = 0.0;
+        //sendMotionCommand();
+
     }
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
@@ -1909,6 +1958,8 @@ void Task::exec_DEPLOYMENT_FRONT(CommandInfo* cmd_info)
         bema_command=-DEPLOYMENTLIMIT;
     std::cout <<  "Deployment Front: " << bema_command << std::endl;
     bema_command = bema_command*DEG2RAD;
+    locomotion_mode = LocomotionMode::DEPLOYMENT;
+    _locomotion_mode.write(locomotion_mode);
     if (bema_command>bema[0].position)
     {
         _walking_command_front.write(OMEGA);
@@ -1937,6 +1988,8 @@ void Task::exec_DEPLOYMENT_REAR(CommandInfo* cmd_info)
         bema_command=-DEPLOYMENTLIMIT;
     std::cout <<  "Deployment Rear: " << bema_command << std::endl;
     bema_command = bema_command*DEG2RAD;
+    locomotion_mode = LocomotionMode::DEPLOYMENT;
+    _locomotion_mode.write(locomotion_mode);
     if (bema_command>bema[4].position)
     {
         _walking_command_rear.write(OMEGA);
@@ -1997,6 +2050,7 @@ void Task::exec_GNC_ACKERMANN_DIRECT(CommandInfo* cmd_info)
     if (target_reached)
     {
         // if not in trajectory following, send complete (direct) command
+        locomotion_mode = LocomotionMode::DRIVING;
         sendMotionCommand();
     }
     else
@@ -2017,6 +2071,7 @@ void Task::exec_GNC_TURNSPOT_DIRECT(CommandInfo* cmd_info)
     // TODO does the targetRotation(Speed) need to be multiplied by DEG2RAD here as well?
     targetTranslation=0.0;
     std::cout <<  "GNC_TURNSPOT_DIRECT Rotation:" << targetRotation << std::endl;
+    locomotion_mode = LocomotionMode::DRIVING;
     sendMotionCommand();
     if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
@@ -2028,6 +2083,36 @@ void Task::exec_GNC_TURNSPOT_DIRECT(CommandInfo* cmd_info)
     }
     deadManSwitch();
 }
+
+void Task::exec_PANCAM_ACQ(CommandInfo* cmd_info)
+{
+    messages::Telecommand tc_out;
+    sscanf(cmd_info->activityParams.c_str(), "%*d %d %d", &productType, &productMode);
+    tc_out.productType = productType;
+    if (productMode>0)
+    {
+        tc_out.productMode=messages::Mode::PERIODIC;
+        tc_out.usecPeriod=productMode*1000;
+    }
+    else
+    {
+        tc_out.productMode = productMode;
+    }
+    std::cout <<  "PanCam Get Image type " << productType << " and mode: " << productMode << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting PanCamState" << std::endl;
+    }
+    PanCamState[PANCAM_ACTION_ID_INDEX]=50;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting PanCamState" << std::endl;
+    }
+    _pancam_trigger.write(tc_out);
+    PAN_STEREO_index++;
+}
+
 
 void Task::exec_MAST_ACQ(CommandInfo* cmd_info)
 {
@@ -2063,6 +2148,35 @@ void Task::exec_GNCG(CommandInfo* cmd_info)
     TaskLib* taskLib = new TaskLib("");
     taskLib->insertSol(std::string("/home/marta/rock/bundles/rover/config/orogen/ActivityPlan.txt"));
     taskLib->ExecuteActivityPlan();
+}
+
+void Task::exec_NAVCAM_ACQ(CommandInfo* cmd_info)
+{
+    messages::Telecommand tc_out;
+    sscanf(cmd_info->activityParams.c_str(), "%*d %d %d", &productType, &productMode);
+    tc_out.productType = productType;
+    if (productMode>0)
+    {
+        tc_out.productMode=messages::Mode::PERIODIC;
+        tc_out.usecPeriod=productMode*1000;
+    }
+    else
+    {
+        tc_out.productMode = productMode;
+    }
+    std::cout <<  "LocCamFront Get Image type " << productType << " and mode: " << productMode << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[PANCAM_ACTION_ID_INDEX]=51;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+    _navcam_trigger.write(tc_out);
+    FLOC_STEREO_index++;
 }
 
 void Task::exec_FRONT_ACQ(CommandInfo* cmd_info)
@@ -2121,6 +2235,36 @@ void Task::exec_REAR_ACQ(CommandInfo* cmd_info)
     }
     _rear_trigger.write(tc_out);
     RLOC_STEREO_index++;
+}
+
+void Task::exec_LOCCAM_ACQ(CommandInfo* cmd_info)
+{
+    messages::Telecommand tc_out;
+    sscanf(cmd_info->activityParams.c_str(), "%*d %d %d", &productType, &productMode);
+    tc_out.productType = productType;
+    if (productMode>0)
+    {
+        tc_out.productMode=messages::Mode::PERIODIC;
+        tc_out.usecPeriod=productMode*1000;
+    }
+    else
+    {
+        tc_out.productMode = productMode;
+    }
+    std::cout <<  "HazCamFront Get Image type " << productType << " and mode: " << productMode << std::endl;
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[PANCAM_ACTION_ID_INDEX]=53;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+
+    _loccam_trigger.write(tc_out);
+    FHAZ_STEREO_index++;
 }
 
 void Task::exec_HAZCAM_ACQ(CommandInfo* cmd_info)
@@ -2559,8 +2703,9 @@ void Task::reactToInputPorts()
         GNCState[GNC_ROVER_POSERX_INDEX]=-(double)((double)aux/10.0);
         aux = (int)(imu.getPitch()*RAD2DEG*10);
         GNCState[GNC_ROVER_POSERY_INDEX]=-(double)((double)aux/10.0);
-        aux = (int)((imu.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG)*10);
-        GNCState[GNC_ROVER_POSERZ_INDEX]=(double)((double)aux/10.0);
+        // commenting out the yaw from the imu reading.
+        //aux = (int)((imu.getYaw()*RAD2DEG + initial_absolute_heading*RAD2DEG)*10);
+        //GNCState[GNC_ROVER_POSERZ_INDEX]=(double)((double)aux/10.0);
         if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
             std::cout << "Error setting GNCState" << std::endl;
@@ -2609,8 +2754,8 @@ void Task::getAndExecTelecommand()
 
         try
         {
-            initializeTimeout(cmd_str);
             getExecFunction(cmd_str)(cmd_info);
+            initializeTimer(cmd_str);
         }
         catch (std::exception& e)
         {
@@ -2627,17 +2772,22 @@ void Task::getAndExecTelecommand()
     }
 }
 
-int Task::getTimeout(const string cmd_str)
+int Task::getTimer(const string cmd_str)
 {
     return std::get<0>(tc_map[cmd_str]);
 }
 
-void Task::setTimeout(const string cmd_str, const int val)
+void Task::setTimer(const string cmd_str, const int val)
 {
     std::get<0>(tc_map[cmd_str]) = val;
 }
 
-void Task::initializeTimeout(const string cmd_str)
+void Task::setTimeout(const string cmd_str, const int val)
+{
+    std::get<1>(tc_map[cmd_str]) = val;
+}
+
+void Task::initializeTimer(const string cmd_str)
 {
     std::get<0>(tc_map[cmd_str]) = std::get<1>(tc_map[cmd_str]);
 }
@@ -2657,27 +2807,27 @@ void Task::controlRunningActivities()
     for (auto &map_entry : tc_map)
     {
         auto cmd_str = map_entry.first;
-        auto timeout = getTimeout(cmd_str);
-        if (timeout > 0)
+        auto timer = getTimer(cmd_str);
+        if (timer > 0)
         {
             bool activity_finished = getControlFunction(cmd_str)();
             if (activity_finished)
             {
-                setTimeout(cmd_str, -1);
+                setTimer(cmd_str, -1);
                 std::cout << "Completed activity: " << cmd_str << std::endl;
                 theRobotProcedure->GetRTFromName((char*)(cmd_str).c_str())->post_cond=1;
             }
             else
             {
-                setTimeout(cmd_str, timeout-1);
+                setTimer(cmd_str, timer-1);
             }
         }
-        else if (timeout == 0)
+        else if (timer == 0)
         {
             std::cout << "Timeout in activity: " << cmd_str << std::endl;
             abort_activity=true;
             bool activity_finished = getControlFunction(cmd_str)();
-            setTimeout(cmd_str, -1);
+            setTimer(cmd_str, -1);
             theRobotProcedure->GetRTFromName((char*)(cmd_str).c_str())->post_cond=1; // ToDo when a Timeout is reached a different notification to post_cond=1 should be used.
         }
     }
@@ -2766,6 +2916,22 @@ bool Task::ctrl_ALL_ACQ()
         std::cout << "Error getting LocCamState" << std::endl;
     }
     PanCamState[LIDAR_INDEX]=LIDAR_index-1;
+    PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
+    }
+    return true;
+}
+
+bool Task::ctrl_LOCCAM_ACQ()
+{
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[HAZCAM_FHAZ_STEREO_INDEX]=FHAZ_STEREO_index-1;
     PanCamState[PANCAM_ACTION_ID_INDEX]=0;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
     if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
@@ -3126,6 +3292,50 @@ bool Task::ctrl_GNC_ACKERMANN_GOTO()
     }
 }
 
+bool Task::ctrl_GNC_WHEELWALK_GOTO()
+{
+    travelledDistance = getTravelledDistance();
+    if ((travelledDistance >= targetDistance) || abort_activity)
+    {
+        abort_activity=false;
+        travelledDistance = 0.0;
+        targetDistance = 0.0;
+        targetTranslation = 0.0;
+        targetRotation = 0.0;
+        sendMotionCommand();
+        targetPositionX=0.0;
+        targetPositionY=0.0;
+        targetSpeed=0.0;
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+        return true;
+    }
+    else
+    {
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=32;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+        return false;
+    }
+}
+
 bool Task::ctrl_GNC_LLO()
 {
     travelledDistance = getTravelledDistance();
@@ -3170,6 +3380,22 @@ bool Task::ctrl_GNC_LLO()
     }
 }
 
+bool Task::ctrl_PANCAM_ACQ()
+{
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting PanCamState" << std::endl;
+    }
+    PanCamState[PANCAM_PAN_STEREO_INDEX]=PAN_STEREO_index-1;
+    PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting PanCamState" << std::endl;
+    }
+    return true;
+}
+
 bool Task::ctrl_MAST_ACQ()
 {
     if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
@@ -3182,6 +3408,22 @@ bool Task::ctrl_MAST_ACQ()
     if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
         std::cout << "Error setting PanCamState" << std::endl;
+    }
+    return true;
+}
+
+bool Task::ctrl_NAVCAM_ACQ()
+{
+    if ( theRobotProcedure->GetParameters()->get( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error getting LocCamState" << std::endl;
+    }
+    PanCamState[LOCCAM_FLOC_STEREO_INDEX]=FLOC_STEREO_index-1;
+    PanCamState[PANCAM_ACTION_ID_INDEX]=0;
+    PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
+    if ( theRobotProcedure->GetParameters()->set( "PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
+    {
+        std::cout << "Error setting LocCamState" << std::endl;
     }
     return true;
 }
