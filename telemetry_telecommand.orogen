@@ -109,6 +109,7 @@ task_context "Task" do
         transform "right_camera_navcam_back", "lab"
         transform "left_camera_bb3", "lab"
         transform "left_camera_bb2", "lab"
+        transform "right_camera_bb2", "lab"
         transform "lidar", "lab"
         transform "tof", "lab"
         #align_port "current_pose"

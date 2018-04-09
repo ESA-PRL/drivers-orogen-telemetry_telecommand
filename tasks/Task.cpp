@@ -456,7 +456,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         }
                         if (activemqTMSender->isConnected)
                         {
-                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamProducerMonitoring, transformation);
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
                         break;
@@ -479,7 +479,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         }
                         if (activemqTMSender->isConnected)
                         {
-                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamProducerMonitoring, transformation);
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent stereo left image with size " << size << std::endl;
                         }
                         break;
@@ -502,7 +502,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         }
                         if (activemqTMSender->isConnected)
                         {
-                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamProducerMonitoring, transformation);
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamRightProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
                         break;
@@ -851,7 +851,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         }
                         if (activemqTMSender->isConnected)
                         {
-                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamProducerMonitoring, transformation);
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
                         break;
@@ -884,7 +884,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         }
                         if (activemqTMSender->isConnected)
                         {
-                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamProducerMonitoring, transformation);
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
                         break;
@@ -917,7 +917,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         }
                         if (activemqTMSender->isConnected)
                         {
-                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamProducerMonitoring, transformation);
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamRightProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
                         break;
@@ -1285,7 +1285,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         }
                         if (activemqTMSender->isConnected)
                         {
-                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamProducerMonitoring, transformation);
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
                         break;
@@ -1308,7 +1308,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         }
                         if (activemqTMSender->isConnected)
                         {
-                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamProducerMonitoring, transformation);
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
                         break;
@@ -1331,7 +1331,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         }
                         if (activemqTMSender->isConnected)
                         {
-                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamProducerMonitoring, transformation);
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamRightProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
                         break;
@@ -1443,8 +1443,54 @@ void Task::sendProduct(messages::Telemetry tm)
                         }
                         if (activemqTMSender->isConnected)
                         {
-                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgHazcamProducerMonitoring, transformation);
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgHazcamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::STEREO_LEFT:
+                    {
+                        std::cout << "Telemetry: sending stereo left from Hazcam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_left_camera_bb22lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgHazcamLeftProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent stereo left with size " << size << std::endl;
+                        }
+                        break;
+                    }
+                case messages::ProductType::STEREO_RIGHT:
+                    {
+                        std::cout << "Telemetry: sending stereo right from Hazcam " << tm.productPath << std::endl;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, "");
+                        Eigen::Affine3d tf;
+                        if (_right_camera_bb22lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgHazcamRightProducerMonitoring, transformation);
+                            std::cout << "Telemetry: sent stereo right with size " << size << std::endl;
                         }
                         break;
                     }
