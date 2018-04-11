@@ -3015,7 +3015,6 @@ bool Task::ctrl_MAST_PTU_MOVE_TO()
         }
         MastState[MAST_ACTION_RET_INDEX]=ACTION_RET_OK;
         MastState[MAST_ACTION_ID_INDEX]=0;
-        MastState[MAST_STATUS_INDEX]=MAST_OPER_MODE_PTU_STNDBY;
         if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
             std::cout << "Error setting MastState" << std::endl;
@@ -3029,7 +3028,6 @@ bool Task::ctrl_MAST_PTU_MOVE_TO()
             std::cout << "Error getting MastState" << std::endl;
         }
         MastState[MAST_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
-        MastState[MAST_STATUS_INDEX]=MAST_OPER_MODE_PTU_MOVING;
         MastState[MAST_ACTION_ID_INDEX]=35;
         if ( theRobotProcedure->GetParameters()->set( "MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
