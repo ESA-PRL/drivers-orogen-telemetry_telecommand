@@ -17,6 +17,7 @@
   <depend package="drivers/telemetry_telecommand" />
   <depend package="drivers/orogen/temperature" />
   <depend package="drivers/orogen/transformer" />
+  <depend package="control/orogen/fdir" />
 <!--  <depend package="image_processing/frame_helper" /> -->
 
 </package>

@@ -2815,6 +2815,19 @@ void Task::reactToInputPorts()
         }
     }
 
+    if (_fdir_state.read(fdir_state) == RTT::NewData)
+    {
+        if ( theRobotProcedure->GetParameters()->get( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_FDIR_STATUS_INDEX]=(double)(fdir_state);
+        if ( theRobotProcedure->GetParameters()->set( "GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+    }
+
     if (_telemetry_product.read(tm_in) == RTT::NewData)
     {
         sendProduct(tm_in);

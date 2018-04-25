@@ -17,6 +17,12 @@
 
 #include "telemetry_telecommand/Messages.hpp"
 #include "temperature/temperatureTypes.hpp"
+#include "fdir/fdirTypes.hpp"
+
+#include "base-logging/Logging.hpp"
+
+#define BASE_LOG_DISABLE
+#define BASE_LOG_NAMESPACE telemetry_telecommand
 
 namespace telemetry_telecommand
 {
@@ -139,6 +145,7 @@ namespace telemetry_telecommand
         base::samples::RigidBodyState absolute_pose;
         double initial_absolute_heading;
         int tj_status;
+        fdir::FdirState fdir_state;
 
         //FIXME Dirty fix to allow executing commands while executing motion commands
         bool isActiveACKERMANNGOTO = false;
