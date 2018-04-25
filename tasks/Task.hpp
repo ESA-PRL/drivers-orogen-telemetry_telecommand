@@ -263,6 +263,8 @@ namespace telemetry_telecommand
         void exec_HAZCAM_ACQ(CommandInfo*);
         void exec_LOCCAM_ACQ(CommandInfo*);
         void exec_GNCG(CommandInfo*);
+        void exec_ACTIVITY_PLAN(CommandInfo*);
+        void exec_GET_NEW_HK_TM(CommandInfo*);
         void exec_ABORT(CommandInfo*);
         void exec_MAST_ACQ(CommandInfo*);
         void exec_PANCAM_ACQ(CommandInfo*);

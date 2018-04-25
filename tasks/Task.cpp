@@ -112,6 +112,7 @@ bool Task::configureHook()
 
     MastDeployed = _isMastDeployed.get();
     rover = _rover.get();
+    std::cout << "Configuring Rover: " << rover <<std::endl;
 
     std::function<bool(void)> trueFn = [](){return true;};
 
@@ -143,6 +144,8 @@ bool Task::configureHook()
         { "GNC_TURNSPOT_DIRECT",  std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_TURNSPOT_DIRECT,  this, std::placeholders::_1), trueFn ) },
         { "ALL_ACQ",              std::make_tuple( -1, 50, std::bind( &Task::exec_ALL_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_ALL_ACQ,              this ) ) },
         { "GNCG",                 std::make_tuple( -1, 50, std::bind( &Task::exec_GNCG,                 this, std::placeholders::_1), trueFn ) },
+        { "Activity_Plan",        std::make_tuple( -1, 50, std::bind( &Task::exec_ACTIVITY_PLAN,        this, std::placeholders::_1), trueFn ) },
+        { "GET_NEW_HK_TM",        std::make_tuple( -1, 50, std::bind( &Task::exec_GET_NEW_HK_TM,        this, std::placeholders::_1), trueFn ) },
         { "ABORT",                std::make_tuple( -1, 50, std::bind( &Task::exec_ABORT,                this, std::placeholders::_1), trueFn ) }
     };
 
@@ -255,7 +258,9 @@ bool Task::startHook()
     theRobotProcedure->insertRT(new RobotTask("ALL_ACQ"));                  // Executed
     theRobotProcedure->insertRT(new RobotTask("MAST_PTU_MoveTo"));          // Executed (params: pan, tilt (deg, deg))
     theRobotProcedure->insertRT(new RobotTask("GNC_Update"));               // Executed  (params: x,y,z in meters rx,ry,rz in degrees)
-    theRobotProcedure->insertRT(new RobotTask("GNCG"));                     // Executed  (params: ActivityPlan file name)
+    theRobotProcedure->insertRT(new RobotTask("GNCG"));                     // Executed  (params: fixed ActivityPlan.txt)
+    theRobotProcedure->insertRT(new RobotTask("Activity_Plan"));            // Executed  (params: ActivityPlan file name)
+    theRobotProcedure->insertRT(new RobotTask("GET_NEW_HK_TM"));            // Executed  (params: )
     theRobotProcedure->insertRT(new RobotTask("GNC_ACKERMANN_GOTO"));       // Executed  (params: distance, speed (m, m/hour))
     theRobotProcedure->insertRT(new RobotTask("GNC_WHEELWALK_GOTO"));       // Executed  (params: distance, speed (m, m/hour))
     theRobotProcedure->insertRT(new RobotTask("GNC_LLO"));                  // Executed  (params: distance, speed (m, m/hour))
@@ -380,7 +385,7 @@ bool Task::bema1TargetReached()
     double window = TARGET_WINDOW2;
     for (int i=0;i<6;i++)
     {
-        std::cout << "bema_command: " << bema_command << " bema[].position: " << bema[i].position << std::endl;
+        LOG_DEBUG_S << "bema_command: " << bema_command << " bema[].position: " << bema[i].position;
         if (std::abs(bema[i].position-bema_command) < window)
         {
             std::cout << "---- >>>> bema1 target reached!" << std::endl;
@@ -1020,7 +1025,7 @@ void Task::sendProduct(messages::Telemetry tm)
                     }
                 case messages::ProductType::DEM:
                     {
-                        std::cout << "Telemetry: sending dem from Loccam " << tm.productPath << std::endl;
+                        std::cout << "Telemetry: sending dem from Navcam " << tm.productPath << std::endl;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -2220,10 +2225,30 @@ void Task::exec_MAST_ACQ(CommandInfo* cmd_info)
     PAN_STEREO_index++;
 }
 
+void Task::exec_GET_NEW_HK_TM(CommandInfo* cmd_info)
+{
+    tmComm->sendStatesTM();
+}
+
+void Task::exec_ACTIVITY_PLAN(CommandInfo* cmd_info)
+{
+    char activityPlan[1024];
+    sscanf(cmd_info->activityParams.c_str(), "%*d %s", activityPlan);
+    std::cout << "Activity Plan Name: " << activityPlan << std::endl;
+    TaskLib* taskLib = new TaskLib("");
+//    taskLib->insertSol(std::string("/home/marta/rock/bundles/rover/config/orogen/ActivityPlan.txt"));
+    taskLib->insertSol(activityPlan);
+    taskLib->ExecuteActivityPlan();
+}
+
 void Task::exec_GNCG(CommandInfo* cmd_info)
 {
+//    char activityPlan[1024];
+//    sscanf(cmd_info->activityParams.c_str(), "%*d %s", activityPlan);
+//    std::cout << "Activity Plan Name: " << activityPlan << std::endl;
     TaskLib* taskLib = new TaskLib("");
     taskLib->insertSol(std::string("/home/marta/rock/bundles/rover/config/orogen/ActivityPlan.txt"));
+//    taskLib->insertSol(activityPlan);
     taskLib->ExecuteActivityPlan();
 }
 
@@ -2647,47 +2672,47 @@ void Task::reactToInputPorts()
             aux = (int)(joint_samples[15].position*RAD2DEG*100);
             LOCOMState[GNC_ROVER_DEPLOYMENT_Q6_INDEX]=(double)((double)aux/100.0);
 
-            aux = (int)(joint_samples[0].raw*100);
-            LOCOMState[GNC_ROVER_WHEEL1_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[1].raw*100);
-            LOCOMState[GNC_ROVER_WHEEL2_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[2].raw*100);
-            LOCOMState[GNC_ROVER_WHEEL3_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[3].raw*100);
-            LOCOMState[GNC_ROVER_WHEEL4_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[4].raw*100);
-            LOCOMState[GNC_ROVER_WHEEL5_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[5].raw*100);
-            LOCOMState[GNC_ROVER_WHEEL6_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[6].raw*100);
-            LOCOMState[GNC_ROVER_STEER1_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[7].raw*100);
-            LOCOMState[GNC_ROVER_STEER2_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[8].raw*100);
-            LOCOMState[GNC_ROVER_STEER5_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[9].raw*100);
-            LOCOMState[GNC_ROVER_STEER6_CURRENT_INDEX]=(double)((double)aux/100.0);
+            aux = (int)(joint_samples[0].raw*10);
+            LOCOMState[GNC_ROVER_WHEEL1_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[1].raw*10);
+            LOCOMState[GNC_ROVER_WHEEL2_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[2].raw*10);
+            LOCOMState[GNC_ROVER_WHEEL3_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[3].raw*10);
+            LOCOMState[GNC_ROVER_WHEEL4_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[4].raw*10);
+            LOCOMState[GNC_ROVER_WHEEL5_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[5].raw*10);
+            LOCOMState[GNC_ROVER_WHEEL6_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[6].raw*10);
+            LOCOMState[GNC_ROVER_STEER1_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[7].raw*10);
+            LOCOMState[GNC_ROVER_STEER2_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[8].raw*10);
+            LOCOMState[GNC_ROVER_STEER5_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[9].raw*10);
+            LOCOMState[GNC_ROVER_STEER6_CURRENT_INDEX]=(double)((double)aux/10.0);
 
-            aux = (int)(joint_samples[10].raw*100);
-            LOCOMState[GNC_ROVER_DEPLOYMENT1_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[11].raw*100);
-            LOCOMState[GNC_ROVER_DEPLOYMENT2_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[12].raw*100);
-            LOCOMState[GNC_ROVER_DEPLOYMENT3_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[13].raw*100);
-            LOCOMState[GNC_ROVER_DEPLOYMENT4_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[14].raw*100);
-            LOCOMState[GNC_ROVER_DEPLOYMENT5_CURRENT_INDEX]=(double)((double)aux/100.0);
-            aux = (int)(joint_samples[15].raw*100);
-            LOCOMState[GNC_ROVER_DEPLOYMENT6_CURRENT_INDEX]=(double)((double)aux/100.0);
+            aux = (int)(joint_samples[10].raw*10);
+            LOCOMState[GNC_ROVER_DEPLOYMENT1_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[11].raw*10);
+            LOCOMState[GNC_ROVER_DEPLOYMENT2_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[12].raw*10);
+            LOCOMState[GNC_ROVER_DEPLOYMENT3_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[13].raw*10);
+            LOCOMState[GNC_ROVER_DEPLOYMENT4_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[14].raw*10);
+            LOCOMState[GNC_ROVER_DEPLOYMENT5_CURRENT_INDEX]=(double)((double)aux/10.0);
+            aux = (int)(joint_samples[15].raw*10);
+            LOCOMState[GNC_ROVER_DEPLOYMENT6_CURRENT_INDEX]=(double)((double)aux/10.0);
 
-            // joint samples for rocker and bogies are already in degrees
+            // joint samples for rocker and bogies are in RAD in ExoTeR
             // rounding values from float to closest integer. This is done by adding 0.5 to the floating value and then casting, i.e truncating, to INT
-            aux = (int)(joint_samples[16].position+0.5);
+            aux = (int)(joint_samples[16].position*RAD2DEG +0.5);
             LOCOMState[GNC_ROVER_LEFT_BOGIE_INDEX]=(double)(aux);
-            aux = (int)(joint_samples[17].position+0.5);
+            aux = (int)(joint_samples[17].position*RAD2DEG +0.5);
             LOCOMState[GNC_ROVER_RIGHT_BOGIE_INDEX]=(double)(aux);
-            aux = (int)(joint_samples[18].position+0.5);
+            aux = (int)(joint_samples[18].position*RAD2DEG +0.5);
             LOCOMState[GNC_ROVER_REAR_BOGIE_INDEX]=(double)(aux);
 
             LOCOMState[GNC_ROVER_LEFT_ROCKER_INDEX]=0.0;
