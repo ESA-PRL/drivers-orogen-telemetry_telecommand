@@ -303,6 +303,12 @@ namespace telemetry_telecommand
         void initializeTimer(const string cmd_str);
         std::function< void(CommandInfo*) > getExecFunction(const string cmd_str);
         std::function< bool(void) > getControlFunction(const string cmd_str);
+
+        bool getProductWaitStatus();
+        void setProductWaitFlags(messages::ProductType);
+
+        bool sent_image_left, sent_image_right, sent_distance_image, sent_point_cloud, sent_dem;
+
     };
 }
 

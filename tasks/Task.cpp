@@ -149,6 +149,13 @@ bool Task::configureHook()
         { "ABORT",                std::make_tuple( -1, 50, std::bind( &Task::exec_ABORT,                this, std::placeholders::_1), trueFn ) }
     };
 
+    // we're not waiting for these products without receiving the command first
+    sent_image_left = true;
+    sent_image_right = true;
+    sent_distance_image = true;
+    sent_point_cloud = true;
+    sent_dem = true;
+
     return true;
 }
 
@@ -495,6 +502,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_LEFT:
@@ -518,6 +526,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent stereo left image with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_RIGHT:
@@ -541,6 +550,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamRightProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_right = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
@@ -564,6 +574,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distPancamProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                         }
+                        sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
@@ -586,6 +597,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcPancamProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
                         }
+                        sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
@@ -626,6 +638,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
                             std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
                         }
+                        sent_dem = true;
                         break;
                     }
             }
@@ -654,6 +667,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgMastProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
@@ -677,6 +691,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distMastProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                         }
+                        sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
@@ -699,6 +714,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcMastProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
                         }
+                        sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
@@ -739,6 +755,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
                             std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
                         }
+                        sent_dem = true;
                         break;
                     }
             }
@@ -767,6 +784,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLidarProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
@@ -790,6 +808,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distLidarProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                         }
+                        sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
@@ -812,6 +831,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcLidarProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
                         }
+                        sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
@@ -852,6 +872,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
                             std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
                         }
+                        sent_dem = true;
                         break;
                     }
             }
@@ -890,6 +911,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_LEFT:
@@ -923,6 +945,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_RIGHT:
@@ -956,6 +979,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamRightProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_right = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
@@ -989,6 +1013,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distNavcamProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                         }
+                        sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
@@ -1021,6 +1046,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcNavcamProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
                         }
+                        sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
@@ -1071,6 +1097,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
                             std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
                         }
+                        sent_dem = true;
                         break;
                     }
             }
@@ -1099,6 +1126,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgFrontProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
@@ -1122,6 +1150,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distFrontProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                         }
+                        sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
@@ -1144,6 +1173,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcFrontProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
                         }
+                        sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
@@ -1184,6 +1214,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
                             std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
                         }
+                        sent_dem = true;
                         break;
                     }
             }
@@ -1212,6 +1243,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgTofProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
@@ -1235,6 +1267,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distTofProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                         }
+                        sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
@@ -1257,6 +1290,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcTofProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
                         }
+                        sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
@@ -1297,6 +1331,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
                             std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
                         }
+                        sent_dem = true;
                         break;
                     }
             }
@@ -1324,6 +1359,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_LEFT:
@@ -1347,6 +1383,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_RIGHT:
@@ -1370,6 +1407,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamRightProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_right = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
@@ -1393,6 +1431,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distLoccamProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                         }
+                        sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
@@ -1415,6 +1454,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcLoccamProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
                         }
+                        sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
@@ -1455,6 +1495,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
                             std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
                         }
+                        sent_dem = true;
                         break;
                     }
             }
@@ -1482,6 +1523,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgHazcamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_LEFT:
@@ -1505,6 +1547,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgHazcamLeftProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent stereo left with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_RIGHT:
@@ -1528,6 +1571,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgHazcamRightProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent stereo right with size " << size << std::endl;
                         }
+                        sent_image_right = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
@@ -1551,6 +1595,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distHazcamProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                         }
+                        sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
@@ -1573,6 +1618,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcHazcamProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
                         }
+                        sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
@@ -1613,6 +1659,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
                             std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
                         }
+                        sent_dem = true;
                         break;
                     }
             }
@@ -1641,6 +1688,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgRearProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent image with size " << size << std::endl;
                         }
+                        sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
@@ -1664,6 +1712,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distRearProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent distance file with size " << size << std::endl;
                         }
+                        sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
@@ -1686,6 +1735,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcRearProducerMonitoring, transformation);
                             std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
                         }
+                        sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
@@ -1726,6 +1776,7 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
                             std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
                         }
+                        sent_dem = true;
                         break;
                     }
             }
@@ -2191,6 +2242,10 @@ void Task::exec_PANCAM_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting PanCamState" << std::endl;
     }
+
+    // set flags to wait for correct products
+    setProductWaitFlags(productType);
+
     _pancam_trigger.write(tc_out);
     PAN_STEREO_index++;
 }
@@ -2221,6 +2276,8 @@ void Task::exec_MAST_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting PanCamState" << std::endl;
     }
+
+    setProductWaitFlags(productType);
     _mast_trigger.write(tc_out);
     PAN_STEREO_index++;
 }
@@ -2277,6 +2334,7 @@ void Task::exec_NAVCAM_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
+    setProductWaitFlags(productType);
     _navcam_trigger.write(tc_out);
     FLOC_STEREO_index++;
 }
@@ -2306,6 +2364,7 @@ void Task::exec_FRONT_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
+    setProductWaitFlags(productType);
     _front_trigger.write(tc_out);
     FLOC_STEREO_index++;
 }
@@ -2335,6 +2394,7 @@ void Task::exec_REAR_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
+    setProductWaitFlags(productType);
     _rear_trigger.write(tc_out);
     RLOC_STEREO_index++;
 }
@@ -2364,7 +2424,7 @@ void Task::exec_LOCCAM_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-
+    setProductWaitFlags(productType);
     _loccam_trigger.write(tc_out);
     FHAZ_STEREO_index++;
 }
@@ -2395,6 +2455,7 @@ void Task::exec_HAZCAM_ACQ(CommandInfo* cmd_info)
         std::cout << "Error setting LocCamState" << std::endl;
     }
 
+    setProductWaitFlags(productType);
     _haz_front_trigger.write(tc_out);
     FHAZ_STEREO_index++;
 }
@@ -2424,6 +2485,8 @@ void Task::exec_TOF_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
+
+    setProductWaitFlags(productType);
     _tof_trigger.write(tc_out);
     TOF_index++;
 }
@@ -2453,12 +2516,16 @@ void Task::exec_LIDAR_ACQ(CommandInfo* cmd_info)
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
+
+    setProductWaitFlags(productType);
     _lidar_trigger.write(tc_out);
     LIDAR_index++;
 }
 
 void Task::exec_ALL_ACQ(CommandInfo* cmd_info)
 {
+    // TODO:
+    // only allow execution of stop all
     messages::Telecommand tc_out;
     sscanf(cmd_info->activityParams.c_str(), "%*d %d %d", &productType, &productMode);
     tc_out.productType = productType;
@@ -2485,14 +2552,19 @@ void Task::exec_ALL_ACQ(CommandInfo* cmd_info)
 
     _lidar_trigger.write(tc_out);
     LIDAR_index++;
+
     _tof_trigger.write(tc_out);
     TOF_index++;
+
     _haz_front_trigger.write(tc_out);
     FHAZ_STEREO_index++;
+
     _rear_trigger.write(tc_out);
     RLOC_STEREO_index++;
+
     _front_trigger.write(tc_out);
     FLOC_STEREO_index++;
+
     _mast_trigger.write(tc_out);
     PAN_STEREO_index++;
 }
@@ -2980,7 +3052,7 @@ bool Task::ctrl_REAR_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    return true;
+    return getProductWaitStatus();
 }
 
 bool Task::ctrl_PANCAM_PANORAMA()
@@ -2993,6 +3065,7 @@ bool Task::ctrl_PANCAM_PANORAMA()
     {
         std::cout << "Error setting PanCamState" << std::endl;
     }
+    //TODO need input port from pancam_panorama to signal "finished"
     return true;
 }
 
@@ -3009,7 +3082,7 @@ bool Task::ctrl_TOF_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    return true;
+    return getProductWaitStatus();
 }
 
 bool Task::ctrl_LIDAR_ACQ()
@@ -3025,7 +3098,7 @@ bool Task::ctrl_LIDAR_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    return true;
+    return getProductWaitStatus();
 }
 
 bool Task::ctrl_ALL_ACQ()
@@ -3057,7 +3130,7 @@ bool Task::ctrl_LOCCAM_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    return true;
+    return getProductWaitStatus();
 }
 
 bool Task::ctrl_HAZCAM_ACQ()
@@ -3073,7 +3146,7 @@ bool Task::ctrl_HAZCAM_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    return true;
+    return getProductWaitStatus();
 }
 
 bool Task::ctrl_DEPLOY_MAST(){return true;}
@@ -3511,7 +3584,7 @@ bool Task::ctrl_PANCAM_ACQ()
     {
         std::cout << "Error setting PanCamState" << std::endl;
     }
-    return true;
+    return getProductWaitStatus();
 }
 
 bool Task::ctrl_MAST_ACQ()
@@ -3527,7 +3600,7 @@ bool Task::ctrl_MAST_ACQ()
     {
         std::cout << "Error setting PanCamState" << std::endl;
     }
-    return true;
+    return getProductWaitStatus();
 }
 
 bool Task::ctrl_NAVCAM_ACQ()
@@ -3543,7 +3616,7 @@ bool Task::ctrl_NAVCAM_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    return true;
+    return getProductWaitStatus();
 }
 
 bool Task::ctrl_FRONT_ACQ()
@@ -3559,5 +3632,39 @@ bool Task::ctrl_FRONT_ACQ()
     {
         std::cout << "Error setting LocCamState" << std::endl;
     }
-    return true;
+    return getProductWaitStatus();
+}
+
+void Task::setProductWaitFlags(messages::ProductType productType)
+{
+    switch (productType)
+    {
+        case messages::ProductType::IMAGE:
+            sent_image_left = false;
+            break;
+        case messages::ProductType::STEREO:
+            sent_image_left = false;
+            sent_image_right = false;
+            break;
+        case messages::ProductType::DISTANCE:
+            sent_image_left = false;
+            sent_distance_image = false;
+            break;
+        case messages::ProductType::POINT_CLOUD:
+            sent_point_cloud = false;
+            break;
+        case messages::ProductType::DEM:
+            sent_image_left = false;
+            sent_dem = false;
+            break;
+    }
+}
+
+bool Task::getProductWaitStatus()
+{
+    return sent_image_left &&
+        sent_image_right &&
+        sent_distance_image &&
+        sent_point_cloud &&
+        sent_dem;
 }
