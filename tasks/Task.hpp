@@ -286,7 +286,6 @@ namespace telemetry_telecommand
         bool ctrl_DEPLOYMENT_ALL();
         bool ctrl_DEPLOYMENT_FRONT();
         bool ctrl_DEPLOYMENT_REAR();
-        bool ctrl_GNC_UPDATE();
         bool ctrl_ALL_ACQ();
         bool ctrl_HAZCAM_ACQ();
         bool ctrl_LOCCAM_ACQ();

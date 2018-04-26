@@ -125,21 +125,21 @@ bool Task::configureHook()
         { "GNC_TRAJECTORY",       std::make_tuple( -1, 600, std::bind( &Task::exec_GNC_TRAJECTORY,       this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TRAJECTORY,       this ) ) },
         { "GNC_TRAJECTORY_WISDOM",std::make_tuple( -1, 600, std::bind( &Task::exec_GNC_TRAJECTORY_WISDOM,this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TRAJECTORY_WISDOM,this ) ) },
         { "MAST_PTU_MoveTo",      std::make_tuple( -1, 300, std::bind( &Task::exec_MAST_PTU_MOVE_TO,     this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_PTU_MOVE_TO,     this ) ) },
-        { "Deploy_Mast",          std::make_tuple( -1, 50, std::bind( &Task::exec_DEPLOY_MAST,          this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOY_MAST,          this ) ) },
+        { "Deploy_Mast",          std::make_tuple( -1, 50, std::bind( &Task::exec_DEPLOY_MAST,          this, std::placeholders::_1), trueFn ) },
         { "PANCAM_PANORAMA",      std::make_tuple( -1, 500, std::bind( &Task::exec_PANCAM_PANORAMA,     this, std::placeholders::_1), std::bind( &Task::ctrl_PANCAM_PANORAMA,      this ) ) },
-        { "TOF_ACQ",              std::make_tuple( -1, 50, std::bind( &Task::exec_TOF_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_TOF_ACQ,              this ) ) },
-        { "LIDAR_ACQ",            std::make_tuple( -1, 50, std::bind( &Task::exec_LIDAR_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_LIDAR_ACQ,            this ) ) },
-        { "FRONT_ACQ",            std::make_tuple( -1, 50, std::bind( &Task::exec_FRONT_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_FRONT_ACQ,            this ) ) },
-        { "NAVCAM_ACQ",           std::make_tuple( -1, 50, std::bind( &Task::exec_NAVCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_NAVCAM_ACQ,           this ) ) },
-        { "MAST_ACQ",             std::make_tuple( -1, 50, std::bind( &Task::exec_MAST_ACQ,             this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_ACQ,             this ) ) },
-        { "PANCAM_ACQ",           std::make_tuple( -1, 50, std::bind( &Task::exec_PANCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_PANCAM_ACQ,           this ) ) },
-        { "REAR_ACQ",             std::make_tuple( -1, 50, std::bind( &Task::exec_REAR_ACQ,             this, std::placeholders::_1), std::bind( &Task::ctrl_REAR_ACQ,             this ) ) },
-        { "HAZCAM_ACQ",           std::make_tuple( -1, 50, std::bind( &Task::exec_HAZCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_HAZCAM_ACQ,           this ) ) },
-        { "LOCCAM_ACQ",           std::make_tuple( -1, 50, std::bind( &Task::exec_LOCCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_LOCCAM_ACQ,           this ) ) },
+        { "TOF_ACQ",              std::make_tuple( -1, 200, std::bind( &Task::exec_TOF_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_TOF_ACQ,              this ) ) },
+        { "LIDAR_ACQ",            std::make_tuple( -1, 200, std::bind( &Task::exec_LIDAR_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_LIDAR_ACQ,            this ) ) },
+        { "FRONT_ACQ",            std::make_tuple( -1, 200, std::bind( &Task::exec_FRONT_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_FRONT_ACQ,            this ) ) },
+        { "NAVCAM_ACQ",           std::make_tuple( -1, 200, std::bind( &Task::exec_NAVCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_NAVCAM_ACQ,           this ) ) },
+        { "MAST_ACQ",             std::make_tuple( -1, 200, std::bind( &Task::exec_MAST_ACQ,             this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_ACQ,             this ) ) },
+        { "PANCAM_ACQ",           std::make_tuple( -1, 200, std::bind( &Task::exec_PANCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_PANCAM_ACQ,           this ) ) },
+        { "REAR_ACQ",             std::make_tuple( -1, 200, std::bind( &Task::exec_REAR_ACQ,             this, std::placeholders::_1), std::bind( &Task::ctrl_REAR_ACQ,             this ) ) },
+        { "HAZCAM_ACQ",           std::make_tuple( -1, 200, std::bind( &Task::exec_HAZCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_HAZCAM_ACQ,           this ) ) },
+        { "LOCCAM_ACQ",           std::make_tuple( -1, 200, std::bind( &Task::exec_LOCCAM_ACQ,           this, std::placeholders::_1), std::bind( &Task::ctrl_LOCCAM_ACQ,           this ) ) },
         { "Deployment_All",       std::make_tuple( -1, 500, std::bind( &Task::exec_DEPLOYMENT_ALL,      this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_ALL,       this ) ) },
         { "Deployment_Front",     std::make_tuple( -1, 500, std::bind( &Task::exec_DEPLOYMENT_FRONT,    this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_FRONT,     this ) ) },
         { "Deployment_Rear",      std::make_tuple( -1, 500, std::bind( &Task::exec_DEPLOYMENT_REAR,     this, std::placeholders::_1), std::bind( &Task::ctrl_DEPLOYMENT_REAR,      this ) ) },
-        { "GNC_Update",           std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_UPDATE,           this ) ) },
+        { "GNC_Update",           std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_UPDATE,           this, std::placeholders::_1), trueFn ) },
         { "GNC_ACKERMANN_DIRECT", std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_ACKERMANN_DIRECT, this, std::placeholders::_1), trueFn ) },
         { "GNC_TURNSPOT_DIRECT",  std::make_tuple( -1, 50, std::bind( &Task::exec_GNC_TURNSPOT_DIRECT,  this, std::placeholders::_1), trueFn ) },
         { "ALL_ACQ",              std::make_tuple( -1, 50, std::bind( &Task::exec_ALL_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_ALL_ACQ,              this ) ) },
@@ -3149,8 +3149,6 @@ bool Task::ctrl_HAZCAM_ACQ()
     return getProductWaitStatus();
 }
 
-bool Task::ctrl_DEPLOY_MAST(){return true;}
-
 bool Task::ctrl_MAST_PTU_MOVE_TO()
 {
     if (ptuTargetReached())
@@ -3249,12 +3247,6 @@ bool Task::ctrl_DEPLOYMENT_FRONT()
         }
         return false;
     }
-}
-
-bool Task::ctrl_GNC_UPDATE()
-{
-    //TODO Add logic to handle an Update command. Probably need to trigger a restart of the odometry related component.
-    return false;
 }
 
 bool Task::ctrl_DEPLOYMENT_ALL()
