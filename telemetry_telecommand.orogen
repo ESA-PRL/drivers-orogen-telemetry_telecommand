@@ -115,7 +115,7 @@ task_context "Task" do
         transform "lidar", "lab"
         transform "tof", "lab"
         #align_port "current_pose"
-        max_latency 0.5
+        max_latency 2.0
     end
 
     # If you want that component's updateHook() to be executed when the "input"
