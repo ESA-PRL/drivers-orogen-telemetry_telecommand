@@ -125,8 +125,8 @@ namespace telemetry_telecommand
         std::string dem_filename;
         std::string dist_filename;
         messages::Telemetry tm_in;
-        messages::ProductType productType;
-        messages::Mode productMode;
+        int productType;
+        int productMode;
 
         // PanCam_WAC_RRGB parameters
         int inPanCamActivity;
