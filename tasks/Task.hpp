@@ -1,6 +1,13 @@
 #ifndef TELEMETRY_TELECOMMAND_TASK_TASK_HPP
 #define TELEMETRY_TELECOMMAND_TASK_TASK_HPP
 
+#include <cmath>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <regex>
+
 #include <base/commands/Motion2D.hpp>
 #include <base/commands/Joints.hpp>
 #include <base/samples/RigidBodyState.hpp>

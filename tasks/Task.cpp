@@ -1,17 +1,11 @@
-#include <cmath>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <iomanip>
-#include <regex>
 #include "Task.hpp"
 
-#define TC_SERVER_PORT_NUMBER 7031
-#define TM_SERVER_PORT_NUMBER 7032
-#define TC_REPLY_SERVER_PORT_NUMBER 7033
+const unsigned int TC_SERVER_PORT_NUMBER = 7031;
+const unsigned int TM_SERVER_PORT_NUMBER = 7032;
+const unsigned int TC_REPLY_SERVER_PORT_NUMBER = 7033;
 
-const double DEG2RAD = 3.141592/180;
-const double RAD2DEG = 180/3.141592;
+const double DEG2RAD = M_PI/180;
+const double RAD2DEG = 180/M_PI;
 
 const double MIN_ACK_RADIUS = 0.6;
 const double OMEGA = 0.04;                      //in Rad/s the commanded angular velocity to the walking actuators when deploying
@@ -33,7 +27,6 @@ const double TARGET_WINDOW3 = 2.0;              //ExoTeR
 
 using namespace telemetry_telecommand;
 using namespace locomotion_switcher;
-
 
 RobotProcedure*  theRobotProcedure;
 ActiveMQTCReceiver* activemqTCReceiver;
@@ -3648,6 +3641,8 @@ void Task::setProductWaitFlags(messages::ProductType productType)
         case messages::ProductType::DEM:
             sent_image_left = false;
             sent_dem = false;
+            break;
+        default:
             break;
     }
 }
