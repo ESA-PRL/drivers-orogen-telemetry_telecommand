@@ -2429,7 +2429,7 @@ void Task::exec_LOCCAM_ACQ(CommandInfo* cmd_info)
     {
         tc_out.productMode = static_cast<messages::Mode>(productMode);
     }
-    std::cout <<  "HazCamFront Get Image type " << productType << " and mode: " << productMode << std::endl;
+    std::cout <<  "LocCam Get Image type " << productType << " and mode: " << productMode << std::endl;
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
         std::cout << "Error getting LocCamState" << std::endl;
