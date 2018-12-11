@@ -28,9 +28,6 @@
 
 #include "base-logging/Logging.hpp"
 
-#define BASE_LOG_DISABLE
-#define BASE_LOG_NAMESPACE telemetry_telecommand
-
 namespace telemetry_telecommand
 {
     enum Telecommand
