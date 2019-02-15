@@ -106,7 +106,7 @@ bool Task::configureHook()
 
     MastDeployed = _isMastDeployed.get();
     rover = _rover.get();
-    std::cout << "Configuring Rover: " << rover <<std::endl;
+    LOG_DEBUG_S << "Configuring Rover: " << rover;
 
     std::function<bool(void)> trueFn = [](){return true;};
 
@@ -293,7 +293,7 @@ bool Task::startHook()
      */
     /*
     bema_command=-90.0;
-    std::cout <<  "Deployment All: " << bema_command << std::endl;
+    LOG_INFO_S <<  "Deployment All: " << bema_command;
     bema_command = bema_command*DEG2RAD;
     locomotion_mode = LocomotionMode::DEPLOYMENT;
     _locomotion_mode.write(locomotion_mode);
@@ -373,7 +373,7 @@ bool Task::ptuTargetReached()
         return false;
     if (std::abs(ptu[1].position-tilt) > window)
         return false;
-    std::cout << "---- >>>> ptu target reached!" << std::endl;
+    LOG_INFO_S << "---- >>>> ptu target reached!";
     return true;
 }
 
@@ -391,7 +391,7 @@ bool Task::bema1TargetReached()
         LOG_DEBUG_S << "bema_command: " << bema_command << " bema[].position: " << bema[i].position;
         if (std::abs(bema[i].position-bema_command) < window)
         {
-            std::cout << "---- >>>> bema1 target reached!" << std::endl;
+            LOG_INFO_S << "---- >>>> bema1 target reached!";
             targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
             return true;
         }
@@ -410,10 +410,10 @@ bool Task::bema2TargetReached()
     double window = TARGET_WINDOW2;
     for (int i=0;i<2;i++)
     {
-        std::cout << "bema_command: " << bema_command << " bema[].position: " << bema[i].position << std::endl;
+        LOG_INFO_S << "bema_command: " << bema_command << " bema[].position: " << bema[i].position;
         if (std::abs(bema[i].position-bema_command) < window)
         {
-            std::cout << "---- >>>> bema2 target reached!" << std::endl;
+             LOG_INFO_S << "---- >>>> bema2 target reached!";
             targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
             return true;
         }
@@ -432,10 +432,10 @@ bool Task::bema3TargetReached()
     double window = TARGET_WINDOW2;
     for (int i=0;i<2;i++)
     {
-        std::cout << "bema_command: " << bema_command << " bema[].position: " << bema[4+i].position << std::endl;
+        LOG_INFO_S << "bema_command: " << bema_command << " bema[].position: " << bema[4+i].position;
         if (std::abs(bema[4+i].position-bema_command) < window)
         {
-            std::cout << "---- >>>> bema3 target reached!" << std::endl;
+            LOG_INFO_S << "---- >>>> bema3 target reached!";
             targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
             return true;
         }
@@ -479,7 +479,7 @@ void Task::sendProduct(messages::Telemetry tm)
             {
                 case messages::ProductType::IMAGE:
                     {
-                        std::cout << "Telemetry: sending image from Pancam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending image from Pancam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -496,14 +496,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamLeftProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_LEFT:
                     {
-                        std::cout << "Telemetry: sending stereo left image from Pancam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending stereo left image from Pancam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -520,14 +520,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamLeftProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent stereo left image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent stereo left image with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_RIGHT:
                     {
-                        std::cout << "Telemetry: sending stereo right image from Pancam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending stereo right image from Pancam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -544,14 +544,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamRightProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_right = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
                     {
-                        std::cout << "Telemetry: sending distance from Pancam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending distance from Pancam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -568,14 +568,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distPancamProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent distance file with size " << size;
                         }
                         sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
                     {
-                        std::cout << "Telemetry: sending point cloud from Pancam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending point cloud from Pancam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -591,14 +591,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcPancamProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent point cloud file with size " << data.size();
                         }
                         sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
                     {
-                        std::cout << "Telemetry: sending dem from Pancam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending dem from Pancam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -615,11 +615,11 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demPancamProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent dem with size " << data.size();
                         }
                         std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
                         mtl_filename.replace(mtl_filename.find(".gz"),3,"");
-                        std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                        LOG_INFO_S << "Telemetry: sending mtl file " << mtl_filename;
                         char command[256];
                         std::string folder = _productsFolder.value();
                         sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
@@ -632,7 +632,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-                            std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                            LOG_INFO_S << "Telemetry: sent mtl file with size " << size2;
                         }
                         sent_dem = true;
                         break;
@@ -646,7 +646,7 @@ void Task::sendProduct(messages::Telemetry tm)
             {
                 case messages::ProductType::IMAGE:
                     {
-                        std::cout << "Telemetry: sending image from Mast " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending image from Mast " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -663,14 +663,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgMastProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
                     {
-                        std::cout << "Telemetry: sending distance from Mast " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending distance from Mast " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -687,14 +687,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distMastProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent distance file with size " << size;
                         }
                         sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
                     {
-                        std::cout << "Telemetry: sending point cloud from Mast " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending point cloud from Mast " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -710,14 +710,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcMastProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent point cloud file with size " << data.size();
                         }
                         sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
                     {
-                        std::cout << "Telemetry: sending dem from Mast " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending dem from Mast " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -734,11 +734,11 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demMastProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent dem with size " << data.size();
                         }
                         std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
                         mtl_filename.replace(mtl_filename.find(".gz"),3,"");
-                        std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                        LOG_INFO_S << "Telemetry: sending mtl file " << mtl_filename;
                         char command[256];
                         std::string folder = _productsFolder.value();
                         sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
@@ -751,7 +751,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-                            std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                            LOG_INFO_S << "Telemetry: sent mtl file with size " << size2;
                         }
                         sent_dem = true;
                         break;
@@ -765,7 +765,7 @@ void Task::sendProduct(messages::Telemetry tm)
             {
                 case messages::ProductType::IMAGE:
                     {
-                        std::cout << "Telemetry: sending image from Lidar " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending image from Lidar " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -782,14 +782,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLidarProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
                     {
-                        std::cout << "Telemetry: sending distance from Lidar " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending distance from Lidar " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -806,14 +806,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distLidarProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent distance file with size " << size;
                         }
                         sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
                     {
-                        std::cout << "Telemetry: sending point cloud from Lidar " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending point cloud from Lidar " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -829,14 +829,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcLidarProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent point cloud file with size " << data.size();
                         }
                         sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
                     {
-                        std::cout << "Telemetry: sending dem from Lidar " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending dem from Lidar " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -853,11 +853,11 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demLidarProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent dem with size " << data.size();
                         }
                         std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
                         mtl_filename.replace(mtl_filename.find(".gz"),3,"");
-                        std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                        LOG_INFO_S << "Telemetry: sending mtl file " << mtl_filename;
                         char command[256];
                         std::string folder = _productsFolder.value();
                         sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
@@ -870,7 +870,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-                            std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                            LOG_INFO_S << "Telemetry: sent mtl file with size " << size2;
                         }
                         sent_dem = true;
                         break;
@@ -884,7 +884,7 @@ void Task::sendProduct(messages::Telemetry tm)
             {
                 case messages::ProductType::IMAGE:
                     {
-                        std::cout << "Telemetry: sending image from Navcam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending image from Navcam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -911,14 +911,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamLeftProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_LEFT:
                     {
-                        std::cout << "Telemetry: sending stereo left image from Navcam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending stereo left image from Navcam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -945,14 +945,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamLeftProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_RIGHT:
                     {
-                        std::cout << "Telemetry: sending stereo right image from Navcam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending stereo right image from Navcam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -979,14 +979,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgNavcamRightProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_right = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
                     {
-                        std::cout << "Telemetry: sending distance from Loccam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending distance from Loccam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1013,14 +1013,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distNavcamProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent distance file with size " << size;
                         }
                         sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
                     {
-                        std::cout << "Telemetry: sending point cloud from Loccam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending point cloud from Loccam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -1046,14 +1046,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcNavcamProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent point cloud file with size " << data.size();
                         }
                         sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
                     {
-                        std::cout << "Telemetry: sending dem from Navcam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending dem from Navcam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -1080,11 +1080,11 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demNavcamProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent dem with size " << data.size();
                         }
                         std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
                         mtl_filename.replace(mtl_filename.find(".gz"),3,"");
-                        std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                        LOG_INFO_S << "Telemetry: sending mtl file " << mtl_filename;
                         char command[256];
                         std::string folder = _productsFolder.value();
                         sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
@@ -1097,7 +1097,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-                            std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                            LOG_INFO_S << "Telemetry: sent mtl file with size " << size2;
                         }
                         sent_dem = true;
                         break;
@@ -1111,7 +1111,7 @@ void Task::sendProduct(messages::Telemetry tm)
             {
                 case messages::ProductType::IMAGE:
                     {
-                        std::cout << "Telemetry: sending image from Front " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending image from Front " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1128,14 +1128,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgFrontProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
                     {
-                        std::cout << "Telemetry: sending distance from Front " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending distance from Front " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1152,14 +1152,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distFrontProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent distance file with size " << size;
                         }
                         sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
                     {
-                        std::cout << "Telemetry: sending point cloud from Front " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending point cloud from Front " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -1175,14 +1175,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcFrontProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent point cloud file with size " << data.size();
                         }
                         sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
                     {
-                        std::cout << "Telemetry: sending dem from Front " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending dem from Front " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -1199,11 +1199,11 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demFrontProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent dem with size " << data.size();
                         }
                         std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
                         mtl_filename.replace(mtl_filename.find(".gz"),3,"");
-                        std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                        LOG_INFO_S << "Telemetry: sending mtl file " << mtl_filename;
                         char command[256];
                         std::string folder = _productsFolder.value();
                         sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
@@ -1216,7 +1216,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-                            std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                            LOG_INFO_S << "Telemetry: sent mtl file with size " << size2;
                         }
                         sent_dem = true;
                         break;
@@ -1230,7 +1230,7 @@ void Task::sendProduct(messages::Telemetry tm)
             {
                 case messages::ProductType::IMAGE:
                     {
-                        std::cout << "Telemetry: sending image from Tof " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending image from Tof " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1247,14 +1247,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgTofProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
                     {
-                        std::cout << "Telemetry: sending distance from Tof " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending distance from Tof " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1271,14 +1271,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distTofProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent distance file with size " << size;
                         }
                         sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
                     {
-                        std::cout << "Telemetry: sending point cloud from Tof " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending point cloud from Tof " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -1294,14 +1294,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcTofProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent point cloud file with size " << data.size();
                         }
                         sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
                     {
-                        std::cout << "Telemetry: sending dem from Tof " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending dem from Tof " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -1318,11 +1318,11 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demTofProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent dem with size " << data.size();
                         }
                         std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
                         mtl_filename.replace(mtl_filename.find(".gz"),3,"");
-                        std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                        LOG_INFO_S << "Telemetry: sending mtl file " << mtl_filename;
                         char command[256];
                         std::string folder = _productsFolder.value();
                         sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
@@ -1335,7 +1335,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-                            std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                            LOG_INFO_S << "Telemetry: sent mtl file with size " << size2;
                         }
                         sent_dem = true;
                         break;
@@ -1349,7 +1349,7 @@ void Task::sendProduct(messages::Telemetry tm)
             {
                 case messages::ProductType::IMAGE:
                     {
-                        std::cout << "Telemetry: sending image from loccam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending image from loccam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1366,14 +1366,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamLeftProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_LEFT:
                     {
-                        std::cout << "Telemetry: sending stereo left image from Loccam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending stereo left image from Loccam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1390,14 +1390,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamLeftProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_RIGHT:
                     {
-                        std::cout << "Telemetry: sending stereo right image from Loccam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending stereo right image from Loccam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1414,14 +1414,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgLoccamRightProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_right = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
                     {
-                        std::cout << "Telemetry: sending distance from Loccam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending distance from Loccam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1438,14 +1438,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distLoccamProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent distance file with size " << size;
                         }
                         sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
                     {
-                        std::cout << "Telemetry: sending point cloud from Loccam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending point cloud from Loccam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -1461,14 +1461,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcLoccamProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent point cloud file with size " << data.size();
                         }
                         sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
                     {
-                        std::cout << "Telemetry: sending dem from Loccam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending dem from Loccam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -1485,11 +1485,11 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demLoccamProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent dem with size " << data.size();
                         }
                         std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
                         mtl_filename.replace(mtl_filename.find(".gz"),3,"");
-                        std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                        LOG_INFO_S << "Telemetry: sending mtl file " << mtl_filename;
                         char command[256];
                         std::string folder = _productsFolder.value();
                         sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
@@ -1502,7 +1502,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-                            std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                            LOG_INFO_S << "Telemetry: sent mtl file with size " << size2;
                         }
                         sent_dem = true;
                         break;
@@ -1516,7 +1516,7 @@ void Task::sendProduct(messages::Telemetry tm)
             {
                 case messages::ProductType::IMAGE:
                     {
-                        std::cout << "Telemetry: sending image from Hazcam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending image from Hazcam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1533,14 +1533,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgHazcamLeftProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_LEFT:
                     {
-                        std::cout << "Telemetry: sending stereo left from Hazcam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending stereo left from Hazcam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1557,14 +1557,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgHazcamLeftProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent stereo left with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent stereo left with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::STEREO_RIGHT:
                     {
-                        std::cout << "Telemetry: sending stereo right from Hazcam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending stereo right from Hazcam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1581,14 +1581,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgHazcamRightProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent stereo right with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent stereo right with size " << size;
                         }
                         sent_image_right = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
                     {
-                        std::cout << "Telemetry: sending distance from Hazcam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending distance from Hazcam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1605,14 +1605,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distHazcamProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent distance file with size " << size;
                         }
                         sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
                     {
-                        std::cout << "Telemetry: sending point cloud from Hazcam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending point cloud from Hazcam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -1628,14 +1628,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcHazcamProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent point cloud file with size " << data.size();
                         }
                         sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
                     {
-                        std::cout << "Telemetry: sending dem from Hazcam " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending dem from Hazcam " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -1652,11 +1652,11 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demHazcamProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent dem with size " << data.size();
                         }
                         std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
                         mtl_filename.replace(mtl_filename.find(".gz"),3,"");
-                        std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                        LOG_INFO_S << "Telemetry: sending mtl file " << mtl_filename;
                         char command[256];
                         std::string folder = _productsFolder.value();
                         sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
@@ -1669,7 +1669,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-                            std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                            LOG_INFO_S << "Telemetry: sent mtl file with size " << size2;
                         }
                         sent_dem = true;
                         break;
@@ -1683,7 +1683,7 @@ void Task::sendProduct(messages::Telemetry tm)
             {
                 case messages::ProductType::IMAGE:
                     {
-                        std::cout << "Telemetry: sending image from Rear " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending image from Rear " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1700,14 +1700,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgRearProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent image with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent image with size " << size;
                         }
                         sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
                     {
-                        std::cout << "Telemetry: sending distance from Rear " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending distance from Rear " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
@@ -1724,14 +1724,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distRearProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent distance file with size " << size << std::endl;
+                            LOG_INFO_S << "Telemetry: sent distance file with size " << size;
                         }
                         sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::POINT_CLOUD:
                     {
-                        std::cout << "Telemetry: sending point cloud from Rear " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending point cloud from Rear " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -1747,14 +1747,14 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(tm.productPath.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->pcRearProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent point cloud file with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent point cloud file with size " << data.size();
                         }
                         sent_point_cloud = true;
                         break;
                     }
                 case messages::ProductType::DEM:
                     {
-                        std::cout << "Telemetry: sending dem from Rear " << tm.productPath << std::endl;
+                        LOG_INFO_S << "Telemetry: sending dem from Rear " << tm.productPath;
                         std::ifstream input(tm.productPath.c_str(), std::ios::binary);
                         std::vector<char> fileContents((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         std::vector<unsigned char> data =  std::vector<unsigned char>(fileContents.begin(), fileContents.end());
@@ -1771,11 +1771,11 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendDEMMessage(filename.c_str(), seq, time, date.c_str(), data.size(), data, activemqTMSender->demRearProducerMonitoring, transformation);
-                            std::cout << "Telemetry: sent dem with size " << data.size() << std::endl;
+                            LOG_INFO_S << "Telemetry: sent dem with size " << data.size();
                         }
                         std::string mtl_filename = tm.productPath.replace(tm.productPath.find("obj"), 3, "mtl");
                         mtl_filename.replace(mtl_filename.find(".gz"),3,"");
-                        std::cout << "Telemetry: sending mtl file " << mtl_filename << std::endl;
+                        LOG_INFO_S << "Telemetry: sending mtl file " << mtl_filename;
                         char command[256];
                         std::string folder = _productsFolder.value();
                         sprintf(command,  "sed -ie 's/%s//g' %s", folder.c_str(), mtl_filename.c_str());
@@ -1788,7 +1788,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         if (activemqTMSender->isConnected)
                         {
                             tmComm->sendFileMessage(mtl_filename.c_str(), size2, (const unsigned char *)data2, activemqTMSender->fileProducerMonitoring);
-                            std::cout << "Telemetry: sent mtl file with size " << size2 << std::endl;
+                            LOG_INFO_S << "Telemetry: sent mtl file with size " << size2;
                         }
                         sent_dem = true;
                         break;
@@ -1805,7 +1805,7 @@ void Task::sendProduct(messages::Telemetry tm)
 void Task::exec_GNC_AUTONAV_GOTO(CommandInfo* cmd_info)
 {
     sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %lf %lf %lf %d %d", &targetPositionX, &targetPositionY, &targetOrientationTheta, &max_obstacle, &max_slope, &cold_start, &timeout_motions);
-    std::cout <<  "GNC_AUTONAV_GOTO X:" << targetPositionX << ", Y:" << targetPositionY << ", Heading: " << targetOrientationTheta << std::endl;
+    LOG_INFO_S <<  "GNC_AUTONAV_GOTO X:" << targetPositionX << ", Y:" << targetPositionY << ", Heading: " << targetOrientationTheta;
     base::Waypoint goal_pose2D(base::Position(targetPositionX,targetPositionY,0),targetOrientationTheta,0,0);
     _autonav_obstacle.write(max_obstacle);
     _autonav_slope.write(max_slope);
@@ -1814,11 +1814,11 @@ void Task::exec_GNC_AUTONAV_GOTO(CommandInfo* cmd_info)
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     }
 }
 
@@ -1838,7 +1838,7 @@ void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
     double radius = (targetPositionX*targetPositionX + targetPositionY*targetPositionY)/(2*targetPositionY);
     if (std::abs(radius)<MIN_ACK_RADIUS)
     {
-        std::cout << "Telemetry_Telecommand: Aborting Ackerman activity. Radius of curvature too small. Try Point Turn first." << std::endl;
+        LOG_INFO_S << "Telemetry_Telecommand: Aborting Ackerman activity. Radius of curvature too small. Try Point Turn first.";
         targetTranslation=0.0;
         targetRotation=0.0;
         setTimeout(cmd_info->activityName, 0);
@@ -1852,17 +1852,17 @@ void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
     }
     travelledDistance = 0.0;
     initial_pose = pose;
-    std::cout <<  "GNC_ACKERMANN_GOTO X:" << targetPositionX << " Y:" << targetPositionY << " speed:" << targetSpeed << std::endl;
+    LOG_INFO_S <<  "GNC_ACKERMANN_GOTO X:" << targetPositionX << " Y:" << targetPositionY << " speed:" << targetSpeed;
     locomotion_mode = LocomotionMode::DRIVING;
     sendMotionCommand();
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     }
 }
 
@@ -1872,7 +1872,7 @@ void Task::exec_GNC_WHEELWALK_GOTO(CommandInfo* cmd_info)
     targetDistance = std::abs(targetPositionX);
     travelledDistance = 0.0;
     initial_pose = pose;
-    std::cout <<  "GNC_WHEELWALK_GOTO PositionX:" << targetPositionX << std::endl;
+    LOG_INFO_S <<  "GNC_WHEELWALK_GOTO PositionX:" << targetPositionX;
     locomotion_mode = LocomotionMode::WHEEL_WALKING;
     targetTranslation = targetDistance; // just needs to be non zero
     targetRotation = 0;                 // any value
@@ -1880,11 +1880,11 @@ void Task::exec_GNC_WHEELWALK_GOTO(CommandInfo* cmd_info)
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     }
 }
 
@@ -1898,17 +1898,17 @@ void Task::exec_GNC_LLO(CommandInfo* cmd_info)
     targetRotation = 0;
     //travelledDistance = 0.0;
     //initial_pose = pose;
-    std::cout <<  "GNC_LLO Distance:" << targetPositionX << " speed:" << targetSpeed << std::endl;
+    LOG_INFO_S <<  "GNC_LLO Distance:" << targetPositionX << " speed:" << targetSpeed;
     locomotion_mode = LocomotionMode::DRIVING;
     sendMotionCommand();
     setTimeout(cmd_info->activityName, (int)(targetDistance/targetSpeed/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     }
 }
 
@@ -1939,17 +1939,17 @@ void Task::exec_GNC_TURNSPOT_GOTO(CommandInfo* cmd_info)
     }
 
     travelledAngle = 0.0;
-    std::cout <<  "GNC_TURNSPOT_GOTO angle:" << targetOrientationTheta << std::endl;
+    LOG_INFO_S <<  "GNC_TURNSPOT_GOTO angle:" << targetOrientationTheta;
     locomotion_mode = LocomotionMode::DRIVING;
     sendMotionCommand();
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     }
 }
 
@@ -1959,20 +1959,20 @@ void Task::exec_GNC_TRAJECTORY(CommandInfo* cmd_info)
     char *token_str = strtok((char *)(cmd_info->activityParams.c_str()), " ");
     token_str = strtok(NULL, " ");
     int NofWaypoints = atoi(token_str);
-    std::cout << "NofWaypoints:" << NofWaypoints << "<-" << std::endl;
+    LOG_INFO_S << "NofWaypoints:" << NofWaypoints << "<-";
     for (int i=0;i<NofWaypoints;i++)
     {
         token_str = strtok(NULL, " ");
         waypoint.position(0)=atof(token_str);
-        std::cout << "Point " << i+1 << " x:" << waypoint.position(0) << std::endl;
+        LOG_INFO_S << "Point " << i+1 << " x:" << waypoint.position(0);
         token_str = strtok(NULL, " ");
         waypoint.position(1)=atof(token_str);
-        std::cout << "Point " << i+1 << " y:" << waypoint.position(1) << std::endl;
+        LOG_INFO_S << "Point " << i+1 << " y:" << waypoint.position(1);
         trajectory.push_back(waypoint);
     }
     token_str = strtok(NULL, " ");
     targetOrientationTheta = atof(token_str);
-    std::cout << "targetOrientationTheta: " << targetOrientationTheta << std::endl;
+    LOG_INFO_S << "targetOrientationTheta: " << targetOrientationTheta;
     trajectory.back().heading = targetOrientationTheta*DEG2RAD;
     token_str = strtok(NULL, " ");
     targetSpeed = atof(token_str);
@@ -1986,14 +1986,14 @@ void Task::exec_GNC_TRAJECTORY(CommandInfo* cmd_info)
         _trajectory_speed.write(targetSpeed);
     }
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
-    std::cout <<  "GNC_TRAJECTORY #ofWaypoints:" << NofWaypoints << std::endl;
+    LOG_INFO_S <<  "GNC_TRAJECTORY #ofWaypoints:" << NofWaypoints;
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     }
 }
 
@@ -2003,30 +2003,30 @@ void Task::exec_GNC_TRAJECTORY_WISDOM(CommandInfo* cmd_info)
     char *token_str = strtok((char *)(cmd_info->activityParams.c_str()), " ");
     token_str = strtok(NULL, " ");
     int NofWaypoints = atoi(token_str);
-    std::cout << "NofWaypoints:" << NofWaypoints << "<-" << std::endl;
+    LOG_INFO_S << "NofWaypoints:" << NofWaypoints << "<-";
     for (int i=0;i<NofWaypoints;i++)
     {
         token_str = strtok(NULL, " ");
         waypoint.position(0)=atof(token_str);
-        std::cout << "Point " << i+1 << " x:" << waypoint.position(0) << std::endl;
+        LOG_INFO_S << "Point " << i+1 << " x:" << waypoint.position(0);
         token_str = strtok(NULL, " ");
         waypoint.position(1)=atof(token_str);
-        std::cout << "Point " << i+1 << " y:" << waypoint.position(1) << std::endl;
+        LOG_INFO_S << "Point " << i+1 << " y:" << waypoint.position(1);
         trajectory.push_back(waypoint);
     }
     token_str = strtok(NULL, " ");
     targetOrientationTheta = atof(token_str);
-    std::cout << "targetOrientationTheta: " << targetOrientationTheta << std::endl;
+    LOG_INFO_S << "targetOrientationTheta: " << targetOrientationTheta;
     trajectory.back().heading = targetOrientationTheta*DEG2RAD;
     token_str = strtok(NULL, " ");
     targetSpeed = atof(token_str);
-    std::cout << "targetSpeed: " << targetSpeed << std::endl;
+    LOG_INFO_S << "targetSpeed: " << targetSpeed;
     token_str = strtok(NULL, " ");
     WisdomDistance = atof(token_str);
-    std::cout << "WisdomDistance: " << WisdomDistance << std::endl;
+    LOG_INFO_S << "WisdomDistance: " << WisdomDistance;
     token_str = strtok(NULL, " ");
     WisdomTimer = atof(token_str);
-    std::cout << "WisdomTimer: " << WisdomTimer << std::endl;
+    LOG_INFO_S << "WisdomTimer: " << WisdomTimer;
     token_str = strtok(NULL, " ");
     timeout_motions = atof(token_str);
     travelledDistance = 0.0;
@@ -2039,46 +2039,46 @@ void Task::exec_GNC_TRAJECTORY_WISDOM(CommandInfo* cmd_info)
         _trajectory_speed.write(targetSpeed);
     }
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
-    std::cout <<  "GNC_TRAJECTORY #ofWaypoints:" << NofWaypoints << std::endl;
+    LOG_INFO_S <<  "GNC_TRAJECTORY #ofWaypoints:" << NofWaypoints;
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     }
 }
 
 void Task::exec_MAST_PTU_MOVE_TO(CommandInfo* cmd_info)
 {
     sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %d", &pan, &tilt, &timeout_motions);
-    std::cout <<  "MAST_PTU_MoveTo pan:" << pan << " tilt:" << tilt << std::endl;
+    LOG_INFO_S <<  "MAST_PTU_MoveTo pan:" << pan << " tilt:" << tilt;
     pan = pan*DEG2RAD;
     tilt = tilt*DEG2RAD;
     sendPtuCommand();
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
     {
-        std::cout << "Error getting MastState" << std::endl;
+        LOG_INFO_S << "Error getting MastState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
     {
-        std::cout << "Error setting MastState" << std::endl;
+        LOG_INFO_S << "Error setting MastState";
     }
 }
 
 void Task::exec_DEPLOY_MAST(CommandInfo* cmd_info)
 {
-    std::cout <<  "DEPLOY_MAST: Mast Deployed." << std::endl;
+    LOG_INFO_S <<  "DEPLOY_MAST: Mast Deployed.";
     MastDeployed=true;
     if ( theRobotProcedure->GetParameters()->get( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
     {
-        std::cout << "Error getting MastState" << std::endl;
+        LOG_INFO_S << "Error getting MastState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
     {
-        std::cout << "Error setting MastState" << std::endl;
+        LOG_INFO_S << "Error setting MastState";
     }
 }
 
@@ -2089,7 +2089,7 @@ void Task::exec_DEPLOYMENT_ALL(CommandInfo* cmd_info)
         bema_command=DEPLOYMENTLIMIT;
     else if (bema_command<-DEPLOYMENTLIMIT)
         bema_command=-DEPLOYMENTLIMIT;
-    std::cout <<  "Deployment All: " << bema_command << std::endl;
+    LOG_INFO_S <<  "Deployment All: " << bema_command;
     bema_command = bema_command*DEG2RAD;
     locomotion_mode = LocomotionMode::DEPLOYMENT;
     _locomotion_mode.write(locomotion_mode);
@@ -2111,11 +2111,11 @@ void Task::exec_DEPLOYMENT_ALL(CommandInfo* cmd_info)
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     }
 }
 
@@ -2126,7 +2126,7 @@ void Task::exec_DEPLOYMENT_FRONT(CommandInfo* cmd_info)
         bema_command=DEPLOYMENTLIMIT;
     else if (bema_command<-DEPLOYMENTLIMIT)
         bema_command=-DEPLOYMENTLIMIT;
-    std::cout <<  "Deployment Front: " << bema_command << std::endl;
+    LOG_INFO_S <<  "Deployment Front: " << bema_command;
     bema_command = bema_command*DEG2RAD;
     locomotion_mode = LocomotionMode::DEPLOYMENT;
     _locomotion_mode.write(locomotion_mode);
@@ -2141,11 +2141,11 @@ void Task::exec_DEPLOYMENT_FRONT(CommandInfo* cmd_info)
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     }
 }
 
@@ -2156,7 +2156,7 @@ void Task::exec_DEPLOYMENT_REAR(CommandInfo* cmd_info)
         bema_command=DEPLOYMENTLIMIT;
     else if (bema_command<-DEPLOYMENTLIMIT)
         bema_command=-DEPLOYMENTLIMIT;
-    std::cout <<  "Deployment Rear: " << bema_command << std::endl;
+    LOG_INFO_S <<  "Deployment Rear: " << bema_command;
     bema_command = bema_command*DEG2RAD;
     locomotion_mode = LocomotionMode::DEPLOYMENT;
     _locomotion_mode.write(locomotion_mode);
@@ -2171,11 +2171,11 @@ void Task::exec_DEPLOYMENT_REAR(CommandInfo* cmd_info)
     setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     }
 }
 
@@ -2198,22 +2198,22 @@ void Task::exec_GNC_UPDATE(CommandInfo* cmd_info)
     _update_pose.write(absolute_pose);
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     }
 }
 
 void Task::exec_GNC_ACKERMANN_DIRECT(CommandInfo* cmd_info)
 {
     sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf", &targetTranslation, &targetRotation);
-    std::cout <<  "GNC_ACKERMANN_DIRECT Translation:" << targetTranslation << " Rotation:" << targetRotation << std::endl;
+    LOG_INFO_S <<  "GNC_ACKERMANN_DIRECT Translation:" << targetTranslation << " Rotation:" << targetRotation;
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     deadManSwitch();
 
     // check if we are in direct or in path following mode
@@ -2240,16 +2240,16 @@ void Task::exec_GNC_TURNSPOT_DIRECT(CommandInfo* cmd_info)
     sscanf(cmd_info->activityParams.c_str(), "%*d %lf", &targetRotation);
     // TODO does the targetRotation(Speed) need to be multiplied by DEG2RAD here as well?
     targetTranslation=0.0;
-    std::cout <<  "GNC_TURNSPOT_DIRECT Rotation:" << targetRotation << std::endl;
+    LOG_INFO_S <<  "GNC_TURNSPOT_DIRECT Rotation:" << targetRotation;
     locomotion_mode = LocomotionMode::DRIVING;
     sendMotionCommand();
     if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error getting GNCState" << std::endl;
+        LOG_INFO_S << "Error getting GNCState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
     {
-        std::cout << "Error setting GNCState" << std::endl;
+        LOG_INFO_S << "Error setting GNCState";
     }
     deadManSwitch();
 }
@@ -2268,16 +2268,16 @@ void Task::exec_PANCAM_ACQ(CommandInfo* cmd_info)
     {
         tc_out.productMode = static_cast<messages::Mode>(productMode);
     }
-    std::cout <<  "PanCam Get Image type " << productType << " and mode: " << productMode << std::endl;
+    LOG_INFO_S <<  "PanCam Get Image type " << productType << " and mode: " << productMode;
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting PanCamState" << std::endl;
+        LOG_INFO_S << "Error getting PanCamState";
     }
     PanCamState[PANCAM_ACTION_ID_INDEX]=50;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting PanCamState" << std::endl;
+        LOG_INFO_S << "Error setting PanCamState";
     }
 
     // set flags to wait for correct products
@@ -2302,16 +2302,16 @@ void Task::exec_MAST_ACQ(CommandInfo* cmd_info)
     {
         tc_out.productMode = static_cast<messages::Mode>(productMode);
     }
-    std::cout <<  "PanCam Get Image type " << productType << " and mode: " << productMode << std::endl;
+    LOG_INFO_S <<  "PanCam Get Image type " << productType << " and mode: " << productMode;
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting PanCamState" << std::endl;
+        LOG_INFO_S << "Error getting PanCamState";
     }
     PanCamState[PANCAM_ACTION_ID_INDEX]=50;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting PanCamState" << std::endl;
+        LOG_INFO_S << "Error setting PanCamState";
     }
 
     setProductWaitFlags(static_cast<messages::ProductType>(productType));
@@ -2328,7 +2328,7 @@ void Task::exec_ACTIVITY_PLAN(CommandInfo* cmd_info)
 {
     char activityPlan[1024];
     sscanf(cmd_info->activityParams.c_str(), "%*d %s", activityPlan);
-    std::cout << "Activity Plan Name: " << activityPlan << std::endl;
+    LOG_INFO_S << "Activity Plan Name: " << activityPlan;
     TaskLib* taskLib = new TaskLib("");
 //    taskLib->insertSol(std::string("/home/marta/rock/bundles/rover/config/orogen/ActivityPlan.txt"));
     taskLib->insertSol(activityPlan);
@@ -2339,7 +2339,7 @@ void Task::exec_GNCG(CommandInfo* cmd_info)
 {
 //    char activityPlan[1024];
 //    sscanf(cmd_info->activityParams.c_str(), "%*d %s", activityPlan);
-//    std::cout << "Activity Plan Name: " << activityPlan << std::endl;
+//    LOG_INFO_S << "Activity Plan Name: " << activityPlan;
     TaskLib* taskLib = new TaskLib("");
     taskLib->insertSol(std::string("/home/marta/rock/bundles/rover/config/orogen/ActivityPlan.txt"));
 //    taskLib->insertSol(activityPlan);
@@ -2360,16 +2360,16 @@ void Task::exec_NAVCAM_ACQ(CommandInfo* cmd_info)
     {
         tc_out.productMode = static_cast<messages::Mode>(productMode);
     }
-    std::cout <<  "LocCamFront Get Image type " << productType << " and mode: " << productMode << std::endl;
+    LOG_INFO_S <<  "LocCamFront Get Image type " << productType << " and mode: " << productMode;
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[PANCAM_ACTION_ID_INDEX]=51;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
     setProductWaitFlags(static_cast<messages::ProductType>(productType));
     _navcam_trigger.write(tc_out);
@@ -2390,16 +2390,16 @@ void Task::exec_FRONT_ACQ(CommandInfo* cmd_info)
     {
         tc_out.productMode = static_cast<messages::Mode>(productMode);
     }
-    std::cout <<  "LocCamFront Get Image type " << productType << " and mode: " << productMode << std::endl;
+    LOG_INFO_S <<  "LocCamFront Get Image type " << productType << " and mode: " << productMode;
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[PANCAM_ACTION_ID_INDEX]=51;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
     setProductWaitFlags(static_cast<messages::ProductType>(productType));
     _front_trigger.write(tc_out);
@@ -2420,16 +2420,16 @@ void Task::exec_REAR_ACQ(CommandInfo* cmd_info)
     {
         tc_out.productMode = static_cast<messages::Mode>(productMode);
     }
-    std::cout <<  "LocCamRear Get Image type " << productType << " and mode: " << productMode << std::endl;
+    LOG_INFO_S <<  "LocCamRear Get Image type " << productType << " and mode: " << productMode;
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[PANCAM_ACTION_ID_INDEX]=52;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
     setProductWaitFlags(static_cast<messages::ProductType>(productType));
     _rear_trigger.write(tc_out);
@@ -2450,16 +2450,16 @@ void Task::exec_LOCCAM_ACQ(CommandInfo* cmd_info)
     {
         tc_out.productMode = static_cast<messages::Mode>(productMode);
     }
-    std::cout <<  "LocCam Get Image type " << productType << " and mode: " << productMode << std::endl;
+    LOG_INFO_S <<  "LocCam Get Image type " << productType << " and mode: " << productMode;
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[PANCAM_ACTION_ID_INDEX]=53;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
     setProductWaitFlags(static_cast<messages::ProductType>(productType));
     _loccam_trigger.write(tc_out);
@@ -2480,16 +2480,16 @@ void Task::exec_HAZCAM_ACQ(CommandInfo* cmd_info)
     {
         tc_out.productMode = static_cast<messages::Mode>(productMode);
     }
-    std::cout <<  "HazCamFront Get Image type " << productType << " and mode: " << productMode << std::endl;
+    LOG_INFO_S <<  "HazCamFront Get Image type " << productType << " and mode: " << productMode;
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[PANCAM_ACTION_ID_INDEX]=53;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
 
     setProductWaitFlags(static_cast<messages::ProductType>(productType));
@@ -2511,16 +2511,16 @@ void Task::exec_TOF_ACQ(CommandInfo* cmd_info)
     {
         tc_out.productMode = static_cast<messages::Mode>(productMode);
     }
-    std::cout <<  "Tof Get Image type " << productType << " and mode: " << productMode << std::endl;
+    LOG_INFO_S <<  "Tof Get Image type " << productType << " and mode: " << productMode;
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[PANCAM_ACTION_ID_INDEX]=53;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
 
     setProductWaitFlags(static_cast<messages::ProductType>(productType));
@@ -2542,16 +2542,16 @@ void Task::exec_LIDAR_ACQ(CommandInfo* cmd_info)
     {
         tc_out.productMode = static_cast<messages::Mode>(productMode);
     }
-    std::cout <<  "Lidar Get Image type " << productType << " and mode: " << productMode << std::endl;
+    LOG_INFO_S <<  "Lidar Get Image type " << productType << " and mode: " << productMode;
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[PANCAM_ACTION_ID_INDEX]=53;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
 
     setProductWaitFlags(static_cast<messages::ProductType>(productType));
@@ -2575,16 +2575,16 @@ void Task::exec_ALL_ACQ(CommandInfo* cmd_info)
     {
         tc_out.productMode = static_cast<messages::Mode>(productMode);
     }
-    std::cout <<  "All sensors Get Image type " << productType << " and mode: " << productMode << std::endl;
+    LOG_INFO_S <<  "All sensors Get Image type " << productType << " and mode: " << productMode;
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[PANCAM_ACTION_ID_INDEX]=53;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
 
     _lidar_trigger.write(tc_out);
@@ -2612,14 +2612,14 @@ void Task::exec_PANCAM_PANORAMA(CommandInfo* cmd_info)
     sscanf(cmd_info->activityParams.c_str(), "%*d %lf", &panorama_tilt);
     tc_out.productType = messages::ProductType::DEM;
     tc_out.productMode = messages::Mode::CONTINUOUS;
-    std::cout <<  "PanCam Panorama at tilt: " << panorama_tilt << std::endl;
+    LOG_INFO_S <<  "PanCam Panorama at tilt: " << panorama_tilt;
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting PanCamState" << std::endl;
+        LOG_INFO_S << "Error getting PanCamState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting PanCamState" << std::endl;
+        LOG_INFO_S << "Error setting PanCamState";
     }
     _pancam_360_trigger.write(tc_out);
     _panorama_tilt.write(panorama_tilt);
@@ -2628,7 +2628,7 @@ void Task::exec_PANCAM_PANORAMA(CommandInfo* cmd_info)
 void Task::exec_ABORT(CommandInfo* cmd_info)
 {
     abort_activity=true;
-    std::cout << "Abort message received!" << std::endl;
+    LOG_INFO_S << "Abort message received!";
 }
 
 void Task::reactToInputPorts()
@@ -2638,7 +2638,7 @@ void Task::reactToInputPorts()
         //! new TM packet with updated pose estimation
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         int aux = (int)((cos(initial_absolute_heading)*pose.position[0] - sin(initial_absolute_heading)*pose.position[1] + initial_3Dpose.position[0])*100);
         GNCState[GNC_ROVER_POSEX_INDEX]=(double)((double)aux/100.0);
@@ -2657,7 +2657,7 @@ void Task::reactToInputPorts()
         GNCState[GNC_ROVER_POSERZ_INDEX]=(double)((double)aux/10.0);
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
     }
     if (_current_bema.read(bema) == RTT::NewData)
@@ -2665,7 +2665,7 @@ void Task::reactToInputPorts()
         //! new TM packet with updated bema estimation
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         int aux = (int)(bema[0].position*RAD2DEG*100);
         GNCState[GNC_ROVER_DEPLOYMENT_Q1_INDEX]=(double)((double)aux/100.0);
@@ -2681,7 +2681,7 @@ void Task::reactToInputPorts()
         GNCState[GNC_ROVER_DEPLOYMENT_Q6_INDEX]=(double)((double)aux/100.0);
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
     }
     if (_joint_samples.read(joint_samples) == RTT::NewData)
@@ -2689,7 +2689,7 @@ void Task::reactToInputPorts()
         //! new TM packet with updated joint samples
         if ( theRobotProcedure->GetParameters()->get( (char*)"LOCOMState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) LOCOMState ) == ERROR )
         {
-            std::cout << "Error getting LOCOMState" << std::endl;
+            LOG_INFO_S << "Error getting LOCOMState";
         }
         if (rover == HDPR)
         {
@@ -2829,7 +2829,7 @@ void Task::reactToInputPorts()
         }
         if ( theRobotProcedure->GetParameters()->set( (char*)"LOCOMState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) LOCOMState ) == ERROR )
         {
-            std::cout << "Error setting LOCOMState" << std::endl;
+            LOG_INFO_S << "Error setting LOCOMState";
         }
     }
     if (_motor_temperatures.read(motor_temperatures) == RTT::NewData)
@@ -2837,7 +2837,7 @@ void Task::reactToInputPorts()
         //! new TM packet with updated motor temperature values
         if ( theRobotProcedure->GetParameters()->get( (char*)"LOCOMState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) LOCOMState ) == ERROR )
         {
-            std::cout << "Error getting LOCOMState" << std::endl;
+            LOG_INFO_S << "Error getting LOCOMState";
         }
         int aux = (int)(motor_temperatures.temp[0].getCelsius()*10);
         LOCOMState[GNC_ROVER_WHEEL1_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
@@ -2853,7 +2853,7 @@ void Task::reactToInputPorts()
         LOCOMState[GNC_ROVER_WHEEL6_TEMPERATURE_INDEX]=(double)((double)aux/10.0);
         if ( theRobotProcedure->GetParameters()->set( (char*)"LOCOMState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) LOCOMState ) == ERROR )
         {
-            std::cout << "Error setting LOCOMState" << std::endl;
+            LOG_INFO_S << "Error setting LOCOMState";
         }
     }
     if (_current_ptu.read(ptu) == RTT::NewData)
@@ -2861,7 +2861,7 @@ void Task::reactToInputPorts()
         //! new TM packet with updated ptu position
         if ( theRobotProcedure->GetParameters()->get( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
-            std::cout << "Error getting MastState" << std::endl;
+            LOG_INFO_S << "Error getting MastState";
         }
         int aux = (int)(ptu[0].position*RAD2DEG*100);
         MastState[MAST_CURRENT_Q2_INDEX]=(double)((double)aux/100.0);
@@ -2869,7 +2869,7 @@ void Task::reactToInputPorts()
         MastState[MAST_CURRENT_Q3_INDEX]=(double)((double)aux/100.0);
         if ( theRobotProcedure->GetParameters()->set( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
-            std::cout << "Error setting MastState" << std::endl;
+            LOG_INFO_S << "Error setting MastState";
         }
     }
     if (_current_pan.read(ptu[0].position) == RTT::NewData)
@@ -2878,13 +2878,13 @@ void Task::reactToInputPorts()
         //ptu[0].position=pan;
         if ( theRobotProcedure->GetParameters()->get( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
-            std::cout << "Error getting MastState" << std::endl;
+            LOG_INFO_S << "Error getting MastState";
         }
         int aux = (int)(ptu[0].position*RAD2DEG*100);
         MastState[MAST_CURRENT_Q2_INDEX]=(double)((double)aux/100.0);
         if ( theRobotProcedure->GetParameters()->set( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
-            std::cout << "Error setting MastState" << std::endl;
+            LOG_INFO_S << "Error setting MastState";
         }
     }
     if (_current_tilt.read(ptu[1].position) == RTT::NewData)
@@ -2894,13 +2894,13 @@ void Task::reactToInputPorts()
             ptu[1].position/=4.0; // HDPR tilt value comes with a factor of 4
         if ( theRobotProcedure->GetParameters()->get( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
-            std::cout << "Error getting MastState" << std::endl;
+            LOG_INFO_S << "Error getting MastState";
         }
         int aux = (int)(ptu[1].position*RAD2DEG*100);
         MastState[MAST_CURRENT_Q3_INDEX]=(double)((double)aux/100.0);
         if ( theRobotProcedure->GetParameters()->set( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
-            std::cout << "Error setting MastState" << std::endl;
+            LOG_INFO_S << "Error setting MastState";
         }
     }
     if (_current_imu.read(imu) == RTT::NewData)
@@ -2908,7 +2908,7 @@ void Task::reactToInputPorts()
         //! new TM packet with updated imu pose
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         int aux = (int)(imu.getRoll()*RAD2DEG*10);
         GNCState[GNC_ROVER_POSERX_INDEX]=-(double)((double)aux/10.0);
@@ -2919,7 +2919,7 @@ void Task::reactToInputPorts()
         //GNCState[GNC_ROVER_POSERZ_INDEX]=(double)((double)aux/10.0);
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
     }
 
@@ -2927,31 +2927,31 @@ void Task::reactToInputPorts()
     {
         if (an_state == 0)
         {
-            std::cout << "Autonav state is 0" << std::endl;
+            LOG_INFO_S << "Autonav state is 0";
         }
         if (an_state == 1)
         {
-            std::cout << "Autonav state is 1" << std::endl;
+            LOG_INFO_S << "Autonav state is 1";
         }
         if (an_state == 2)
         {
-            std::cout << "Autonav state is 2" << std::endl;
+            LOG_INFO_S << "Autonav state is 2";
         }
         if (an_state == 3)
         {
-            std::cout << "Autonav state is 3" << std::endl;
+            LOG_INFO_S << "Autonav state is 3";
         }
         if (an_state == 4)
         {
-            std::cout << "Autonav state is 4" << std::endl;
+            LOG_INFO_S << "Autonav state is 4";
         }
         if (an_state == 5)
         {
-            std::cout << "Autonav state is 5" << std::endl;
+            LOG_INFO_S << "Autonav state is 5";
         }
         if (an_state == 6)
         {
-            std::cout << "Autonav state is 6" << std::endl;
+            LOG_INFO_S << "Autonav state is 6";
         }
     }
 
@@ -2960,24 +2960,24 @@ void Task::reactToInputPorts()
         if (tj_status == 2)  //! TARGET_REACHED
         {
             target_reached=true;
-            std::cout << "Trajectory target reached (segment or final)" << std::endl;
+            LOG_INFO_S << "Trajectory target reached (segment or final)";
         }
         else if (tj_status == 3) //! OUT_OF_BOUNDARIES
         {
             abort_activity=true;
             target_reached=true;
-            std::cout << "Rover out of trajectory boundaries. Aborting trajectory!" << std::endl;
+            LOG_INFO_S << "Rover out of trajectory boundaries. Aborting trajectory!";
         }
         //! Nothing to do in other status
 
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_TRAJECTORY_STATUS_INDEX]=(double)(tj_status);
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
     }
 
@@ -2985,12 +2985,12 @@ void Task::reactToInputPorts()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_FDIR_STATUS_INDEX]=(double)(fdir_state);
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
     }
 
@@ -3011,7 +3011,7 @@ void Task::getAndExecTelecommand()
         try
         {
             getExecFunction(cmd_str)(cmd_info);
-            std::cout << "Found and executed exec function" << std::endl;
+            LOG_INFO_S << "Found and executed exec function";
             initializeTimer(cmd_str);
         }
         catch (std::exception& e)
@@ -3023,7 +3023,7 @@ void Task::getAndExecTelecommand()
             }
             else
             {
-                std::cout <<  "DEBUG: TC command not recognised!" << std::endl;
+                LOG_INFO_S <<  "DEBUG: TC command not recognised!";
             }
         }
     }
@@ -3074,7 +3074,7 @@ void Task::controlRunningActivities()
             if (activity_finished)
             {
                 setTimer(cmd_str, -1);
-                std::cout << "Completed activity: " << cmd_str << std::endl;
+                LOG_INFO_S << "Completed activity: " << cmd_str;
                 theRobotProcedure->GetRTFromName((char*)(cmd_str).c_str())->post_cond=1;
             }
             else
@@ -3084,7 +3084,7 @@ void Task::controlRunningActivities()
         }
         else if (timer == 0)
         {
-            std::cout << "Timeout in activity: " << cmd_str << std::endl;
+            LOG_INFO_S << "Timeout in activity: " << cmd_str;
             abort_activity=true;
             getControlFunction(cmd_str)();
             setTimer(cmd_str, -1);
@@ -3104,7 +3104,7 @@ void Task::checkDeadManSwitch()
         {
             targetTranslation = 0.0; targetRotation = 0.0; sendMotionCommand();
             deadMan = true;
-            std::cout << "Dead man switch stopped motion" << std::endl;
+            LOG_INFO_S << "Dead man switch stopped motion";
         }
     }
 }
@@ -3113,14 +3113,14 @@ bool Task::ctrl_REAR_ACQ()
 {
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[LOCCAM_RLOC_STEREO_INDEX]=RLOC_STEREO_index-1;
     PanCamState[PANCAM_ACTION_ID_INDEX]=0;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
     return getProductWaitStatus();
 }
@@ -3129,11 +3129,11 @@ bool Task::ctrl_PANCAM_PANORAMA()
 {
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting PanCamState" << std::endl;
+        LOG_INFO_S << "Error getting PanCamState";
     }
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting PanCamState" << std::endl;
+        LOG_INFO_S << "Error setting PanCamState";
     }
     //TODO need input port from pancam_panorama to signal "finished"
     return true;
@@ -3143,14 +3143,14 @@ bool Task::ctrl_TOF_ACQ()
 {
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[TOF_INDEX]=TOF_index-1;
     PanCamState[PANCAM_ACTION_ID_INDEX]=0;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
     return getProductWaitStatus();
 }
@@ -3159,14 +3159,14 @@ bool Task::ctrl_LIDAR_ACQ()
 {
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[LIDAR_INDEX]=LIDAR_index-1;
     PanCamState[PANCAM_ACTION_ID_INDEX]=0;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
     return getProductWaitStatus();
 }
@@ -3175,14 +3175,14 @@ bool Task::ctrl_ALL_ACQ()
 {
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[LIDAR_INDEX]=LIDAR_index-1;
     PanCamState[PANCAM_ACTION_ID_INDEX]=0;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
     return true;
 }
@@ -3191,14 +3191,14 @@ bool Task::ctrl_LOCCAM_ACQ()
 {
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[HAZCAM_FHAZ_STEREO_INDEX]=FHAZ_STEREO_index-1;
     PanCamState[PANCAM_ACTION_ID_INDEX]=0;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
     return getProductWaitStatus();
 }
@@ -3207,14 +3207,14 @@ bool Task::ctrl_HAZCAM_ACQ()
 {
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[HAZCAM_FHAZ_STEREO_INDEX]=FHAZ_STEREO_index-1;
     PanCamState[PANCAM_ACTION_ID_INDEX]=0;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
     return getProductWaitStatus();
 }
@@ -3225,13 +3225,13 @@ bool Task::ctrl_MAST_PTU_MOVE_TO()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
-            std::cout << "Error getting MastState" << std::endl;
+            LOG_INFO_S << "Error getting MastState";
         }
         MastState[MAST_ACTION_RET_INDEX]=ACTION_RET_OK;
         MastState[MAST_ACTION_ID_INDEX]=0;
         if ( theRobotProcedure->GetParameters()->set( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
-            std::cout << "Error setting MastState" << std::endl;
+            LOG_INFO_S << "Error setting MastState";
         }
         return true;
     }
@@ -3239,13 +3239,13 @@ bool Task::ctrl_MAST_PTU_MOVE_TO()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
-            std::cout << "Error getting MastState" << std::endl;
+            LOG_INFO_S << "Error getting MastState";
         }
         MastState[MAST_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         MastState[MAST_ACTION_ID_INDEX]=35;
         if ( theRobotProcedure->GetParameters()->set( (char*)"MastState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) MastState ) == ERROR )
         {
-            std::cout << "Error setting MastState" << std::endl;
+            LOG_INFO_S << "Error setting MastState";
         }
         return false;
     }
@@ -3257,14 +3257,14 @@ bool Task::ctrl_DEPLOYMENT_REAR()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
         GNCState[GNC_ACTION_ID_INDEX]=0;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return true;
     }
@@ -3272,14 +3272,14 @@ bool Task::ctrl_DEPLOYMENT_REAR()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         GNCState[GNC_ACTION_ID_INDEX]=37;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return false;
     }
@@ -3291,14 +3291,14 @@ bool Task::ctrl_DEPLOYMENT_FRONT()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
         GNCState[GNC_ACTION_ID_INDEX]=0;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return true;
     }
@@ -3306,14 +3306,14 @@ bool Task::ctrl_DEPLOYMENT_FRONT()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         GNCState[GNC_ACTION_ID_INDEX]=36;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return false;
     }
@@ -3325,14 +3325,14 @@ bool Task::ctrl_DEPLOYMENT_ALL()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
         GNCState[GNC_ACTION_ID_INDEX]=0;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return true;
     }
@@ -3340,14 +3340,14 @@ bool Task::ctrl_DEPLOYMENT_ALL()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         GNCState[GNC_ACTION_ID_INDEX]=35;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return false;
     }
@@ -3366,14 +3366,14 @@ bool Task::ctrl_GNC_TRAJECTORY()
         _trajectory.write(trajectory);
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
         GNCState[GNC_ACTION_ID_INDEX]=0;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return true;
     }
@@ -3381,14 +3381,14 @@ bool Task::ctrl_GNC_TRAJECTORY()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         GNCState[GNC_ACTION_ID_INDEX]=34;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return false;
     }
@@ -3407,14 +3407,14 @@ bool Task::ctrl_GNC_TRAJECTORY_WISDOM()
         _trajectory.write(trajectory);
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
         GNCState[GNC_ACTION_ID_INDEX]=0;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return true;
     }
@@ -3446,14 +3446,14 @@ bool Task::ctrl_GNC_TRAJECTORY_WISDOM()
         }
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         GNCState[GNC_ACTION_ID_INDEX]=34;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return false;
     }
@@ -3463,7 +3463,7 @@ bool Task::ctrl_GNC_TURNSPOT_GOTO()
 {
     if (angleReached() || abort_activity)
     {
-        std::cout << "Finish Turnspot" << std::endl;
+        LOG_INFO_S << "Finish Turnspot";
         abort_activity=false;
         travelledAngle = 0.0;
         targetOrientationTheta = 0.0;
@@ -3472,14 +3472,14 @@ bool Task::ctrl_GNC_TURNSPOT_GOTO()
         sendMotionCommand();
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
         GNCState[GNC_ACTION_ID_INDEX]=0;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return true;
     }
@@ -3487,14 +3487,14 @@ bool Task::ctrl_GNC_TURNSPOT_GOTO()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         GNCState[GNC_ACTION_ID_INDEX]=33;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return false;
     }
@@ -3514,14 +3514,14 @@ bool Task::ctrl_GNC_AUTONAV_GOTO()
         _autonav_reset.write(true);
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
         GNCState[GNC_ACTION_ID_INDEX]=0;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return true;
     }
@@ -3529,14 +3529,14 @@ bool Task::ctrl_GNC_AUTONAV_GOTO()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         GNCState[GNC_ACTION_ID_INDEX]=32;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return false;
     }
@@ -3558,14 +3558,14 @@ bool Task::ctrl_GNC_ACKERMANN_GOTO()
         targetSpeed=0.0;
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
         GNCState[GNC_ACTION_ID_INDEX]=0;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return true;
     }
@@ -3573,14 +3573,14 @@ bool Task::ctrl_GNC_ACKERMANN_GOTO()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         GNCState[GNC_ACTION_ID_INDEX]=32;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return false;
     }
@@ -3602,14 +3602,14 @@ bool Task::ctrl_GNC_WHEELWALK_GOTO()
         targetSpeed=0.0;
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
         GNCState[GNC_ACTION_ID_INDEX]=0;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return true;
     }
@@ -3617,14 +3617,14 @@ bool Task::ctrl_GNC_WHEELWALK_GOTO()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         GNCState[GNC_ACTION_ID_INDEX]=32;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return false;
     }
@@ -3647,14 +3647,14 @@ bool Task::ctrl_GNC_LLO()
         targetSpeed=0.0;
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
         GNCState[GNC_ACTION_ID_INDEX]=0;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return true;
     }
@@ -3662,14 +3662,14 @@ bool Task::ctrl_GNC_LLO()
     {
         if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error getting GNCState" << std::endl;
+            LOG_INFO_S << "Error getting GNCState";
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         GNCState[GNC_ACTION_ID_INDEX]=32;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            std::cout << "Error setting GNCState" << std::endl;
+            LOG_INFO_S << "Error setting GNCState";
         }
         return false;
     }
@@ -3679,14 +3679,14 @@ bool Task::ctrl_PANCAM_ACQ()
 {
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting PanCamState" << std::endl;
+        LOG_INFO_S << "Error getting PanCamState";
     }
     PanCamState[PANCAM_PAN_STEREO_INDEX]=PAN_STEREO_index-1;
     PanCamState[PANCAM_ACTION_ID_INDEX]=0;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting PanCamState" << std::endl;
+        LOG_INFO_S << "Error setting PanCamState";
     }
     return getProductWaitStatus();
 }
@@ -3695,14 +3695,14 @@ bool Task::ctrl_MAST_ACQ()
 {
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting PanCamState" << std::endl;
+        LOG_INFO_S << "Error getting PanCamState";
     }
     PanCamState[PANCAM_PAN_STEREO_INDEX]=PAN_STEREO_index-1;
     PanCamState[PANCAM_ACTION_ID_INDEX]=0;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting PanCamState" << std::endl;
+        LOG_INFO_S << "Error setting PanCamState";
     }
     return getProductWaitStatus();
 }
@@ -3711,14 +3711,14 @@ bool Task::ctrl_NAVCAM_ACQ()
 {
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[LOCCAM_FLOC_STEREO_INDEX]=FLOC_STEREO_index-1;
     PanCamState[PANCAM_ACTION_ID_INDEX]=0;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
     return getProductWaitStatus();
 }
@@ -3727,14 +3727,14 @@ bool Task::ctrl_FRONT_ACQ()
 {
     if ( theRobotProcedure->GetParameters()->get( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error getting LocCamState" << std::endl;
+        LOG_INFO_S << "Error getting LocCamState";
     }
     PanCamState[LOCCAM_FLOC_STEREO_INDEX]=FLOC_STEREO_index-1;
     PanCamState[PANCAM_ACTION_ID_INDEX]=0;
     PanCamState[PANCAM_ACTION_RET_INDEX]=ACTION_RET_OK;
     if ( theRobotProcedure->GetParameters()->set( (char*)"PanCamState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) PanCamState ) == ERROR )
     {
-        std::cout << "Error setting LocCamState" << std::endl;
+        LOG_INFO_S << "Error setting LocCamState";
     }
     return getProductWaitStatus();
 }
