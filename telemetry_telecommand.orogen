@@ -44,7 +44,13 @@ task_context "Task" do
     input_port "dist_haz_front_filename", "std/string"
     input_port "telemetry_product", "telemetry_telecommand/messages/Telemetry"
     input_port "fdir_state", "fdir/FdirState"
+    input_port "autonav_state", "int"
 
+    output_port "autonav_goal", "/base/Waypoint"
+    output_port "autonav_obstacle", "double"
+    output_port "autonav_slope", "double"
+    output_port "autonav_coldstart", "bool"
+    output_port "autonav_reset", "bool"
     output_port "update_pose", "/base/samples/RigidBodyState"
     output_port "bema_command", "double"
     output_port "walking_command_front", "double"

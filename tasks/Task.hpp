@@ -32,6 +32,7 @@ namespace telemetry_telecommand
 {
     enum Telecommand
     {
+        GNC_AUTONAV_GOTO,
         GNC_ACKERMANN_GOTO,
         GNC_TURNSPOT_GOTO,
         GNC_TRAJECTORY,
@@ -101,6 +102,8 @@ namespace telemetry_telecommand
         std::vector<base::Waypoint> trajectory;
         base::Waypoint waypoint;
         bool target_reached;
+        double max_obstacle;
+        double max_slope;
         base::samples::RigidBodyState initial_pose;
         base::samples::RigidBodyState initial_imu;
         int timeout_motions;
@@ -150,6 +153,9 @@ namespace telemetry_telecommand
         double initial_absolute_heading;
         int tj_status;
         fdir::FdirState fdir_state;
+        int an_state;
+        int cold_start;
+
 
         //FIXME Dirty fix to allow executing commands while executing motion commands
         bool isActiveACKERMANNGOTO = false;
@@ -246,6 +252,7 @@ namespace telemetry_telecommand
 
         private:
 
+        void exec_GNC_AUTONAV_GOTO(CommandInfo*);
         void exec_GNC_ACKERMANN_GOTO(CommandInfo*);
         void exec_GNC_WHEELWALK_GOTO(CommandInfo*);
         void exec_GNC_LLO(CommandInfo*);
@@ -276,6 +283,7 @@ namespace telemetry_telecommand
         void exec_NAVCAM_ACQ(CommandInfo*);
         void exec_REAR_ACQ(CommandInfo*);
 
+        bool ctrl_GNC_AUTONAV_GOTO();
         bool ctrl_GNC_ACKERMANN_GOTO();
         bool ctrl_GNC_WHEELWALK_GOTO();
         bool ctrl_GNC_LLO();

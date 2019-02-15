@@ -15,8 +15,8 @@ const double OMEGA = 0.04;                      //in Rad/s the commanded angular
 //const double TILTLIMIT_LOW = -25*DEG2RAD;       //HDPR
 //const double TILTLIMIT_HIGH= 45*DEG2RAD;        //HDPR
 
-const double PANLIMIT_LEFT = 50*DEG2RAD;       //ExoTeR
-const double PANLIMIT_RIGHT = -235*DEG2RAD;     //ExoTeR
+const double PANLIMIT_LEFT = 90*DEG2RAD;       //ExoTeR
+const double PANLIMIT_RIGHT = -180*DEG2RAD;     //ExoTeR
 const double TILTLIMIT_LOW = -90*DEG2RAD;       //ExoTeR
 const double TILTLIMIT_HIGH= 90*DEG2RAD;        //ExoTeR
 
@@ -112,6 +112,7 @@ bool Task::configureHook()
 
     // map telecommand strings to the corresponding enum and function
     tc_map = {
+        { "GNC_AUTONAV_GOTO",     std::make_tuple( -1, 200, std::bind( &Task::exec_GNC_AUTONAV_GOTO,     this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_AUTONAV_GOTO,     this ) ) },
         { "GNC_ACKERMANN_GOTO",   std::make_tuple( -1, 200, std::bind( &Task::exec_GNC_ACKERMANN_GOTO,   this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_ACKERMANN_GOTO,   this ) ) },
         { "GNC_WHEELWALK_GOTO",   std::make_tuple( -1, 200, std::bind( &Task::exec_GNC_WHEELWALK_GOTO,   this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_WHEELWALK_GOTO,   this ) ) },
         { "GNC_LLO",              std::make_tuple( -1, 200, std::bind( &Task::exec_GNC_LLO,              this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_LLO,              this ) ) },
@@ -119,8 +120,8 @@ bool Task::configureHook()
         { "GNC_TRAJECTORY",       std::make_tuple( -1, 600, std::bind( &Task::exec_GNC_TRAJECTORY,       this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TRAJECTORY,       this ) ) },
         { "GNC_TRAJECTORY_WISDOM",std::make_tuple( -1, 600, std::bind( &Task::exec_GNC_TRAJECTORY_WISDOM,this, std::placeholders::_1), std::bind( &Task::ctrl_GNC_TRAJECTORY_WISDOM,this ) ) },
         { "MAST_PTU_MoveTo",      std::make_tuple( -1, 300, std::bind( &Task::exec_MAST_PTU_MOVE_TO,     this, std::placeholders::_1), std::bind( &Task::ctrl_MAST_PTU_MOVE_TO,     this ) ) },
-        { "Deploy_Mast",          std::make_tuple( -1, 50, std::bind( &Task::exec_DEPLOY_MAST,          this, std::placeholders::_1), trueFn ) },
-        { "PANCAM_PANORAMA",      std::make_tuple( -1, 500, std::bind( &Task::exec_PANCAM_PANORAMA,     this, std::placeholders::_1), std::bind( &Task::ctrl_PANCAM_PANORAMA,      this ) ) },
+        { "Deploy_Mast",          std::make_tuple( -1, 50, std::bind( &Task::exec_DEPLOY_MAST,           this, std::placeholders::_1), trueFn ) },
+        { "PANCAM_PANORAMA",      std::make_tuple( -1, 500, std::bind( &Task::exec_PANCAM_PANORAMA,      this, std::placeholders::_1), std::bind( &Task::ctrl_PANCAM_PANORAMA,      this ) ) },
         { "TOF_ACQ",              std::make_tuple( -1, 200, std::bind( &Task::exec_TOF_ACQ,              this, std::placeholders::_1), std::bind( &Task::ctrl_TOF_ACQ,              this ) ) },
         { "LIDAR_ACQ",            std::make_tuple( -1, 200, std::bind( &Task::exec_LIDAR_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_LIDAR_ACQ,            this ) ) },
         { "FRONT_ACQ",            std::make_tuple( -1, 200, std::bind( &Task::exec_FRONT_ACQ,            this, std::placeholders::_1), std::bind( &Task::ctrl_FRONT_ACQ,            this ) ) },
@@ -262,6 +263,7 @@ bool Task::startHook()
     theRobotProcedure->insertRT(new RobotTask("GNCG"));                     // Executed  (params: fixed ActivityPlan.txt)
     theRobotProcedure->insertRT(new RobotTask("Activity_Plan"));            // Executed  (params: ActivityPlan file name)
     theRobotProcedure->insertRT(new RobotTask("GET_NEW_HK_TM"));            // Executed  (params: )
+    theRobotProcedure->insertRT(new RobotTask("GNC_AUTONAV_GOTO"));         // Executed  (params: x,y global coordinates (m, m))
     theRobotProcedure->insertRT(new RobotTask("GNC_ACKERMANN_GOTO"));       // Executed  (params: distance, speed (m, m/hour))
     theRobotProcedure->insertRT(new RobotTask("GNC_WHEELWALK_GOTO"));       // Executed  (params: distance, speed (m, m/hour))
     theRobotProcedure->insertRT(new RobotTask("GNC_LLO"));                  // Executed  (params: distance, speed (m, m/hour))
@@ -1800,9 +1802,29 @@ void Task::sendProduct(messages::Telemetry tm)
     }
 }
 
+void Task::exec_GNC_AUTONAV_GOTO(CommandInfo* cmd_info)
+{
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %lf %lf %lf %d %d", &targetPositionX, &targetPositionY, &targetOrientationTheta, &max_obstacle, &max_slope, &cold_start, &timeout_motions);
+    std::cout <<  "GNC_AUTONAV_GOTO X:" << targetPositionX << ", Y:" << targetPositionY << ", Heading: " << targetOrientationTheta << std::endl;
+    base::Waypoint goal_pose2D(base::Position(targetPositionX,targetPositionY,0),targetOrientationTheta,0,0);
+    _autonav_obstacle.write(max_obstacle);
+    _autonav_slope.write(max_slope);
+    _autonav_coldstart.write((bool)cold_start);
+    _autonav_goal.write(goal_pose2D);
+    setTimeout(cmd_info->activityName, (int)(timeout_motions/taskPeriod));
+    if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error getting GNCState" << std::endl;
+    }
+    if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+    {
+        std::cout << "Error setting GNCState" << std::endl;
+    }
+}
+
 void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
 {
-    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %lf %d", &targetPositionX, &targetPositionY, &targetSpeed, &timeout_motions); 
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %lf %lf %d", &targetPositionX, &targetPositionY, &targetSpeed, &timeout_motions);
     // Calculate the parameters to be sent as motion commands (2D): Translation (m/s) and Rotation (rad/s)
     if (targetPositionY == 0) // Straight line command
     {
@@ -1846,8 +1868,7 @@ void Task::exec_GNC_ACKERMANN_GOTO(CommandInfo* cmd_info)
 
 void Task::exec_GNC_WHEELWALK_GOTO(CommandInfo* cmd_info)
 {
-    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %d", &targetPositionX, &timeout_motions); 
-    
+    sscanf(cmd_info->activityParams.c_str(), "%*d %lf %d", &targetPositionX, &timeout_motions);
     targetDistance = std::abs(targetPositionX);
     travelledDistance = 0.0;
     initial_pose = pose;
@@ -2902,12 +2923,44 @@ void Task::reactToInputPorts()
         }
     }
 
+    if (_autonav_state.read(an_state) == RTT::NewData)
+    {
+        if (an_state == 0)
+        {
+            std::cout << "Autonav state is 0" << std::endl;
+        }
+        if (an_state == 1)
+        {
+            std::cout << "Autonav state is 1" << std::endl;
+        }
+        if (an_state == 2)
+        {
+            std::cout << "Autonav state is 2" << std::endl;
+        }
+        if (an_state == 3)
+        {
+            std::cout << "Autonav state is 3" << std::endl;
+        }
+        if (an_state == 4)
+        {
+            std::cout << "Autonav state is 4" << std::endl;
+        }
+        if (an_state == 5)
+        {
+            std::cout << "Autonav state is 5" << std::endl;
+        }
+        if (an_state == 6)
+        {
+            std::cout << "Autonav state is 6" << std::endl;
+        }
+    }
+
     if (_trajectory_status.read(tj_status) == RTT::NewData)
     {
         if (tj_status == 2)  //! TARGET_REACHED
         {
             target_reached=true;
-            std::cout << "Final trajectory target reached" << std::endl;
+            std::cout << "Trajectory target reached (segment or final)" << std::endl;
         }
         else if (tj_status == 3) //! OUT_OF_BOUNDARIES
         {
@@ -3438,6 +3491,48 @@ bool Task::ctrl_GNC_TURNSPOT_GOTO()
         }
         GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
         GNCState[GNC_ACTION_ID_INDEX]=33;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
+        if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+        return false;
+    }
+}
+
+bool Task::ctrl_GNC_AUTONAV_GOTO()
+{
+    if (abort_activity)
+    {
+        abort_activity=false;
+        targetPositionX=0.0;
+        targetPositionY=0.0;
+        targetOrientationTheta=0.0;
+        max_obstacle = 0.0;
+        max_slope = 0.0;
+        cold_start = 0;
+        _autonav_reset.write(true);
+        if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_OK;
+        GNCState[GNC_ACTION_ID_INDEX]=0;
+        GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_STNDBY;
+        if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error setting GNCState" << std::endl;
+        }
+        return true;
+    }
+    else
+    {
+        if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
+        {
+            std::cout << "Error getting GNCState" << std::endl;
+        }
+        GNCState[GNC_ACTION_RET_INDEX]=ACTION_RET_RUNNING;
+        GNCState[GNC_ACTION_ID_INDEX]=32;
         GNCState[GNC_STATUS_INDEX]=GNC_OPER_MODE_LLO;
         if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
