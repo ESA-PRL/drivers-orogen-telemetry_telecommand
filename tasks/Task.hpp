@@ -63,7 +63,6 @@ namespace telemetry_telecommand
     {
         friend class TaskBase;
         protected:
-
         double taskPeriod;
         RoverName rover;
 
