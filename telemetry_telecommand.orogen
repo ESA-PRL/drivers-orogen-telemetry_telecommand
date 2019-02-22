@@ -45,6 +45,7 @@ task_context "Task" do
     input_port "telemetry_product", "telemetry_telecommand/messages/Telemetry"
     input_port "fdir_state", "fdir/FdirState"
     input_port "autonav_state", "int"
+    input_port "autonav_finished", "bool"
 
     output_port "autonav_goal", "/base/Waypoint"
     output_port "autonav_obstacle", "double"

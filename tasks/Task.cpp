@@ -495,8 +495,8 @@ void Task::sendProduct(messages::Telemetry tm)
                         }
                         if (activemqTMSender->isConnected)
                         {
-                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamLeftProducerMonitoring, transformation);
-                            LOG_INFO_S << "Sent image with size " << size;
+                            int res = tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgPancamLeftProducerMonitoring, transformation);
+                            LOG_INFO_S << "Sent image with size " << size << " and result " << res;
                         }
                         sent_image_left = true;
                         break;
@@ -3502,7 +3502,8 @@ bool Task::ctrl_GNC_TURNSPOT_GOTO()
 
 bool Task::ctrl_GNC_AUTONAV_GOTO()
 {
-    if (abort_activity)
+    bool autonav_finished = false;
+    if (abort_activity || (_autonav_finished.read(autonav_finished) == RTT::NewData))
     {
         abort_activity=false;
         targetPositionX=0.0;
