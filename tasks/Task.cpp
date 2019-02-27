@@ -2927,31 +2927,31 @@ void Task::reactToInputPorts()
     {
         if (an_state == 0)
         {
-            LOG_INFO_S << "Autonav state is 0";
+            LOG_DEBUG_S << "Autonav state is 0";
         }
         if (an_state == 1)
         {
-            LOG_INFO_S << "Autonav state is 1";
+            LOG_DEBUG_S << "Autonav state is 1";
         }
         if (an_state == 2)
         {
-            LOG_INFO_S << "Autonav state is 2";
+            LOG_DEBUG_S << "Autonav state is 2";
         }
         if (an_state == 3)
         {
-            LOG_INFO_S << "Autonav state is 3";
+            LOG_DEBUG_S << "Autonav state is 3";
         }
         if (an_state == 4)
         {
-            LOG_INFO_S << "Autonav state is 4";
+            LOG_DEBUG_S << "Autonav state is 4";
         }
         if (an_state == 5)
         {
-            LOG_INFO_S << "Autonav state is 5";
+            LOG_DEBUG_S << "Autonav state is 5";
         }
         if (an_state == 6)
         {
-            LOG_INFO_S << "Autonav state is 6";
+            LOG_DEBUG_S << "Autonav state is 6";
         }
     }
 
