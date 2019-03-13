@@ -1797,6 +1797,133 @@ void Task::sendProduct(messages::Telemetry tm)
                     break;
             }
             break;
+        case messages::Producer::AUTONAV:
+            switch (tm.type)
+            {
+                case messages::ProductType::IMAGE:
+                    {
+                        LOG_INFO_S << "Sending image from Autonav " << tm.productPath;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, ""); //ToDo: modify "21" by the right number or index of last slash.
+                        Eigen::Affine3d tf;
+                        if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgAutonavProducerMonitoring, transformation);
+                            LOG_INFO_S << "Sent image with size " << size;
+                        }
+                        //sent_image_left = true;
+                        break;
+                    }
+                case messages::ProductType::DISTANCE:
+                    {
+                        LOG_INFO_S << "Sending distance from Autonav " << tm.productPath;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, ""); //ToDo: modify "21" by the right number of index of last slash.
+                        Eigen::Affine3d tf;
+                        if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distAutonavProducerMonitoring, transformation);
+                            LOG_INFO_S << "Sent distance file with size " << size;
+                        }
+                        //sent_distance_image = true;
+                        break;
+                    }
+                case messages::ProductType::DEM:
+                    {
+                        LOG_INFO_S << "Sending dem from Autonav " << tm.productPath;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, ""); //ToDo: modify "21"
+                        Eigen::Affine3d tf;
+                        if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->demAutonavProducerMonitoring, transformation);
+                            LOG_INFO_S << "Sent dem with size " << size;
+                        }
+                        //sent_dem = true;
+                        break;
+                    }
+                case messages::ProductType::NAVMAP:
+                    {
+                        LOG_INFO_S << "Sending mavmap from Autonav " << tm.productPath;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, ""); //ToDo: modify "21"
+                        Eigen::Affine3d tf;
+                        if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->navmapAutonavProducerMonitoring, transformation);
+                            LOG_INFO_S << "Sent navmap with size " << size;
+                        }
+                        //sent_dem = true;
+                        break;
+                    }
+                case messages::ProductType::TRAJMAP:
+                    {
+                        LOG_INFO_S << "Sending trajmap from Autonav " << tm.productPath;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath.replace(0, 21, ""); //ToDo: modify "21"
+                        Eigen::Affine3d tf;
+                        if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->trajmapAutonavProducerMonitoring, transformation);
+                            LOG_INFO_S << "Sent trajmap with size " << size;
+                        }
+                        //sent_dem = true;
+                        break;
+                    }
+                default:
+                    break;
+            }
+            break;
         default:
             break;
     }
