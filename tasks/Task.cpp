@@ -1869,6 +1869,29 @@ void Task::sendProduct(messages::Telemetry tm)
                         }
                         break;
                     }
+                case messages::ProductType::PARTIAL_NAVMAP:
+                    {
+                        LOG_INFO_S << "Sending mavmap from Autonav " << tm.productPath;
+                        std::ifstream input(tm.productPath.c_str(), std::ios::binary);
+                        std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+                        auto size = buffer.size();
+                        char* data = &buffer[0];
+                        long time=tm.timestamp.toMilliseconds();
+                        std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
+                        date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
+                        tm.productPath = date + "_AUTONAV_PARTIAL_NAVMAP.png";
+                        Eigen::Affine3d tf;
+                        if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
+                        {
+                            getTransform(tf);
+                        }
+                        if (activemqTMSender->isConnected)
+                        {
+                            tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->partialNavmapAutonavProducerMonitoring, transformation);
+                            LOG_INFO_S << "Sent partial navmap with size " << size;
+                        }
+                        break;
+                    }
                 case messages::ProductType::NAVMAP:
                     {
                         LOG_INFO_S << "Sending mavmap from Autonav " << tm.productPath;
@@ -3047,33 +3070,14 @@ void Task::reactToInputPorts()
 
     if (_autonav_state.read(an_state) == RTT::NewData)
     {
-        if (an_state == 0)
+        if ( theRobotProcedure->GetParameters()->get( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            LOG_DEBUG_S << "Autonav state is 0";
+            LOG_WARN_S << "Error getting GNCState";
         }
-        if (an_state == 1)
+        GNCState[GNC_AUTONAV_STATUS_INDEX]=(double)(an_state);
+        if ( theRobotProcedure->GetParameters()->set( (char*)"GNCState", DOUBLE, MAX_STATE_SIZE, 0, ( char * ) GNCState ) == ERROR )
         {
-            LOG_DEBUG_S << "Autonav state is 1";
-        }
-        if (an_state == 2)
-        {
-            LOG_DEBUG_S << "Autonav state is 2";
-        }
-        if (an_state == 3)
-        {
-            LOG_DEBUG_S << "Autonav state is 3";
-        }
-        if (an_state == 4)
-        {
-            LOG_DEBUG_S << "Autonav state is 4";
-        }
-        if (an_state == 5)
-        {
-            LOG_DEBUG_S << "Autonav state is 5";
-        }
-        if (an_state == 6)
-        {
-            LOG_DEBUG_S << "Autonav state is 6";
+            LOG_WARN_S << "Error setting GNCState";
         }
     }
 
