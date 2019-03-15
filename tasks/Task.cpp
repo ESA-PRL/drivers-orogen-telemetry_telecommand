@@ -1807,10 +1807,10 @@ void Task::sendProduct(messages::Telemetry tm)
                         std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
                         auto size = buffer.size();
                         char* data = &buffer[0];
-                        long time=tm.timestamp.toMilliseconds();
+                        long time = tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
-                        tm.productPath.replace(0, 21, ""); //ToDo: modify "21" by the right number or index of last slash.
+                        tm.productPath = date + "_AUTONAV_IMAGE.png";
                         Eigen::Affine3d tf;
                         if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
                         {
@@ -1821,7 +1821,6 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->imgAutonavProducerMonitoring, transformation);
                             LOG_INFO_S << "Sent image with size " << size;
                         }
-                        //sent_image_left = true;
                         break;
                     }
                 case messages::ProductType::DISTANCE:
@@ -1834,7 +1833,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
-                        tm.productPath.replace(0, 21, ""); //ToDo: modify "21" by the right number of index of last slash.
+                        tm.productPath = date + "_AUTONAV_DISPARITY.png";
                         Eigen::Affine3d tf;
                         if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
                         {
@@ -1845,7 +1844,6 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->distAutonavProducerMonitoring, transformation);
                             LOG_INFO_S << "Sent distance file with size " << size;
                         }
-                        //sent_distance_image = true;
                         break;
                     }
                 case messages::ProductType::DEM:
@@ -1858,7 +1856,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
-                        tm.productPath.replace(0, 21, ""); //ToDo: modify "21"
+                        tm.productPath = date + "_AUTONAV_DEM.png";
                         Eigen::Affine3d tf;
                         if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
                         {
@@ -1869,7 +1867,6 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->demAutonavProducerMonitoring, transformation);
                             LOG_INFO_S << "Sent dem with size " << size;
                         }
-                        //sent_dem = true;
                         break;
                     }
                 case messages::ProductType::NAVMAP:
@@ -1882,7 +1879,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
-                        tm.productPath.replace(0, 21, ""); //ToDo: modify "21"
+                        tm.productPath = date + "_AUTONAV_NAVMAP.png";
                         Eigen::Affine3d tf;
                         if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
                         {
@@ -1893,7 +1890,6 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->navmapAutonavProducerMonitoring, transformation);
                             LOG_INFO_S << "Sent navmap with size " << size;
                         }
-                        //sent_dem = true;
                         break;
                     }
                 case messages::ProductType::TRAJMAP:
@@ -1906,7 +1902,7 @@ void Task::sendProduct(messages::Telemetry tm)
                         long time=tm.timestamp.toMilliseconds();
                         std::string date = tm.timestamp.toString(base::Time::Milliseconds,"%Y%m%d_%H%M%S_");
                         date.erase(std::remove(date.begin(),date.end(), ':' ), date.end() ) ;
-                        tm.productPath.replace(0, 21, ""); //ToDo: modify "21"
+                        tm.productPath = date + "_AUTONAV_TRAJMAP.png";
                         Eigen::Affine3d tf;
                         if (_left_camera_navcam2lab.get(tm.timestamp, tf, false))
                         {
@@ -1917,7 +1913,6 @@ void Task::sendProduct(messages::Telemetry tm)
                             tmComm->sendImageMessage(tm.productPath.c_str(), seq, time, date.c_str(), size, (const unsigned char *)data, activemqTMSender->trajmapAutonavProducerMonitoring, transformation);
                             LOG_INFO_S << "Sent trajmap with size " << size;
                         }
-                        //sent_dem = true;
                         break;
                     }
                 default:
